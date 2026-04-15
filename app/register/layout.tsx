@@ -6,11 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function RegisterLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <link rel="stylesheet" href="/css/front/style.css" />
-      <link rel="stylesheet" href="/css/front/responsive.css" />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

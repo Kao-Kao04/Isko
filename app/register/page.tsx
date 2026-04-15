@@ -1,415 +1,475 @@
-"use client"
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { useState } from 'react';
+
+const TEAL = '#1D9E75';
+const TEAL_DARK = '#178a64';
+
+const inp: React.CSSProperties = {
+  width: '100%',
+  border: '1.5px solid #e5e7eb',
+  borderRadius: 10,
+  padding: '10px 14px',
+  fontSize: 14,
+  color: '#111827',
+  background: '#fff',
+  boxSizing: 'border-box',
+  outline: 'none',
+  transition: 'border-color 0.15s',
+};
+
+const lbl: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 600,
+  color: '#374151',
+  marginBottom: 6,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+};
+
+const req = <span style={{ color: '#ef4444', marginLeft: 2 }}>*</span>;
+
+const SectionHeader = ({ icon, title }: { icon: string; title: string }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid #f3f4f6' }}>
+    <span style={{ fontSize: 18 }}>{icon}</span>
+    <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>{title}</span>
+  </div>
+);
+
+const colleges = [
+  { value: 'CAF',   label: 'College of Accountancy and Finance (CAF)' },
+  { value: 'CADBE', label: 'College of Architecture, Design and the Built Environment (CADBE)' },
+  { value: 'CAL',   label: 'College of Arts and Letters (CAL)' },
+  { value: 'CBA',   label: 'College of Business Administration (CBA)' },
+  { value: 'COC',   label: 'College of Communication (COC)' },
+  { value: 'CCIS',  label: 'College of Computer and Information Sciences (CCIS)' },
+  { value: 'COED',  label: 'College of Education (COED)' },
+  { value: 'CE',    label: 'College of Engineering (CE)' },
+  { value: 'CHK',   label: 'College of Human Kinetics (CHK)' },
+  { value: 'CL',    label: 'College of Law (CL)' },
+  { value: 'CPSPA', label: 'College of Political Science and Public Administration (CPSPA)' },
+  { value: 'CSSD',  label: 'College of Social Sciences and Development (CSSD)' },
+  { value: 'CS',    label: 'College of Science (CS)' },
+  { value: 'CTHTM', label: 'College of Tourism, Hospitality and Transportation Management (CTHTM)' },
+  { value: 'ITECH', label: 'Institute of Technology (ITECH)' },
+];
 
 export default function Page() {
+  const [gender, setGender] = useState('');
+  const [yearLevel, setYearLevel] = useState('');
+  const [semester, setSemester] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+        <div style={{ textAlign: 'center', padding: '48px 32px', background: '#fff', borderRadius: 20, border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.07)', maxWidth: 440 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#e8faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: '#111827' }}>Account Created!</h2>
+          <p style={{ margin: '0 0 24px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
+            Your IskoMo account has been submitted for review. You&apos;ll receive an email once your profile is verified.
+          </p>
+          <Link href="/login" style={{ display: 'inline-block', padding: '12px 32px', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#f8fafc' }}>
 
-    {/*  Toast Container  */}
-    <div className="toast-container" id="toastContainer"></div>
-    
-    <div className="container" id="mainContainer">
-        {/*  LEFT PANEL: Branding  */}
-        <div className="left-panel">
-            <i className="fas fa-graduation-cap floating-icon"></i>
-            <i className="fas fa-book floating-icon"></i>
-            <i className="fas fa-trophy floating-icon"></i>
-            <i className="fas fa-lightbulb floating-icon"></i>
-            
-            <div className="left-panel-content">
-                <div className="logo-section">
-                    <div className="logo-circle">
-                        <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo Logo" />
-                    </div>
-                    <div className="logo-text">IskoMo</div>
-                    <div className="platform-label">Scholarship Platform</div>
-                    <div className="tagline">Empowering students with accessible, transparent, and efficient scholarship opportunities.</div>
-                </div>
+      {/* ── Left Panel ── */}
+      <div style={{
+        width: 340,
+        flexShrink: 0,
+        background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 55%, #0f6b4f 100%)`,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '40px 36px',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        overflow: 'hidden',
+      }}>
+        {/* Decorative blobs */}
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
+        <div style={{ position: 'absolute', bottom: -80, left: -40, width: 260, height: 260, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+        <div style={{ position: 'absolute', top: '40%', right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
 
-                <div className="quote-section">
-                    <div className="quote-box">
-                        <div className="quote-text">
-                            &quot;Education is the bridge between dreams and reality.&quot;
-                        </div>
-                        <div className="quote-author">
-                            — Start your journey today
-                        </div>
-                    </div>
-                </div>
+        {/* Logo + brand */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Image
+                src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
+                alt="IskoMo"
+                width={26}
+                height={26}
+                style={{ filter: 'brightness(0) invert(1)' }}
+              />
             </div>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>IskoMo</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Scholarship Platform</div>
+            </div>
+          </div>
+
+          <h2 style={{ margin: '0 0 12px', fontSize: 26, fontWeight: 800, color: '#fff', lineHeight: 1.25 }}>
+            Start your scholarship journey today.
+          </h2>
+          <p style={{ margin: '0 0 32px', fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7 }}>
+            Create your IskoMo account and gain access to hundreds of scholarship opportunities made for Filipino students.
+          </p>
+
+          {/* Feature list */}
+          {[
+            'Find scholarships that match your profile',
+            'Track your application status in real time',
+            'Secure document submission & storage',
+            'Connect with OSFA and scholarship sponsors',
+          ].map((feat) => (
+            <div key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>{feat}</span>
+            </div>
+          ))}
         </div>
 
-        {/*  MIDDLE PANEL: Removed - Role indicator moved to header  */}
-
-        {/*  RIGHT PANEL: Content Area  */}
-        <div className="right-panel">
-            {/*  STEP 1: Role Selection  */}
-            <div className="step-1-content">
-                <div className="progress-container">
-                    <div className="progress-header">
-                        <span className="progress-text">Step 1 of 2</span>
-                    </div>
-                    <div className="progress-bar-container">
-                        <div className="progress-bar-fill" style={{"width":"50%"}}></div>
-                    </div>
-                    <div className="progress-steps">
-                        <div className="progress-step">
-                            <div className="step-circle active">1</div>
-                            <span className="step-label">Choose Role</span>
-                        </div>
-                        <div className="progress-step">
-                            <div className="step-circle">2</div>
-                            <span className="step-label">Complete Profile</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="content-header">
-                    <h1>Choose Your Role</h1>
-                    <p>How will you use IskoMo?</p>
-                </div>
-
-                <div className="role-cards" style={{"gridTemplateColumns":"1fr"}}>
-                    <div className="role-card selected" data-role="iskolar" style={{"cursor":"default","maxWidth":"600px","margin":"0 auto","width":"100%"}}>
-                        <div className="role-header" style={{"justifyContent":"center"}}>
-                            <div className="role-icon iskolar-icon">
-                                <i className="fas fa-user-graduate"></i>
-                            </div>
-                            <div className="role-title-group" style={{"flex":"none","textAlign":"center"}}>
-                                <div className="role-title">iSKOLAR</div>
-                                <div className="role-subtitle">Scholarship Seeker</div>
-                            </div>
-                        </div>
-                        <div className="role-description" style={{"textAlign":"center"}}>
-                            Student looking for financial assistance and scholarship opportunities.
-                        </div>
-                        <ul className="role-features" style={{"display":"flex","justifyContent":"center","gap":"var(--spacing-md)","flexWrap":"wrap"}}>
-                            <li><i className="fas fa-check"></i> Find & apply for scholarships</li>
-                            <li><i className="fas fa-check"></i> Track your applications</li>
-                            <li><i className="fas fa-check"></i> Get financial support</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <button id="continueBtn" className="continue-btn" style={{"maxWidth":"600px","margin":"0 auto","display":"flex"}}>
-                    <span>Continue to Profile Setup</span>
-                    <i className="fas fa-arrow-right"></i>
-                </button>
-            </div>
-
-            {/*  STEP 2: Profile Form  */}
-            <div className="step-2-content">
-                <div className="progress-container">
-                    <div className="progress-header">
-                        <span className="progress-text">Step 2 of 2</span>
-                        <div className="progress-header-right">
-                            <div className="role-indicator" id="roleIndicator">
-                                <i className="fas fa-user-graduate" id="roleIndicatorIcon"></i>
-                                <span id="roleIndicatorName">iSKOLAR</span>
-                                <span className="role-separator">·</span>
-                                <span id="roleIndicatorType">Student</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="progress-bar-container">
-                        <div className="progress-bar-fill"></div>
-                    </div>
-                    <div className="progress-steps">
-                        <div className="progress-step">
-                            <div className="step-circle completed">1</div>
-                            <span className="step-label">Choose Role</span>
-                        </div>
-                        <div className="progress-step">
-                            <div className="step-circle active">2</div>
-                            <span className="step-label">Complete Profile</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="content-header">
-                    <h1 id="formTitle">Complete Your Profile</h1>
-                    <p id="formSubtitle">Fill in your details to get started</p>
-                </div>
-
-                <form id="studentForm">
-                    {/*  SECTION A: Personal Identity  */}
-                    <div className="form-section">
-                        <div className="section-title">
-                            <span className="section-icon">👤</span>
-                            Personal Identity
-                        </div>
-                        <div className="form-grid">
-                            <div className="form-group">
-                                <label className="form-label">
-                                    First Name <span className="required">*</span>
-                                </label>
-                                <input type="text" className="form-input" id="firstName" placeholder="First Name" required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Middle Name <span className="required">*</span>
-                                </label>
-                                <input type="text" className="form-input" id="middleName" placeholder="Middle Name" required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Last Name <span className="required">*</span>
-                                </label>
-                                <input type="text" className="form-input" id="lastName" placeholder="Last Name" required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Date of Birth <span className="required">*</span>
-                                </label>
-                                <input type="date" className="form-input" id="birthDate" required />
-                            </div>
-                            <div className="form-group full-width">
-                                <label className="form-label">
-                                    Sex <span className="required">*</span>
-                                </label>
-                                <div className="gender-group">
-                                    <label className="gender-btn">
-                                        <input type="radio" name="gender" value="male" required />
-                                        <span>Male</span>
-                                    </label>
-                                    <label className="gender-btn">
-                                        <input type="radio" name="gender" value="female" />
-                                        <span>Female</span>
-                                    </label>
-                                    <label className="gender-btn">
-                                        <input type="radio" name="gender" value="prefer_not_to_say" />
-                                        <span>Prefer not to say</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div className="form-group full-width">
-                                <label className="form-label">
-                                    Mobile Number <span className="required">*</span>
-                                </label>
-                                <div className="phone-input-group">
-                                    <select className="country-code-select" id="countryCode">
-                                        <option value="+63">🇵🇭 +63</option>
-                                    </select>
-                                    <input type="tel" className="form-input phone-input" id="contactNumber" placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} title="Must start with 9 and be exactly 10 digits" required />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/*  SECTION B: PUP Academic Information  */}
-                    <div className="form-section">
-                        <div className="section-title">
-                            <span className="section-icon">🎓</span>
-                            PUP Academic Information
-                        </div>
-                        <div className="form-grid">
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Student Number <span className="required">*</span>
-                                </label>
-                                <input type="text" className="form-input" id="studentId" placeholder="2023-12345-MN-0" pattern="\d{4}-\d{5}-[A-Za-z]{2}-\d" title="Format: 2023-12345-MN-0" maxLength={15} required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Campus <span className="required">*</span>
-                                </label>
-                                <input type="text" className="form-input" id="campus" value="PUP Sta. Mesa" readOnly style={{"background":"#f5f5f5","cursor":"not-allowed"}} required />
-                            </div>
-                            <div className="form-group full-width">
-                                <label className="form-label">
-                                    College / Institute <span className="required">*</span>
-                                </label>
-                                <select className="form-select" id="college" required>
-                                    <option value="">Select College / Institute</option>
-                                    <option value="CAF">College of Accountancy and Finance (CAF)</option>
-                                    <option value="CADBE">College of Architecture, Design and the Built Environment (CADBE)</option>
-                                    <option value="CAL">College of Arts and Letters (CAL)</option>
-                                    <option value="CBA">College of Business Administration (CBA)</option>
-                                    <option value="COC">College of Communication (COC)</option>
-                                    <option value="CCIS">College of Computer and Information Sciences (CCIS)</option>
-                                    <option value="COED">College of Education (COED)</option>
-                                    <option value="CE">College of Engineering (CE)</option>
-                                    <option value="CHK">College of Human Kinetics (CHK)</option>
-                                    <option value="CL">College of Law (CL)</option>
-                                    <option value="CPSPA">College of Political Science and Public Administration (CPSPA)</option>
-                                    <option value="CSSD">College of Social Sciences and Development (CSSD)</option>
-                                    <option value="CS">College of Science (CS)</option>
-                                    <option value="CTHTM">College of Tourism, Hospitality and Transportation Management (CTHTM)</option>
-                                    <option value="ITECH">Institute of Technology (ITECH)</option>
-                                </select>
-                            </div>
-                            <div className="form-group full-width">
-                                <label className="form-label">
-                                    Program / Course <span className="required">*</span>
-                                </label>
-                                <select className="form-select" id="program" required disabled>
-                                    <option value="">Select College / Institute First</option>
-                                </select>
-                            </div>
-                            <div className="form-group full-width">
-                                <label className="form-label">
-                                    Year Level <span className="required">*</span>
-                                </label>
-                                <div className="year-level-group">
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="yearLevel" value="1st Year" required />
-                                        <span>1st Year</span>
-                                    </label>
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="yearLevel" value="2nd Year" />
-                                        <span>2nd Year</span>
-                                    </label>
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="yearLevel" value="3rd Year" />
-                                        <span>3rd Year</span>
-                                    </label>
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="yearLevel" value="4th Year" />
-                                        <span>4th Year</span>
-                                    </label>
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="yearLevel" value="5th Year" />
-                                        <span>5th Year</span>
-                                    </label>
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="yearLevel" value="Irregular" />
-                                        <span>Irregular</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Section / Block <span className="required">*</span>
-                                </label>
-                                <input type="text" className="form-input" id="section" placeholder="e.g., 3-1" required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Academic Year <span className="required">*</span>
-                                </label>
-                                <input type="text" className="form-input" id="academicYear" placeholder="e.g., 2025–2026" required />
-                            </div>
-                            <div className="form-group full-width">
-                                <label className="form-label">
-                                    Semester <span className="required">*</span>
-                                </label>
-                                <div className="year-level-group">
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="semester" value="1st Semester" required />
-                                        <span>1st Semester</span>
-                                    </label>
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="semester" value="2nd Semester" />
-                                        <span>2nd Semester</span>
-                                    </label>
-                                    <label className="year-level-btn">
-                                        <input type="radio" name="semester" value="Summer" />
-                                        <span>Summer</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/*  SECTION C: Family Details  */}
-                    <div className="form-section">
-                        <div className="section-title">
-                            <span className="section-icon">👨‍👩‍👧‍👦</span>
-                            Family Details
-                        </div>
-                        <div className="form-grid">
-                            <div className="form-group">
-                                <label className="form-label"> Father&apos;s Name <span className="required">*</span> </label>
-                                <input type="text" className="form-input" id="fatherName" placeholder="Father's Full Name" required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label"> Father&apos;s Occupation <span className="required">*</span> </label>
-                                <input type="text" className="form-input" id="fatherOccupation" placeholder="Father&apos;s Occupation" required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label"> Mother&apos;s Name <span className="required">*</span> </label>
-                                <input type="text" className="form-input" id="motherName" placeholder="Mother's Full Name" required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label"> Mother&apos;s Occupation <span className="required">*</span> </label>
-                                <input type="text" className="form-input" id="motherOccupation" placeholder="Mother&apos;s Occupation" required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label"> Annual Gross Income <span className="required">*</span> </label>
-                                <select className="form-select" id="householdIncome" required>
-                                    <option value="">Select Income Bracket</option>
-                                    <option value="Below 120,000">Below ₱120,000</option>
-                                    <option value="120,000 - 240,000">₱120,000 - ₱240,000</option>
-                                    <option value="240,001 - 480,000">₱240,001 - ₱480,000</option>
-                                    <option value="480,001 - 720,000">₱480,001 - ₱720,000</option>
-                                    <option value="Above 720,000">Above ₱720,000</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label"> Number of Siblings <span className="required">*</span> </label>
-                                <input type="number" className="form-input" id="numberOfSiblings" min="0" placeholder="0" required />
-                            </div>
-                            <div className="form-group full-width">
-                                <label className="form-label"> Guardian&apos;s Name <span className="required">*</span> </label>
-                                <input type="text" className="form-input" id="guardianName" placeholder="Guardian's Full Name" required />
-                            </div>
-                            <div className="form-group full-width">
-                                <label className="form-label"> Guardian&apos;s Contact Number <span className="required">*</span> </label>
-                                <div className="phone-input-group">
-                                    <select className="country-code-select" id="guardianCountryCode">
-                                        <option value="+63">🇵🇭 +63</option>
-                                    </select>
-                                    <input type="tel" className="form-input phone-input" id="guardianContact" placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} title="Must start with 9 and be exactly 10 digits" required />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/*  SECTION D: Required Document Uploads  */}
-                    <div className="form-section">
-                        <div className="section-title">
-                            <span className="section-icon">📄</span>
-                            Required Document Uploads
-                        </div>
-                        <div style={{"marginBottom":"var(--spacing-md)","padding":"var(--spacing-sm) var(--spacing-md)","background":"var(--gray-bg)","borderRadius":"var(--radius-sm)","border":"1px solid var(--gray-border)"}}>
-                            <ul style={{"listStyle":"none","padding":"0","margin":"0","display":"flex","flexDirection":"column","gap":"4px"}}>
-                                <li style={{"display":"flex","alignItems":"flex-start","gap":"var(--spacing-xs)","padding":"4px 0"}}>
-                                    <span style={{"color":"var(--teal-primary)","fontWeight":"600","marginRight":"4px","fontSize":"0.875rem"}}>•</span>
-                                    <span style={{"fontSize":"0.8125rem","color":"var(--gray-dark)","lineHeight":"1.4"}}>Upload PUP ID (Front)</span>
-                                </li>
-                                <li style={{"display":"flex","alignItems":"flex-start","gap":"var(--spacing-xs)","padding":"4px 0"}}>
-                                    <span style={{"color":"var(--teal-primary)","fontWeight":"600","marginRight":"4px","fontSize":"0.875rem"}}>•</span>
-                                    <span style={{"fontSize":"0.8125rem","color":"var(--gray-dark)","lineHeight":"1.4"}}>Upload Certificate of Registration (Latest Semester)</span>
-                                </li>
-                                <li style={{"display":"flex","alignItems":"flex-start","gap":"var(--spacing-xs)","padding":"4px 0"}}>
-                                    <span style={{"color":"var(--teal-primary)","fontWeight":"600","marginRight":"4px","fontSize":"0.875rem"}}>•</span>
-                                    <span style={{"fontSize":"0.8125rem","color":"var(--gray-dark)","lineHeight":"1.4"}}>Upload Grade Slip (Latest Term)</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div className="file-upload" id="studentFileUpload">
-                            <i className="fas fa-cloud-upload-alt"></i>
-                            <p>Drag and drop files here or click to upload</p>
-                            <small>Allowed formats: PDF, JPG, PNG (Max 10MB each)</small>
-                        </div>
-                        <div className="uploaded-files" id="studentFiles"></div>
-                        <input type="hidden" id="studentFilesCount" required />
-                    </div>
-
-                    <div className="action-buttons">
-                        <button type="submit" className="btn-submit" id="submitBtn" style={{"width":"100%"}} disabled>
-                            <span>Complete Profile</span>
-                            <i className="fas fa-check"></i>
-                        </button>
-                    </div>
-                </form>
-
-                {/*  Sponsor Form Removed  */}
-            </div>
+        {/* Bottom: Already have account */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 20 }} />
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+            Already have an account?{' '}
+            <Link href="/login" style={{ color: '#a7f3d0', fontWeight: 700, textDecoration: 'none' }}>
+              Sign in
+            </Link>
+          </p>
         </div>
+      </div>
+
+      {/* ── Right Panel: Form ── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '40px 48px' }}>
+        <div style={{ maxWidth: 700, margin: '0 auto' }}>
+
+          <div style={{ marginBottom: 32 }}>
+            <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 800, color: '#111827' }}>Create Your Account</h1>
+            <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>Fill in your details below to register as an IskoMo student.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+            {/* ── Section A: Personal Identity ── */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <SectionHeader icon="👤" title="Personal Identity" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
+                <div>
+                  <label style={lbl}>First Name {req}</label>
+                  <input type="text" style={inp} placeholder="Juan" required />
+                </div>
+                <div>
+                  <label style={lbl}>Middle Name</label>
+                  <input type="text" style={inp} placeholder="Santos" />
+                </div>
+                <div>
+                  <label style={lbl}>Last Name {req}</label>
+                  <input type="text" style={inp} placeholder="Dela Cruz" required />
+                </div>
+                <div>
+                  <label style={lbl}>Date of Birth {req}</label>
+                  <input type="date" style={inp} required />
+                </div>
+
+                {/* Sex */}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>Sex {req}</label>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    {['Male', 'Female', 'Prefer not to say'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setGender(opt)}
+                        style={{
+                          padding: '9px 20px',
+                          borderRadius: 10,
+                          border: `1.5px solid ${gender === opt ? TEAL : '#e5e7eb'}`,
+                          background: gender === opt ? '#e8faf4' : '#fff',
+                          color: gender === opt ? TEAL : '#374151',
+                          fontWeight: gender === opt ? 700 : 500,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mobile */}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>Mobile Number {req}</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <select style={{ ...inp, width: 96, flexShrink: 0 }}>
+                      <option value="+63">🇵🇭 +63</option>
+                    </select>
+                    <input type="tel" style={{ ...inp, flex: 1 }} placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} required />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>Email Address {req}</label>
+                  <input type="email" style={inp} placeholder="juan.delacruz@example.com" required />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label style={lbl}>Password {req}</label>
+                  <input type="password" style={inp} placeholder="Min. 8 characters" minLength={8} required />
+                </div>
+                <div>
+                  <label style={lbl}>Confirm Password {req}</label>
+                  <input type="password" style={inp} placeholder="Re-enter password" required />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Section B: Academic Information ── */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <SectionHeader icon="🎓" title="PUP Academic Information" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
+                <div>
+                  <label style={lbl}>Student Number {req}</label>
+                  <input type="text" style={inp} placeholder="2023-12345-MN-0" pattern="\d{4}-\d{5}-[A-Za-z]{2}-\d" maxLength={15} required />
+                </div>
+                <div>
+                  <label style={lbl}>Campus</label>
+                  <input type="text" style={{ ...inp, background: '#f9fafb', color: '#6b7280', cursor: 'not-allowed' }} value="PUP Sta. Mesa" readOnly />
+                </div>
+
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>College / Institute {req}</label>
+                  <select style={inp} required defaultValue="">
+                    <option value="" disabled>Select College / Institute</option>
+                    {colleges.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>Program / Course {req}</label>
+                  <select style={inp} required defaultValue="" disabled>
+                    <option value="" disabled>Select College first</option>
+                  </select>
+                </div>
+
+                {/* Year Level */}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>Year Level {req}</label>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Irregular'].map((yr) => (
+                      <button
+                        key={yr}
+                        type="button"
+                        onClick={() => setYearLevel(yr)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 10,
+                          border: `1.5px solid ${yearLevel === yr ? TEAL : '#e5e7eb'}`,
+                          background: yearLevel === yr ? '#e8faf4' : '#fff',
+                          color: yearLevel === yr ? TEAL : '#374151',
+                          fontWeight: yearLevel === yr ? 700 : 500,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {yr}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={lbl}>Section / Block {req}</label>
+                  <input type="text" style={inp} placeholder="e.g., 3-1" required />
+                </div>
+                <div>
+                  <label style={lbl}>Academic Year {req}</label>
+                  <input type="text" style={inp} placeholder="e.g., 2025–2026" required />
+                </div>
+
+                {/* Semester */}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>Semester {req}</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {['1st Semester', '2nd Semester', 'Summer'].map((sem) => (
+                      <button
+                        key={sem}
+                        type="button"
+                        onClick={() => setSemester(sem)}
+                        style={{
+                          padding: '9px 20px',
+                          borderRadius: 10,
+                          border: `1.5px solid ${semester === sem ? TEAL : '#e5e7eb'}`,
+                          background: semester === sem ? '#e8faf4' : '#fff',
+                          color: semester === sem ? TEAL : '#374151',
+                          fontWeight: semester === sem ? 700 : 500,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {sem}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Section C: Family Details ── */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <SectionHeader icon="👨‍👩‍👧" title="Family Details" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
+                <div>
+                  <label style={lbl}>Father&apos;s Name {req}</label>
+                  <input type="text" style={inp} placeholder="Full name" required />
+                </div>
+                <div>
+                  <label style={lbl}>Father&apos;s Occupation {req}</label>
+                  <input type="text" style={inp} placeholder="Occupation" required />
+                </div>
+                <div>
+                  <label style={lbl}>Mother&apos;s Name {req}</label>
+                  <input type="text" style={inp} placeholder="Full name" required />
+                </div>
+                <div>
+                  <label style={lbl}>Mother&apos;s Occupation {req}</label>
+                  <input type="text" style={inp} placeholder="Occupation" required />
+                </div>
+                <div>
+                  <label style={lbl}>Annual Gross Income {req}</label>
+                  <select style={inp} required defaultValue="">
+                    <option value="" disabled>Select income bracket</option>
+                    <option value="Below 120,000">Below ₱120,000</option>
+                    <option value="120,000 - 240,000">₱120,000 – ₱240,000</option>
+                    <option value="240,001 - 480,000">₱240,001 – ₱480,000</option>
+                    <option value="480,001 - 720,000">₱480,001 – ₱720,000</option>
+                    <option value="Above 720,000">Above ₱720,000</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={lbl}>Number of Siblings {req}</label>
+                  <input type="number" style={inp} min="0" placeholder="0" required />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>Guardian&apos;s Name {req}</label>
+                  <input type="text" style={inp} placeholder="Full name" required />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={lbl}>Guardian&apos;s Contact Number {req}</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <select style={{ ...inp, width: 96, flexShrink: 0 }}>
+                      <option value="+63">🇵🇭 +63</option>
+                    </select>
+                    <input type="tel" style={{ ...inp, flex: 1 }} placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} required />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Section D: Document Uploads ── */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <SectionHeader icon="📄" title="Required Documents" />
+
+              {/* Required docs list */}
+              <div style={{ background: '#f8fafc', borderRadius: 10, padding: '14px 16px', marginBottom: 16, border: '1px solid #e5e7eb' }}>
+                {[
+                  'PUP ID (Front)',
+                  'Certificate of Registration (Latest Semester)',
+                  'Grade Slip (Latest Term)',
+                ].map((doc) => (
+                  <div key={doc} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: TEAL, flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: '#374151' }}>{doc}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Drop zone */}
+              <div style={{
+                border: `2px dashed #d1d5db`,
+                borderRadius: 12,
+                padding: '36px 24px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: '#fafafa',
+              }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: '#e8faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
+                <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, color: '#374151' }}>Drag and drop files here</p>
+                <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>PDF, JPG, or PNG — max 10 MB each</p>
+              </div>
+            </div>
+
+            {/* ── Submit ── */}
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
+                color: '#fff',
+                border: 'none',
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 16,
+                cursor: 'pointer',
+                boxShadow: `0 4px 16px ${TEAL}50`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Complete Registration
+            </button>
+
+            <p style={{ margin: '0 0 32px', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>
+              By registering you agree to our{' '}
+              <Link href="/terms" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Terms of Service</Link>
+              {' '}and{' '}
+              <Link href="/privacy" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</Link>.
+            </p>
+          </form>
+        </div>
+      </div>
     </div>
-
-    
-
-    </>
   );
 }
