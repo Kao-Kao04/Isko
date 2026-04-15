@@ -1,13 +1,6 @@
 "use client"
 
-import React, { useEffect } from 'react';
-import Link from 'next/link';
-
 export default function Page() {
-  useEffect(() => {
-    // JS logic here
-  }, []);
-
   return (
     <>
 
@@ -35,7 +28,7 @@ export default function Page() {
                 <div className="quote-section">
                     <div className="quote-box">
                         <div className="quote-text">
-                            "Education is the bridge between dreams and reality."
+                            &quot;Education is the bridge between dreams and reality.&quot;
                         </div>
                         <div className="quote-author">
                             — Start your journey today
@@ -325,20 +318,20 @@ export default function Page() {
                         </div>
                         <div className="form-grid">
                             <div className="form-group">
-                                <label className="form-label"> Father's Name <span className="required">*</span> </label>
+                                <label className="form-label"> Father&apos;s Name <span className="required">*</span> </label>
                                 <input type="text" className="form-input" id="fatherName" placeholder="Father's Full Name" required />
                             </div>
                             <div className="form-group">
-                                <label className="form-label"> Father's Occupation <span className="required">*</span> </label>
-                                <input type="text" className="form-input" id="fatherOccupation" placeholder="Father's Occupation" required />
+                                <label className="form-label"> Father&apos;s Occupation <span className="required">*</span> </label>
+                                <input type="text" className="form-input" id="fatherOccupation" placeholder="Father&apos;s Occupation" required />
                             </div>
                             <div className="form-group">
-                                <label className="form-label"> Mother's Name <span className="required">*</span> </label>
+                                <label className="form-label"> Mother&apos;s Name <span className="required">*</span> </label>
                                 <input type="text" className="form-input" id="motherName" placeholder="Mother's Full Name" required />
                             </div>
                             <div className="form-group">
-                                <label className="form-label"> Mother's Occupation <span className="required">*</span> </label>
-                                <input type="text" className="form-input" id="motherOccupation" placeholder="Mother's Occupation" required />
+                                <label className="form-label"> Mother&apos;s Occupation <span className="required">*</span> </label>
+                                <input type="text" className="form-input" id="motherOccupation" placeholder="Mother&apos;s Occupation" required />
                             </div>
                             <div className="form-group">
                                 <label className="form-label"> Annual Gross Income <span className="required">*</span> </label>
@@ -356,11 +349,11 @@ export default function Page() {
                                 <input type="number" className="form-input" id="numberOfSiblings" min="0" placeholder="0" required />
                             </div>
                             <div className="form-group full-width">
-                                <label className="form-label"> Guardian's Name <span className="required">*</span> </label>
+                                <label className="form-label"> Guardian&apos;s Name <span className="required">*</span> </label>
                                 <input type="text" className="form-input" id="guardianName" placeholder="Guardian's Full Name" required />
                             </div>
                             <div className="form-group full-width">
-                                <label className="form-label"> Guardian's Contact Number <span className="required">*</span> </label>
+                                <label className="form-label"> Guardian&apos;s Contact Number <span className="required">*</span> </label>
                                 <div className="phone-input-group">
                                     <select className="country-code-select" id="guardianCountryCode">
                                         <option value="+63">🇵🇭 +63</option>

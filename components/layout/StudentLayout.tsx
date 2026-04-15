@@ -1,4 +1,5 @@
-import Sidebar from '@/components/shared/Sidebar';
+import StudentNav from '@/components/shared/StudentNav';
+import SignOutButton from '@/components/shared/SignOutButton';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -34,14 +35,11 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           </div>
 
           {/* Center: Student Sidebar Nav Links */}
-          <Sidebar />
+          <StudentNav />
 
-          {/* Right: Profile */}
+          {/* Right: Sign Out */}
           <div className="navbar-right">
-            <Link href="/student/profile" className="profile-trigger" aria-label="My profile">
-              <div className="profile-avatar" id="profileAvatar">ME</div>
-              <span className="profile-label">Me</span>
-            </Link>
+            <SignOutButton />
           </div>
         </div>
       </header>

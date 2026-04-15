@@ -22,16 +22,9 @@ export default function RootLayout({
         <link rel="stylesheet" href="/css/style.css" />
         <link rel="stylesheet" href="/css/responsive.css" />
         <link rel="stylesheet" href="/css/sections.css" />
-        {/* Dashboard & portal styles */}
-        <link rel="stylesheet" href="/css/global-dashboard.css" />
-        <link rel="stylesheet" href="/css/dashboard-styles.css" />
-        <link rel="stylesheet" href="/css/navbar-component.css" />
-        <link rel="stylesheet" href="/css/nav-temp.css" />
-        {/* Profile & legal styles */}
-        <link rel="stylesheet" href="/css/profile.css" />
-        <link rel="stylesheet" href="/css/unified-profile.css" />
-        <link rel="stylesheet" href="/css/compact-profile.css" />
+        {/* Legal styles */}
         <link rel="stylesheet" href="/css/legal.css" />
+        {/* Portal CSS loaded per-route in student/layout.tsx and osfa/layout.tsx */}
         {/* Core UI SaaS Polish overrides */}
         <link rel="stylesheet" href="/css/ui-polish.css" />
         <script src="https://unpkg.com/@supabase/supabase-js@2" async></script>

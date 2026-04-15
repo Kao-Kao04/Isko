@@ -1,13 +1,8 @@
 "use client"
 
-import React, { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Page() {
-  useEffect(() => {
-    // JS logic here
-  }, []);
-
   return (
     <>
 

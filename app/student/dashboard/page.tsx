@@ -20,7 +20,6 @@ export default function Page() {
                     <div style={{"fontSize":"1.125rem","fontWeight":"600"}} id="displayYearLevel">----</div>
                 </div>
             </div>
-        </div>
 
         <div style={{"display":"grid","gridTemplateColumns":"1fr 350px","gap":"2rem","alignItems":"start"}}>
             {/*  Left Column: Scholarships  */}
@@ -139,8 +138,6 @@ export default function Page() {
 
             </div>
         </div>
-    </div>
-    \n    
 
     {/*  Post Creation Modal  */}
     <div id="createPostModal" className="modal">

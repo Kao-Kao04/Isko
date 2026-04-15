@@ -1,4 +1,5 @@
-import OsfaSidebar from '@/components/shared/OsfaSidebar';
+import OsfaNav from '@/components/shared/OsfaNav';
+import SignOutButton from '@/components/shared/SignOutButton';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -34,14 +35,11 @@ export default function OsfaLayout({ children }: OsfaLayoutProps) {
           </div>
 
           {/* Center: OSFA Nav Links */}
-          <OsfaSidebar />
+          <OsfaNav />
 
-          {/* Right: Profile */}
+          {/* Right: Sign Out */}
           <div className="navbar-right">
-            <Link href="/osfa/profile" className="profile-trigger" aria-label="My profile">
-              <div className="profile-avatar" id="profileAvatar">SP</div>
-              <span className="profile-label">Me</span>
-            </Link>
+            <SignOutButton />
           </div>
         </div>
       </header>

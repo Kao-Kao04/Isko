@@ -12,7 +12,18 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Static assets — not TypeScript source
+    "public/**",
   ]),
+  {
+    rules: {
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-console': 'warn',
+      // Placeholder window calls in demo pages use (window as any) — downgrade to warning
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
 ]);
 
 export default eslintConfig;

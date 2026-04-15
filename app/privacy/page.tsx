@@ -97,7 +97,7 @@ export default function Page() {
                             <div className="usage-item">
                                 <div className="usage-content">
                                     <h3>Service Provision</h3>
-                                    <p>To provide, maintain, and improve IskoMo's scholarship platform and features</p>
+                                    <p>To provide, maintain, and improve IskoMo&apos;s scholarship platform and features</p>
                                 </div>
                             </div>
                             
@@ -218,7 +218,7 @@ export default function Page() {
                         
                         <div className="rights-process">
                             <h4>How to Exercise Your Rights</h4>
-                            <p>To exercise any of these rights, please contact us through the platform's contact form. We will respond to all legitimate requests within 30 days.</p>
+                            <p>To exercise any of these rights, please contact us through the platform&apos;s contact form. We will respond to all legitimate requests within 30 days.</p>
                         </div>
                     </section>
 
@@ -229,7 +229,7 @@ export default function Page() {
                         
                         <ul className="changes-list">
                             <li>We will notify users of significant changes via email or platform notification</li>
-                            <li>The "Last updated" date at the top of this page will be revised</li>
+                            <li>The &quot;Last updated&quot; date at the top of this page will be revised</li>
                             <li>Continued use of IskoMo after changes constitutes acceptance</li>
                             <li>Previous versions of the policy will be archived</li>
                         </ul>

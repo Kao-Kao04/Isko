@@ -1,90 +1,10 @@
 "use client"
 
-import React, { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Page() {
-  useEffect(() => {
-    // JS logic here
-  }, []);
-
   return (
     <>
-
-    {/*  Top Navigation Bar  */}
-    <header className="top-navbar">
-        <div className="top-navbar-container">
-            {/*  Left: Logo + Search Bar  */}
-            <div className="navbar-left">
-                <div className="navbar-logo">
-                    <Link href="/" className="navbar-logo-link">
-                        <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo" />
-                    </Link>
-                </div>
-                <div className="navbar-search linkedin-search">
-                    <svg className="navbar-search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="9" cy="9" r="6"/>
-                        <path d="m17 17-4-4"/>
-                    </svg>
-                    <input type="text" placeholder="Search notifications..." id="searchInput" autoComplete="off" />
-                </div>
-            </div>
-
-            {/*  Center: Main Navigation Links  */}
-            <nav className="navbar-center">
-                <Link href="/osfa/home" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <span className="nav-label">Home</span>
-                </Link>
-                <Link href="/osfa/scholarships" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                    </svg>
-                    <span className="nav-label">Scholarships</span>
-                </Link>
-                <Link href="/osfa/applicants" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    </svg>
-                    <span className="nav-label">Applicants</span>
-                </Link>
-                <Link href="/osfa/evaluation" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M9 11l3 3L22 4"/>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                    </svg>
-                    <span className="nav-label">Evaluation</span>
-                </Link>
-                <Link href="/osfa/reports" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 3v18h18"/>
-                        <path d="M7 12l4-4 4 4 6-6"/>
-                    </svg>
-                    <span className="nav-label">Reports</span>
-                </Link>
-                <Link href="/osfa/notifications" className="nav-link active">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    </svg>
-                    <span className="nav-label">Notifications</span>
-                </Link>
-                <Link href="/student/profile" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span>Profile</span>
-                </Link>
-            </nav>
-        </div>
-    </header>
-
     {/*  Main Dashboard Container  */}
     <div className="dashboard-container">
         <div className="dashboard-layout">
@@ -213,7 +133,7 @@ export default function Page() {
                                     <h4 className="notification-title">Evaluation Completed</h4>
                                     <span className="notification-time">5 hours ago</span>
                                 </div>
-                                <p className="notification-message">Maria Santos's application for STEM Innovation Award has been evaluated.</p>
+                                <p className="notification-message">Maria Santos&apos;s application for STEM Innovation Award has been evaluated.</p>
                                 <div className="notification-actions">
                                     <button className="btn-primary btn-sm" onClick={(event) => { event.stopPropagation(); (window as any).viewEvaluation('2') }}>View Evaluation</button>
                                     <button className="btn-secondary btn-sm" onClick={(event) => { event.stopPropagation(); (window as any).markAsRead('2') }}>Mark as Read</button>

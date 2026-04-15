@@ -1,13 +1,8 @@
 "use client"
 
-import React, { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Page() {
-  useEffect(() => {
-    // JS logic here
-  }, []);
-
   return (
     <>
 
@@ -90,7 +85,7 @@ export default function Page() {
                                     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                                 </svg>
                                 <p className="notification-empty-text" style={{"fontSize":"0.875rem","fontWeight":"500","color":"#1f2937","margin":"0 0 0.25rem 0"}}>No new notifications</p>
-                                <p className="notification-empty-subtext" style={{"fontSize":"0.75rem","color":"#6b7280","margin":"0"}}>You're all caught up!</p>
+                                <p className="notification-empty-subtext" style={{"fontSize":"0.75rem","color":"#6b7280","margin":"0"}}>You&apos;re all caught up!</p>
                             </div>
                         </div>
                     </div>

@@ -77,7 +77,7 @@ const osfaNavLinks = [
   },
 ];
 
-export default function OsfaSidebar() {
+export default function OsfaNav() {
   const pathname = usePathname();
 
   return (

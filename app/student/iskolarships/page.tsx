@@ -1,524 +1,257 @@
-"use client"
+'use client';
 
-import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
+
+const TEAL = '#1D9E75';
+const GOLD = '#F0C040';
+
+const typeConfig: Record<string, { label: string; bg: string; color: string }> = {
+  merit:    { label: 'Merit-Based',  bg: '#e0f2fe', color: '#0369a1' },
+  need:     { label: 'Need-Based',   bg: '#fef3c7', color: '#92400e' },
+  stem:     { label: 'STEM Only',    bg: '#ede9fe', color: '#5b21b6' },
+  sports:   { label: 'Sports',       bg: '#dcfce7', color: '#15803d' },
+  arts:     { label: 'Arts',         bg: '#fce7f3', color: '#9d174d' },
+};
+
+const scholarships = [
+  {
+    id: 'ched-merit',
+    initials: 'C',
+    avatarBg: '#1D9E75',
+    name: 'CHED Merit Scholarship Program',
+    type: 'merit',
+    amount: '₱25,000',
+    slots: 400,
+    sponsor: 'Commission on Higher Education',
+    deadline: 'Sep 21, 2025',
+    college: 'CCIS',
+  },
+  {
+    id: 'dost-sei',
+    initials: 'D',
+    avatarBg: '#0369a1',
+    name: 'DOST-SEI Undergraduate Scholarship',
+    type: 'stem',
+    amount: '₱40,000',
+    slots: 500,
+    sponsor: 'Department of Science and Technology',
+    deadline: 'Mar 15, 2025',
+    college: 'all',
+  },
+  {
+    id: 'pup-excellence',
+    initials: 'P',
+    avatarBg: '#7c3aed',
+    name: 'PUP Academic Excellence Grant',
+    type: 'need',
+    amount: '₱30,000',
+    slots: 200,
+    sponsor: 'PUP Scholarship Office',
+    deadline: 'Feb 20, 2025',
+    college: 'all',
+  },
+  {
+    id: 'sm-scholars',
+    initials: 'S',
+    avatarBg: '#dc2626',
+    name: 'SM Foundation College Scholarship',
+    type: 'need',
+    amount: '₱20,000',
+    slots: 150,
+    sponsor: 'SM Foundation Inc.',
+    deadline: 'Apr 30, 2025',
+    college: 'all',
+  },
+  {
+    id: 'ayala-stem',
+    initials: 'A',
+    avatarBg: '#0891b2',
+    name: 'Ayala Foundation STEM Scholarship',
+    type: 'stem',
+    amount: '₱35,000',
+    slots: 100,
+    sponsor: 'Ayala Foundation',
+    deadline: 'May 15, 2025',
+    college: 'CE',
+  },
+  {
+    id: 'jollibee-scholars',
+    initials: 'J',
+    avatarBg: '#d97706',
+    name: 'Jollibee Group Foundation Scholarship',
+    type: 'need',
+    amount: '₱18,000',
+    slots: 300,
+    sponsor: 'Jollibee Group Foundation',
+    deadline: 'Jun 01, 2025',
+    college: 'CBA',
+  },
+];
 
 export default function Page() {
-  useEffect(() => {
-    // JS logic here
-  }, []);
+  const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [filterCollege, setFilterCollege] = useState('all');
+
+  const filtered = scholarships.filter((s) => {
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.sponsor.toLowerCase().includes(search.toLowerCase());
+    const matchType = filterType === 'all' || s.type === filterType;
+    const matchCollege = filterCollege === 'all' || s.college === filterCollege || s.college === 'all';
+    return matchSearch && matchType && matchCollege;
+  });
 
   return (
-    <>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px', display: 'flex', gap: 24 }}>
 
-    {/*  Top Navigation Bar  */}
-    <header className="top-navbar">
-        <div className="top-navbar-container">
-            <div className="navbar-left">
-                <div className="navbar-logo">
-                    <Link href="/student/dashboard" className="navbar-logo-link">
-                        <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo" />
-                    </Link>
-                </div>
-                
-                {/*  Search Bar  */}
-                <div className="navbar-search linkedin-search">
-                    <svg className="navbar-search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="9" cy="9" r="6"/>
-                        <path d="m17 17-4-4"/>
+      {/* Left Sidebar — Filters */}
+      <aside style={{ width: 220, flexShrink: 0 }}>
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${TEAL}`, paddingBottom: 12, marginBottom: 20 }}>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke={TEAL} strokeWidth="2">
+              <path d="M3 4h14M5 8h10M7 12h6M9 16h2"/>
+            </svg>
+            <span style={{ fontWeight: 700, color: TEAL, fontSize: 15 }}>Filters</span>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Search
+            </label>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Scholarship name..."
+              style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              College
+            </label>
+            <select
+              value={filterCollege}
+              onChange={(e) => setFilterCollege(e.target.value)}
+              style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 10px', fontSize: 13, background: '#fff' }}
+            >
+              <option value="all">All Colleges</option>
+              <option value="CCIS">CCIS</option>
+              <option value="CBA">CBA</option>
+              <option value="CAFA">CAFA</option>
+              <option value="CE">CE</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Type
+            </label>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 10px', fontSize: 13, background: '#fff' }}
+            >
+              <option value="all">All Types</option>
+              <option value="merit">Merit-Based</option>
+              <option value="need">Need-Based</option>
+              <option value="stem">STEM Only</option>
+            </select>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#111827' }}>
+            Available Scholarships
+            <span style={{ marginLeft: 10, fontSize: 14, fontWeight: 500, color: '#6b7280' }}>
+              ({filtered.length} found)
+            </span>
+          </h2>
+        </div>
+
+        {filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#6b7280' }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ marginBottom: 12 }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <p style={{ margin: 0, fontWeight: 500 }}>No scholarships match your filters.</p>
+          </div>
+        )}
+
+        {/* 2-column card grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+          {filtered.map((s) => {
+            const badge = typeConfig[s.type] || typeConfig.merit;
+            return (
+              <div key={s.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+                {/* Card top accent bar */}
+                <div style={{ height: 4, background: s.avatarBg }} />
+
+                <div style={{ padding: '20px 20px 0' }}>
+                  {/* Header row: avatar + name + badge */}
+                  <div style={{ display: 'flex', gap: 14, marginBottom: 14 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 12, background: s.avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontSize: 22, fontWeight: 800 }}>
+                      {s.initials}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <h3 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>{s.name}</h3>
+                      <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: badge.bg, color: badge.color }}>
+                        {badge.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Sponsor */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, color: '#6b7280', fontSize: 13 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                     </svg>
-                    <input type="text" placeholder="Search" id="searchInput" autoComplete="off" />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.sponsor}</span>
+                  </div>
+
+                  {/* Stats row */}
+                  <div style={{ display: 'flex', gap: 0, borderTop: '1px solid #f3f4f6', borderBottom: '1px solid #f3f4f6', margin: '0 -20px', padding: '12px 20px' }}>
+                    <div style={{ flex: 1, textAlign: 'center', borderRight: '1px solid #f3f4f6' }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: TEAL }}>{s.amount}</div>
+                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>per semester</div>
+                    </div>
+                    <div style={{ flex: 1, textAlign: 'center' }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#374151' }}>{s.slots}</div>
+                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>slots available</div>
+                    </div>
+                  </div>
+
+                  {/* Deadline badge */}
+                  <div style={{ padding: '12px 0 0' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, background: '#fef2f2', color: '#dc2626', padding: '4px 10px', borderRadius: 20, border: '1px solid #fecaca' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                      </svg>
+                      Deadline: {s.deadline}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ padding: 20, marginTop: 'auto', display: 'flex', gap: 10 }}>
+                  <button style={{ flex: 1, padding: '9px 0', border: `1.5px solid ${TEAL}`, borderRadius: 8, background: '#fff', color: TEAL, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                    View Details
+                  </button>
+                  <Link href={`/student/apply-scholarship`} style={{ flex: 1, padding: '9px 0', border: 'none', borderRadius: 8, background: TEAL, color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    Apply Now
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </main>
     </div>
-            </div>
-
-            <nav className="navbar-center">
-                <Link href="/student/dashboard" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <span>Home</span>
-                </Link>
-                <Link href="/student/iskolarships" className="nav-link active">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                        <path d="M9 7h6"/>
-                        <path d="M9 11h6"/>
-                        <path d="M9 15h4"/>
-                    </svg>
-                    <span>Iskolarships</span>
-                </Link>
-                <Link href="/student/kapwa" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    <span>Kapwa</span>
-                </Link>
-                <Link href="/student/status" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 3v18h18"/>
-                        <path d="M7 12l4-4 4 4 6-6"/>
-                    </svg>
-                    <span className="nav-label">Status</span>
-                </Link>
-                <Link href="/student/profile" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span className="nav-label">Profile</span>
-                </Link>
-            </nav>
-
-            {/*  Right: Notifications + Profile  */}
-            
-            {/*  Right: Search + Notifications + Profile (LinkedIn Style)  */}
-            <div className="navbar-right">
-                <div className="notification-dropdown">
-                    <button className="notification-btn linkedin-notification" id="notificationTrigger" title="Notifications">
-                        <svg className="notification-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
-                        <span className="notification-label">Notifications</span>
-                        <span className="notification-badge"></span>
-                    </button>
-                    {/*  Notification Dropdown Menu  */}
-                    <div className="notification-menu" id="notificationMenu">
-                        <div className="notification-header">
-                            <div className="notification-logo-container">
-                                <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo Logo" style={{"height":"32px","width":"auto","filter":"brightness(0) invert(1)"}} />
-                            </div>
-                            <div className="notification-welcome">
-                                <div className="notification-welcome-title" style={{"fontSize":"1rem","fontWeight":"600","margin":"0 0 0.125rem 0","color":"white","lineHeight":"1.3"}}>Welcome Iskolar</div>
-                                <div className="notification-welcome-subtitle" style={{"fontSize":"0.75rem","margin":"0","color":"rgba(255, 255, 255, 0.85)","fontWeight":"400","lineHeight":"1.4"}}>Stay updated with your scholarship journey</div>
-                            </div>
-                        </div>
-                        <div className="notification-content">
-                            <div className="notification-empty-state">
-                                <svg className="notification-empty-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{"color":"#9ca3af","marginBottom":"0.75rem","opacity":"0.4"}}>
-                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                                </svg>
-                                <p className="notification-empty-text" style={{"fontSize":"0.875rem","fontWeight":"500","color":"#1f2937","margin":"0 0 0.25rem 0"}}>No new notifications</p>
-                                <p className="notification-empty-subtext" style={{"fontSize":"0.75rem","color":"#6b7280","margin":"0"}}>You're all caught up!</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                {/*  Sign Out Button  */}
-                <button className="notification-btn linkedin-notification" id="navLogoutBtn" title="Sign Out" onClick={(event) => { event.preventDefault(); if(typeof (window as any).handleLogout !== 'undefined'){(window as any).handleLogout();} }} style={{"marginLeft":"0.25rem"}}>
-                    <svg className="notification-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{"color":"#dc2626"}}>
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    <span className="notification-label" style={{"color":"#dc2626"}}>Sign Out</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    {/*  Main Content  */}
-    <div className="main-container">
-        <div className="page-content">
-            <div className="iskolarships-wrapper">
-                {/*  Left Sidebar - Filters  */}
-                <aside className="iskolarships-sidebar-left">
-                    <div className="sidebar-card filters-card" style={{"boxShadow":"0 4px 6px -1px rgba(0, 0, 0, 0.1)","borderRadius":"12px","border":"1px solid #e5e7eb"}}>
-                        <div className="filters-header" style={{"borderBottom":"2px solid #0d9488","paddingBottom":"0.75rem","marginBottom":"1.5rem"}}>
-                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#0d9488" strokeWidth="2">
-                                <path d="M3 4h14M3 8h14M3 12h14M3 16h14"/>
-                            </svg>
-                            <h3 style={{"color":"#0d9488","fontWeight":"700"}}>Filters</h3>
-                        </div>
-
-                        {/*  Search  */}
-                        <div className="filter-section">
-                            <label className="filter-label">Search</label>
-                            <div style={{"position":"relative"}}>
-                                <input type="text" id="filterSearchInput" className="filter-select" placeholder="Search name..." style={{"paddingLeft":"2rem"}} />
-                                <svg style={{"position":"absolute","left":"0.5rem","top":"0.625rem","color":"#6b7280"}} width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="9" cy="9" r="6"/>
-                                    <path d="M15 15l-3-3"/>
-                                </svg>
-                            </div>
-                        </div>
-
-                        {/*  College  */}
-                        <div className="filter-section">
-                            <label className="filter-label">College / Institute</label>
-                            <select className="filter-select" id="filterCollege">
-                                <option value="all">All Colleges</option>
-                                <option value="CCIS">CCIS</option>
-                                <option value="CBA">CBA</option>
-                                <option value="CAFA">CAFA</option>
-                                <option value="CE">CE</option>
-                            </select>
-                        </div>
-
-                        {/*  Year Level  */}
-                        <div className="filter-section">
-                            <label className="filter-label">Year Level</label>
-                            <select className="filter-select" id="filterYear">
-                                <option value="all">All Year Levels</option>
-                                <option value="1st Year">1st Year</option>
-                                <option value="2nd Year">2nd Year</option>
-                                <option value="3rd Year">3rd Year</option>
-                                <option value="4th Year">4th Year</option>
-                            </select>
-                        </div>
-
-                        {/*  Scholarship Type  */}
-                        <div className="filter-section">
-                            <label className="filter-label">Scholarship Type</label>
-                            <select className="filter-select" id="filterType">
-                                <option value="all">All Types</option>
-                                <option value="merit">Merit-Based</option>
-                                <option value="need">Need-Based</option>
-                            </select>
-                        </div>
-                    </div>
-                </aside>
-                                {/*  Main Content Area  */}
-                <main className="main-content">
-            {/*  Search Bar  */}
-            <div className="search-container">
-                <div className="search-box">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="9" cy="9" r="6"/>
-                        <path d="M15 15l-3-3"/>
-                    </svg>
-                            <input type="text" id="scholarshipSearchInput" placeholder="Search scholarships by name, provider, or keyword..." autoComplete="off" />
-                </div>
-            </div>
-
-            {/*  Scholarships Grid  */}
-            <div className="scholarships-grid">
-                {/*  Scholarship Card 1  */}
-                        <div className="scholarship-card-new" 
-                             data-type="merit" 
-                             data-purpose="tuition" 
-                             data-sponsor="government" 
-                             data-amount="25000" 
-                             data-slots="400"
-                             data-deadline="2025-09-21"
-                             data-scholarship-id="ched-merit">
-                            {/*  Card Header with Icon and Title  */}
-                            <div className="card-header-new">
-                                <div className="scholarship-icon-large">
-                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                                    </svg>
-                            </div>
-                                <div className="card-header-content">
-                                    <h3 className="card-title-new">CHED Merit Scholarship Program</h3>
-                                    <div className="card-tags">
-                                        <span className="card-tag merit-tag">Merit-Based</span>
-                                        <span className="card-tag purpose-tag">Tuition</span>
-                        </div>
-                                    <div className="card-meta-info">
-                                        <div className="meta-item">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                                            <span>Sponsor name</span>
-                        </div>
-                                        <div className="meta-item">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <circle cx="12" cy="12" r="10"/>
-                                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                                            <span>September 21, 2025</span>
-                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/*  Card Body  */}
-                            <div className="card-body-new">
-                                <div className="card-stats">
-                                    <div className="stat-item">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <circle cx="12" cy="12" r="10"/>
-                                            <path d="M12 6v6l4 2"/>
-                            </svg>
-                                        <div className="stat-content">
-                                            <span className="stat-label">Amount</span>
-                                            <span className="stat-value">P25,000.00</span>
-                                            <span className="stat-suffix">per scholar</span>
-                        </div>
-                    </div>
-                                    <div className="stat-item">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                            <circle cx="9" cy="7" r="4"/>
-                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                                        <div className="stat-content">
-                                            <span className="stat-label">Slots</span>
-                                            <span className="stat-value">400</span>
-                                            <span className="stat-suffix">scholars</span>
-                                        </div>
-                    </div>
-                </div>
-
-                                <div className="card-criteria">
-                                    <div className="criteria-section">
-                                        <h4 className="criteria-title">Criteria</h4>
-                                        <div className="criteria-tags-list">
-                                            <span className="criteria-tag">3rd Year</span>
-                                            <span className="criteria-tag">Male</span>
-                                            <span className="criteria-tag">CCIS</span>
-                                            
-                                            
-                                            <span className="criteria-tag">1st Year</span>
-                            </div>
-                        </div>
-                                    
-                                    <div className="criteria-section">
-                                        <h4 className="criteria-title">Required Documents</h4>
-                                        <div className="criteria-tags-list">
-                                            <span className="criteria-tag">Certificate of Enrollment</span>
-                                            <span className="criteria-tag">Latest Report of Grades</span>
-                                            <span className="criteria-tag-more">+ 4 more</span>
-                    </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/*  Card Actions  */}
-                            <div className="card-actions-new">
-                                <button className="btn-view-details" data-scholarship-id="ched-merit">View Details</button>
-                                <button className="btn-apply-scholarship-new" data-scholarship-name="CHED Merit Scholarship Program" data-scholarship-id="ched-merit">Apply Now</button>
-                            </div>
-                        </div>
-
-                        {/*  Scholarship Card 2  */}
-                        <div className="scholarship-card-new" 
-                             data-type="merit" 
-                             data-purpose="comprehensive" 
-                             data-sponsor="government" 
-                             data-amount="40000" 
-                             data-slots="500"
-                             data-deadline="2025-03-15"
-                             data-scholarship-id="dost-sei">
-                            <div className="card-header-new">
-                                <div className="scholarship-icon-large">
-                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                            </svg>
-                        </div>
-                                <div className="card-header-content">
-                                    <h3 className="card-title-new">DOST-SEI Undergraduate Scholarship</h3>
-                                    <div className="card-tags">
-                                        <span className="card-tag merit-tag">Merit-Based</span>
-                                        <span className="card-tag purpose-tag">Comprehensive</span>
-                                    </div>
-                                    <div className="card-meta-info">
-                                        <div className="meta-item">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                                            <span>Department of Science and Technology</span>
-                        </div>
-                                        <div className="meta-item">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <circle cx="12" cy="12" r="10"/>
-                                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                                            <span>March 15, 2025</span>
-                        </div>
-                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="card-body-new">
-                                <div className="card-stats">
-                                    <div className="stat-item">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <circle cx="12" cy="12" r="10"/>
-                                            <path d="M12 6v6l4 2"/>
-                            </svg>
-                                        <div className="stat-content">
-                                            <span className="stat-label">Amount</span>
-                                            <span className="stat-value">P40,000.00</span>
-                                            <span className="stat-suffix">per scholar</span>
-                                        </div>
-                                    </div>
-                                    <div className="stat-item">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                            <circle cx="9" cy="7" r="4"/>
-                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                        </svg>
-                                        <div className="stat-content">
-                                            <span className="stat-label">Slots</span>
-                                            <span className="stat-value">500</span>
-                                            <span className="stat-suffix">scholars</span>
-                                        </div>
-                    </div>
-                </div>
-
-                                <div className="card-criteria">
-                                    <div className="criteria-section">
-                                        <h4 className="criteria-title">Criteria</h4>
-                                        <div className="criteria-tags-list">
-                                            <span className="criteria-tag">STEM Programs</span>
-                                            <span className="criteria-tag">1st Year</span>
-                                            <span className="criteria-tag">2nd Year</span>
-                                            <span className="criteria-tag">3rd Year</span>
-                            </div>
-                        </div>
-                                    
-                                    <div className="criteria-section">
-                                        <h4 className="criteria-title">Required Documents</h4>
-                                        <div className="criteria-tags-list">
-                                            <span className="criteria-tag">Transcript of Records</span>
-                                            <span className="criteria-tag">Certificate of Enrollment</span>
-                                            <span className="criteria-tag-more">+ 2 more</span>
-                    </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="card-actions-new">
-                                <button className="btn-view-details" data-scholarship-id="dost-sei">View Details</button>
-                                <button className="btn-apply-scholarship-new" data-scholarship-name="DOST-SEI Undergraduate Scholarship" data-scholarship-id="dost-sei">Apply Now</button>
-                            </div>
-                        </div>
-
-                        {/*  Scholarship Card 3  */}
-                        <div className="scholarship-card-new" 
-                             data-type="need" 
-                             data-purpose="tuition" 
-                             data-sponsor="university" 
-                             data-amount="30000" 
-                             data-slots="200"
-                             data-deadline="2025-02-20"
-                             data-scholarship-id="pup-excellence">
-                            <div className="card-header-new">
-                                <div className="scholarship-icon-large">
-                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                            </svg>
-                        </div>
-                                <div className="card-header-content">
-                                    <h3 className="card-title-new">PUP Academic Excellence Grant</h3>
-                                    <div className="card-tags">
-                                        <span className="card-tag need-tag">Need-Based</span>
-                                        <span className="card-tag purpose-tag">Tuition</span>
-                                    </div>
-                                    <div className="card-meta-info">
-                                        <div className="meta-item">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                                            <span>PUP Scholarship Program</span>
-                        </div>
-                                        <div className="meta-item">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <circle cx="12" cy="12" r="10"/>
-                                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                                            <span>February 20, 2025</span>
-                        </div>
-                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="card-body-new">
-                                <div className="card-stats">
-                                    <div className="stat-item">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <circle cx="12" cy="12" r="10"/>
-                                            <path d="M12 6v6l4 2"/>
-                            </svg>
-                                        <div className="stat-content">
-                                            <span className="stat-label">Amount</span>
-                                            <span className="stat-value">P30,000.00</span>
-                                            <span className="stat-suffix">per scholar</span>
-                    </div>
-                                    </div>
-                                    <div className="stat-item">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                            <circle cx="9" cy="7" r="4"/>
-                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                        </svg>
-                                        <div className="stat-content">
-                                            <span className="stat-label">Slots</span>
-                                            <span className="stat-value">200</span>
-                                            <span className="stat-suffix">scholars</span>
-                </div>
-            </div>
-        </div>
-
-                                <div className="card-criteria">
-                                    <div className="criteria-section">
-                                        <h4 className="criteria-title">Criteria</h4>
-                                        <div className="criteria-tags-list">
-                                            <span className="criteria-tag">PUP Students</span>
-                                            <span className="criteria-tag">2nd Year</span>
-                                            <span className="criteria-tag">3rd Year</span>
-                                            <span className="criteria-tag">4th Year</span>
-                        </div>
-                    </div>
-                                    
-                                    <div className="criteria-section">
-                                        <h4 className="criteria-title">Required Documents</h4>
-                                        <div className="criteria-tags-list">
-                                            <span className="criteria-tag">Certificate of Enrollment</span>
-                                            <span className="criteria-tag">Transcript of Records</span>
-                                            <span className="criteria-tag">Income Certificate</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="card-actions-new">
-                                <button className="btn-view-details" data-scholarship-id="pup-excellence">View Details</button>
-                                <button className="btn-apply-scholarship-new" data-scholarship-name="PUP Academic Excellence Grant" data-scholarship-id="pup-excellence">Apply Now</button>
-                            </div>
-                        </div>
-                    </div>
-                {/* Removed duplicate </main> */}
-
-    {/*  Scholarship Details Modal  */}
-    <div className="scholarship-details-modal" id="scholarshipDetailsModal">
-        <div className="modal-overlay"></div>
-        <div className="modal-content">
-            <button className="modal-close" id="closeDetailsModal">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-            </button>
-            <div className="details-content" id="detailsContent">
-                {/*  Content will be dynamically loaded  */}
-            </div>
-        </div>
-    </div>
-
-                </main>
-
-            </div>
-        </div>
-    </div>
-
-    </>
   );
 }

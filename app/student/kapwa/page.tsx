@@ -1,294 +1,217 @@
-"use client"
+'use client';
 
-import React, { useEffect } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
+
+const TEAL = '#1D9E75';
+
+const faqs = [
+  {
+    q: 'When is the deadline for scholarship applications?',
+    a: 'The deadline varies per scholarship. Check the Iskolarships page for each grant\'s specific deadline. The university typically announces openings 2 weeks before the semester starts.',
+  },
+  {
+    q: 'Can I apply for multiple scholarships at once?',
+    a: 'PUP generally allows only ONE major scholarship at a time to give equal opportunity to all students. Some minor grants may allow stackability — check with OSFA or the specific sponsor.',
+  },
+  {
+    q: 'How will I track the status of my application?',
+    a: 'Go to the Status page. It updates in real time as your application moves through Submission → Review → Interview → Document Validation → Approval.',
+  },
+  {
+    q: 'What should I do if my document upload fails?',
+    a: 'Ensure the file is PDF, JPG, or PNG and under 5 MB. Use a free compressor if needed. If the problem persists, switch browsers or reach out via the Help Desk below.',
+  },
+  {
+    q: 'What GWA is required for merit-based scholarships?',
+    a: 'Most merit-based scholarships require a minimum GWA of 1.75 (on a 1.0–5.0 scale). DOST-SEI may have stricter requirements. Always check the eligibility criteria on each scholarship card.',
+  },
+  {
+    q: 'How long does the evaluation process take?',
+    a: 'Evaluation typically takes 4–8 weeks from the submission deadline. You will be notified via email and the Status page as your application progresses.',
+  },
+];
 
 export default function Page() {
-  useEffect(() => {
-    // JS logic here
-  }, []);
+  const [open, setOpen] = useState<number | null>(null);
+  const [formSent, setFormSent] = useState(false);
+
+  const sideCard: React.CSSProperties = {
+    background: '#fff',
+    borderRadius: 14,
+    border: '1px solid #e5e7eb',
+    padding: 20,
+    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+    marginBottom: 16,
+  };
 
   return (
-    <>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
 
-    {/*  Top Navigation Bar  */}
-    <header className="top-navbar">
-        <div className="top-navbar-container">
-            <div className="navbar-left">
-                <div className="navbar-logo">
-                    <Link href="/student/dashboard" className="navbar-logo-link">
-                        <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo" />
-                    </Link>
-                </div>
-                
-                {/*  Search Bar  */}
-                <div className="navbar-search linkedin-search">
-                    <svg className="navbar-search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="9" cy="9" r="6"/>
-                        <path d="m17 17-4-4"/>
-                    </svg>
-                    <input type="text" placeholder="Search" id="searchInput" autoComplete="off" />
-                </div>
+      {/* Page heading */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#111827' }}>Kapwa</h1>
+        <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 14 }}>Community help, FAQs, and OSFA contact information.</p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 24, alignItems: 'start' }}>
+
+        {/* ── Left sidebar ── */}
+        <aside>
+          {/* OSFA Hotlines */}
+          <div style={sideCard}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, fontWeight: 700, fontSize: 15, color: '#111827' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 8, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+              </div>
+              PUP OSFA Hotlines
             </div>
 
-            <nav className="navbar-center">
-                <Link href="/student/dashboard" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <span>Home</span>
-                </Link>
-                <Link href="/student/iskolarships" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                        <path d="M9 7h6"/>
-                        <path d="M9 11h6"/>
-                        <path d="M9 15h4"/>
-                    </svg>
-                    <span>Iskolarships</span>
-                </Link>
-                <Link href="/student/kapwa" className="nav-link active">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    <span>Kapwa</span>
-                </Link>
-                <Link href="/student/status" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 3v18h18"/>
-                        <path d="M7 12l4-4 4 4 6-6"/>
-                    </svg>
-                    <span className="nav-label">Status</span>
-                </Link>
-                <Link href="/student/profile" className="nav-link">
-                    <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span className="nav-label">Profile</span>
-                </Link>
-            </nav>
+            {[
+              { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>, label: 'Email', lines: ['scholarship@pup.edu.ph', 'osfa@pup.edu.ph'] },
+              { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, label: 'OSFA Window', lines: ['South Wing, Ground Floor', 'PUP Main Campus, Sta. Mesa'] },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i === 0 ? 14 : 0, borderBottom: i === 0 ? '1px solid #f3f4f6' : 'none', marginBottom: i === 0 ? 14 : 0 }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {item.icon}
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 3 }}>{item.label}</div>
+                  {item.lines.map((l, li) => <div key={li} style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.7 }}>{l}</div>)}
+                </div>
+              </div>
+            ))}
+          </div>
 
-            {/*  Right: Notifications + Profile  */}
-            
-            {/*  Right: Search + Notifications + Profile (LinkedIn Style)  */}
-            <div className="navbar-right">
-                <div className="notification-dropdown">
-                    <button className="notification-btn linkedin-notification" id="notificationTrigger" title="Notifications">
-                        <svg className="notification-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
-                        <span className="notification-label">Notifications</span>
-                        <span className="notification-badge"></span>
+          {/* Document Guide */}
+          <div style={sideCard}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, fontWeight: 700, fontSize: 15, color: '#111827' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 8, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </div>
+              Document Guide
+            </div>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: '#4b5563', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <li>Formats: <strong>PDF, JPG, PNG</strong></li>
+              <li>Max size: <strong>5 MB</strong> per file</li>
+              <li>Text must be clear and readable</li>
+              <li>Check requirements per scholarship</li>
+            </ul>
+          </div>
+        </aside>
+
+        {/* ── Right main area ── */}
+        <div>
+
+          {/* FAQ Accordion */}
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid #f3f4f6' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Frequently Asked Questions</h2>
+                <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Click any question to expand the answer.</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {faqs.map((faq, i) => {
+                const isOpen = open === i;
+                return (
+                  <div key={i} style={{ border: `1px solid ${isOpen ? TEAL : '#e5e7eb'}`, borderRadius: 10, overflow: 'hidden' }}>
+                    <button
+                      onClick={() => setOpen(isOpen ? null : i)}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '13px 16px', background: isOpen ? '#f0fdf4' : '#fafafa',
+                        border: 'none', cursor: 'pointer', textAlign: 'left', gap: 12,
+                      }}
+                    >
+                      <span style={{ fontSize: 14, fontWeight: isOpen ? 700 : 500, color: isOpen ? TEAL : '#374151', lineHeight: 1.4 }}>
+                        {faq.q}
+                      </span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke={isOpen ? TEAL : '#9ca3af'} strokeWidth="2.5"
+                        style={{ flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
                     </button>
-                    {/*  Notification Dropdown Menu  */}
-                    <div className="notification-menu" id="notificationMenu">
-                        <div className="notification-header">
-                            <div className="notification-logo-container">
-                                <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo Logo" style={{"height":"32px","width":"auto","filter":"brightness(0) invert(1)"}} />
-                            </div>
-                            <div className="notification-welcome">
-                                <div className="notification-welcome-title" style={{"fontSize":"1rem","fontWeight":"600","margin":"0 0 0.125rem 0","color":"white","lineHeight":"1.3"}}>Welcome Iskolar</div>
-                                <div className="notification-welcome-subtitle" style={{"fontSize":"0.75rem","margin":"0","color":"rgba(255, 255, 255, 0.85)","fontWeight":"400","lineHeight":"1.4"}}>Stay updated with your scholarship journey</div>
-                            </div>
-                        </div>
-                        <div className="notification-content">
-                            <div className="notification-empty-state">
-                                <svg className="notification-empty-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{"color":"#9ca3af","marginBottom":"0.75rem","opacity":"0.4"}}>
-                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                                </svg>
-                                <p className="notification-empty-text" style={{"fontSize":"0.875rem","fontWeight":"500","color":"#1f2937","margin":"0 0 0.25rem 0"}}>No new notifications</p>
-                                <p className="notification-empty-subtext" style={{"fontSize":"0.75rem","color":"#6b7280","margin":"0"}}>You're all caught up!</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                {/*  Sign Out Button  */}
-                <button className="notification-btn linkedin-notification" id="navLogoutBtn" title="Sign Out" onClick={(event) => { event.preventDefault(); if(typeof (window as any).handleLogout !== 'undefined'){(window as any).handleLogout();} }} style={{"marginLeft":"0.25rem"}}>
-                    <svg className="notification-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{"color":"#dc2626"}}>
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    <span className="notification-label" style={{"color":"#dc2626"}}>Sign Out</span>
+                    {isOpen && (
+                      <div style={{ padding: '13px 16px', fontSize: 14, color: '#4b5563', lineHeight: 1.7, borderTop: '1px solid #d1fae5', background: '#fff' }}>
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Help Desk Form */}
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16, marginBottom: 20, borderBottom: '1px solid #f3f4f6' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>OSFA Help Desk</h2>
+                <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Can&apos;t find an answer? Send a message to OSFA.</p>
+              </div>
+            </div>
+
+            {formSent ? (
+              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="1.5" style={{ marginBottom: 12 }}>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 16, color: '#111827' }}>Ticket submitted!</p>
+                <p style={{ margin: '4px 0 16px', fontSize: 13, color: '#6b7280' }}>We&apos;ll respond within 1–2 business days.</p>
+                <button onClick={() => setFormSent(false)} style={{ padding: '8px 20px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
+                  Send Another
                 </button>
-            </div>
+              </div>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); setFormSent(true); }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Subject Category</label>
+                    <select required defaultValue="" style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '9px 12px', fontSize: 13, background: '#fff', boxSizing: 'border-box' }}>
+                      <option value="" disabled>Select a category</option>
+                      <option value="application">Application Status Inquiry</option>
+                      <option value="documents">Document Submission Issues</option>
+                      <option value="eligibility">Scholarship Eligibility</option>
+                      <option value="technical">Technical Support</option>
+                      <option value="other">Other Inquiry</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                      Student Number <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span>
+                    </label>
+                    <input type="text" placeholder="e.g. 2023-12345-MN-0" style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '9px 12px', fontSize: 13, boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Your Message</label>
+                  <textarea required rows={4} placeholder="Describe your concern in detail..." style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 8, padding: '9px 12px', fontSize: 13, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                </div>
+                <button type="submit" style={{ alignSelf: 'flex-start', padding: '10px 28px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                  Submit Ticket
+                </button>
+              </form>
+            )}
+          </div>
         </div>
-    </header>
-
-    {/*  Main Content  */}
-    <div className="main-container">
-        <div className="page-content">
-            <div className="kapwa-wrapper">
-                {/*  Left Sidebar - Important Contacts & Guidelines  */}
-                <aside className="kapwa-sidebar-left">
-                    <div className="help-card">
-                        <div className="help-card-title">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                            </svg>
-                            PUP OSFA Hotlines
-                        </div>
-                        <div className="contact-list">
-                            <div className="contact-item">
-                                <div className="contact-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                        <polyline points="22,6 12,13 2,6"/>
-                                    </svg>
-                                </div>
-                                <div className="contact-details">
-                                    <h4>Email Address</h4>
-                                    <p>scholarship@pup.edu.ph</p>
-                                    <p>osfa@pup.edu.ph</p>
-                                </div>
-                            </div>
-                            <div className="contact-item">
-                                <div className="contact-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                                        <polyline points="9 22 9 12 15 12 15 22"/>
-                                    </svg>
-                                </div>
-                                <div className="contact-details">
-                                    <h4>OSFA Window</h4>
-                                    <p>South Wing, Ground Floor</p>
-                                    <p>PUP Main Campus, Sta. Mesa</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="help-card">
-                        <div className="help-card-title">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                                <polyline points="10 9 9 9 8 9"/>
-                            </svg>
-                            Document Upload Guide
-                        </div>
-                        <p style={{"fontSize":"0.875rem","color":"#4b5563","marginBottom":"1rem"}}>
-                            Ensure a smooth application process by preparing your documents correctly:
-                        </p>
-                        <ul style={{"fontSize":"0.875rem","color":"#4b5563","paddingLeft":"1.25rem","display":"flex","flexDirection":"column","gap":"0.5rem","marginBottom":"0"}}>
-                            <li>Accepted formats: <strong>PDF, JPG, PNG</strong></li>
-                            <li>Maximum file size: <strong>5 MB</strong> per file</li>
-                            <li>Ensure text is clear and readable.</li>
-                            <li>Check document requirements for your specific scholarship carefully.</li>
-                        </ul>
-                    </div>
-                </aside>
-
-                {/*  Main Content - FAQ & Help Desk  */}
-                <main className="main-content">
-                    {/*  FAQ Accordion  */}
-                    <div className="help-card">
-                        <div className="help-card-title">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                                <line x1="12" y1="17" x2="12.01" y2="17"/>
-                            </svg>
-                            Frequently Asked Questions (FAQs)
-                        </div>
-                        <div className="faq-list">
-                            <div className="faq-item">
-                                <button className="faq-question">
-                                    When is the deadline for scholarship applications?
-                                    <svg className="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <polyline points="6 9 12 15 18 9"/>
-                                    </svg>
-                                </button>
-                                <div className="faq-answer">
-                                    <p>The deadline varies depending on the scholarship program. Please check the &quot;Iskolarships&quot; page and look at the specific deadline for the grant you are applying for. The university typically announces university-wide scholarship openings 2 weeks prior to the start of the semester.</p>
-                                </div>
-                            </div>
-                            <div className="faq-item">
-                                <button className="faq-question">
-                                    Can I apply for multiple scholarships at once?
-                                    <svg className="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <polyline points="6 9 12 15 18 9"/>
-                                    </svg>
-                                </button>
-                                <div className="faq-answer">
-                                    <p>Generally, PUP only allows students to enjoy ONE major scholarship/financial assistance program at a time to give opportunities to other students. However, some minor grants or college-specific stipends might allow stackability. We recommend checking with the specific sponsor or the OSFA office.</p>
-                                </div>
-                            </div>
-                            <div className="faq-item">
-                                <button className="faq-question">
-                                    How will I track the status of my application?
-                                    <svg className="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <polyline points="6 9 12 15 18 9"/>
-                                    </svg>
-                                </button>
-                                <div className="faq-answer">
-                                    <p>You can track the progress of your application on the &quot;Status&quot; page of this platform. It will update as your application moves through Submission, Review, Interview (if applicable), Validation, and Final Approval.</p>
-                                </div>
-                            </div>
-                            <div className="faq-item">
-                                <button className="faq-question">
-                                    What should I do if my document upload fails?
-                                    <svg className="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <polyline points="6 9 12 15 18 9"/>
-                                    </svg>
-                                </button>
-                                <div className="faq-answer">
-                                    <p>Make sure your file is in PDF, JPG, or PNG format and does not exceed the 5MB size limit. You can use free online compression tools to decrease file size. If issues persist, try switching browsers or contacting the Help Desk below.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/*  Contact Form  */}
-                    <div className="help-card">
-                        <div className="help-card-title">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                            OSFA Help Desk
-                        </div>
-                        <p style={{"fontSize":"0.875rem","color":"#6b7280","marginBottom":"1.5rem"}}>Can't find the answer you're looking for? Send a message directly to the Office of Scholarship and Financial Assistance.</p>
-                        
-                        <form className="contact-form" onSubmit={(event) => { event.preventDefault(); alert('Message sent successfully! Please wait 1-2 business days for a response.'); (event.currentTarget as HTMLFormElement).reset(); }}>
-                            <div className="form-group">
-                                <label className="form-label">Subject Category</label>
-                                <select className="form-select" required defaultValue="">
-                                    <option value="" disabled>Select a category</option>
-                                    <option value="application">Application Status Inquiry</option>
-                                    <option value="documents">Document Submission Issues</option>
-                                    <option value="eligibility">Scholarship Eligibility</option>
-                                    <option value="technical">Technical Support / System Error</option>
-                                    <option value="other">Other Inquiry</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Student Number (Optional)</label>
-                                <input type="text" className="form-input" placeholder="e.g. 2023-12345-MN-0" />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Your Message</label>
-                                <textarea className="form-textarea" placeholder="Detail your concern here..." required></textarea>
-                            </div>
-                            <button type="submit" className="btn-submit">Submit Ticket</button>
-                        </form>
-                    </div>
-                </main>
-
-            </div>
-        </div>
+      </div>
     </div>
-
-    </>
   );
 }

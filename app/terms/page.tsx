@@ -116,8 +116,8 @@ export default function Page() {
                             <h3>Prohibited Activities:</h3>
                             <ul>
                                 <li>Posting false, misleading, or fraudulent scholarship information</li>
-                                <li>Attempting to hack, disrupt, or interfere with the platform's security</li>
-                                <li>Violating other users' privacy or rights</li>
+                                <li>Attempting to hack, disrupt, or interfere with the platform&apos;s security</li>
+                                <li>Violating other users&apos; privacy or rights</li>
                                 <li>Using the platform for commercial purposes without permission</li>
                                 <li>Spamming, phishing, or engaging in deceptive practices</li>
                                 <li>Uploading malicious software or viruses</li>
@@ -157,7 +157,7 @@ export default function Page() {
                     {/*  Disclaimer of Warranties  */}
                     <section id="disclaimer" className="policy-section">
                         <h2 className="section-title">6. Disclaimer of Warranties</h2>
-                        <p>IskoMo is provided "as is" and "as available" without warranties of any kind, either express or implied:</p>
+                        <p>IskoMo is provided &quot;as is&quot; and &quot;as available&quot; without warranties of any kind, either express or implied:</p>
                         
                         <div className="warranty-list">
                             <div className="warranty-item">
@@ -247,7 +247,7 @@ export default function Page() {
                         
                         <ul className="changes-list">
                             <li>Notification via email or platform announcement</li>
-                            <li>Updated "Last updated" date at the top of this page</li>
+                            <li>Updated &quot;Last updated&quot; date at the top of this page</li>
                             <li>Continued use after changes constitutes acceptance</li>
                             <li>Previous versions will be archived for reference</li>
                         </ul>
