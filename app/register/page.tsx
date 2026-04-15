@@ -17,7 +17,6 @@ const inp: React.CSSProperties = {
   background: '#fff',
   boxSizing: 'border-box',
   outline: 'none',
-  transition: 'border-color 0.15s',
 };
 
 const lbl: React.CSSProperties = {
@@ -32,12 +31,23 @@ const lbl: React.CSSProperties = {
 
 const req = <span style={{ color: '#ef4444', marginLeft: 2 }}>*</span>;
 
-const SectionHeader = ({ icon, title }: { icon: string; title: string }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid #f3f4f6' }}>
-    <span style={{ fontSize: 18 }}>{icon}</span>
-    <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>{title}</span>
-  </div>
-);
+const collegePrograms: Record<string, string[]> = {
+  CAF:   ['BS Accountancy', 'BS Internal Auditing', 'BS Management Accounting'],
+  CADBE: ['BS Architecture', 'BS Interior Design', 'Bachelor of Landscape Architecture'],
+  CAL:   ['AB Communication Arts', 'AB English Language Studies', 'AB Filipino', 'AB Literature in English'],
+  CBA:   ['BS Business Administration – Business Economics', 'BS Business Administration – Financial Management', 'BS Business Administration – Human Resource Development Management', 'BS Business Administration – Marketing Management', 'BS Business Administration – Operations Management'],
+  COC:   ['BA Communication – Broadcasting', 'BA Communication – Journalism', 'BA Communication – Media Studies'],
+  CCIS:  ['BS Computer Science', 'BS Information Technology', 'BS Information Systems'],
+  COED:  ['Bachelor of Elementary Education', 'Bachelor of Secondary Education', 'Bachelor of Early Childhood Education'],
+  CE:    ['BS Chemical Engineering', 'BS Civil Engineering', 'BS Electrical Engineering', 'BS Electronics Engineering', 'BS Industrial Engineering', 'BS Mechanical Engineering'],
+  CHK:   ['BS Exercise and Sports Science', 'Bachelor of Physical Education'],
+  CL:    ['Juris Doctor'],
+  CPSPA: ['AB Political Science', 'BS Public Administration'],
+  CSSD:  ['BS Social Work', 'AB Sociology', 'BS Economics'],
+  CS:    ['BS Applied Physics', 'BS Biology', 'BS Chemistry', 'BS Mathematics', 'BS Statistics'],
+  CTHTM: ['BS Hotel and Restaurant Management', 'BS Tourism Management', 'BS Transportation Management'],
+  ITECH: ['BS Industrial Technology'],
+};
 
 const colleges = [
   { value: 'CAF',   label: 'College of Accountancy and Finance (CAF)' },
@@ -57,11 +67,51 @@ const colleges = [
   { value: 'ITECH', label: 'Institute of Technology (ITECH)' },
 ];
 
+function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22, paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>
+      <div style={{ width: 34, height: 34, borderRadius: 9, background: '#e8faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        {icon}
+      </div>
+      <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>{title}</span>
+    </div>
+  );
+}
+
+function ToggleGroup({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(opt)}
+          style={{
+            padding: '9px 18px',
+            borderRadius: 10,
+            border: `1.5px solid ${value === opt ? TEAL : '#e5e7eb'}`,
+            background: value === opt ? '#e8faf4' : '#fff',
+            color: value === opt ? TEAL : '#6b7280',
+            fontWeight: value === opt ? 700 : 500,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function Page() {
   const [gender, setGender] = useState('');
   const [yearLevel, setYearLevel] = useState('');
   const [semester, setSemester] = useState('');
+  const [college, setCollege] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  const programs = college ? collegePrograms[college] ?? [] : [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,26 +144,25 @@ export default function Page() {
 
       {/* ── Left Panel ── */}
       <div style={{
-        width: 340,
+        width: 360,
         flexShrink: 0,
         background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 55%, #0f6b4f 100%)`,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '40px 36px',
+        padding: '44px 36px',
         position: 'sticky',
         top: 0,
         height: '100vh',
         overflow: 'hidden',
       }}>
         {/* Decorative blobs */}
-        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
-        <div style={{ position: 'absolute', bottom: -80, left: -40, width: 260, height: 260, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
+        <div style={{ position: 'absolute', bottom: -80, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
         <div style={{ position: 'absolute', top: '40%', right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
 
-        {/* Logo + brand */}
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Image
                 src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
@@ -129,57 +178,57 @@ export default function Page() {
             </div>
           </div>
 
-          <h2 style={{ margin: '0 0 12px', fontSize: 26, fontWeight: 800, color: '#fff', lineHeight: 1.25 }}>
+          <h2 style={{ margin: '0 0 14px', fontSize: 28, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
             Start your scholarship journey today.
           </h2>
-          <p style={{ margin: '0 0 32px', fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7 }}>
+          <p style={{ margin: '0 0 36px', fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7 }}>
             Create your IskoMo account and gain access to hundreds of scholarship opportunities made for Filipino students.
           </p>
 
-          {/* Feature list */}
+          {/* Features */}
           {[
             'Find scholarships that match your profile',
             'Track your application status in real time',
             'Secure document submission & storage',
             'Connect with OSFA and scholarship sponsors',
           ].map((feat) => (
-            <div key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
-              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
+            <div key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </div>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>{feat}</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.55 }}>{feat}</span>
             </div>
           ))}
         </div>
-
-        {/* Bottom: Already have account */}
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 20 }} />
-          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
-            Already have an account?{' '}
-            <Link href="/login" style={{ color: '#a7f3d0', fontWeight: 700, textDecoration: 'none' }}>
-              Sign in
-            </Link>
-          </p>
-        </div>
       </div>
 
-      {/* ── Right Panel: Form ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '40px 48px' }}>
+      {/* ── Right Panel ── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '44px 52px' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
 
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 800, color: '#111827' }}>Create Your Account</h1>
-            <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>Fill in your details below to register as an IskoMo student.</p>
+            <h1 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 800, color: '#111827' }}>Create Your Account</h1>
+            <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
+              Fill in your details below to register as an IskoMo student.
+              Already have an account?{' '}
+              <Link href="/login" style={{ color: TEAL, fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* ── Section A: Personal Identity ── */}
+            {/* ── A: Personal Identity ── */}
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <SectionHeader icon="👤" title="Personal Identity" />
+              <SectionHeader
+                title="Personal Identity"
+                icon={
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                }
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
                 <div>
                   <label style={lbl}>First Name {req}</label>
@@ -197,51 +246,23 @@ export default function Page() {
                   <label style={lbl}>Date of Birth {req}</label>
                   <input type="date" style={inp} required />
                 </div>
-
-                {/* Sex */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Sex {req}</label>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    {['Male', 'Female', 'Prefer not to say'].map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => setGender(opt)}
-                        style={{
-                          padding: '9px 20px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${gender === opt ? TEAL : '#e5e7eb'}`,
-                          background: gender === opt ? '#e8faf4' : '#fff',
-                          color: gender === opt ? TEAL : '#374151',
-                          fontWeight: gender === opt ? 700 : 500,
-                          fontSize: 13,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
+                  <ToggleGroup options={['Male', 'Female', 'Prefer not to say']} value={gender} onChange={setGender} />
                 </div>
-
-                {/* Mobile */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Mobile Number {req}</label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <select style={{ ...inp, width: 96, flexShrink: 0 }}>
-                      <option value="+63">🇵🇭 +63</option>
-                    </select>
+                    <div style={{ ...inp, width: 100, flexShrink: 0, display: 'flex', alignItems: 'center', background: '#f9fafb', color: '#374151', fontWeight: 600, fontSize: 13 }}>
+                      🇵🇭 +63
+                    </div>
                     <input type="tel" style={{ ...inp, flex: 1 }} placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} required />
                   </div>
                 </div>
-
-                {/* Email */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Email Address {req}</label>
                   <input type="email" style={inp} placeholder="juan.delacruz@example.com" required />
                 </div>
-
-                {/* Password */}
                 <div>
                   <label style={lbl}>Password {req}</label>
                   <input type="password" style={inp} placeholder="Min. 8 characters" minLength={8} required />
@@ -253,9 +274,17 @@ export default function Page() {
               </div>
             </div>
 
-            {/* ── Section B: Academic Information ── */}
+            {/* ── B: Academic Information ── */}
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <SectionHeader icon="🎓" title="PUP Academic Information" />
+              <SectionHeader
+                title="PUP Academic Information"
+                icon={
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                  </svg>
+                }
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
                 <div>
                   <label style={lbl}>Student Number {req}</label>
@@ -266,47 +295,57 @@ export default function Page() {
                   <input type="text" style={{ ...inp, background: '#f9fafb', color: '#6b7280', cursor: 'not-allowed' }} value="PUP Sta. Mesa" readOnly />
                 </div>
 
+                {/* College */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>College / Institute {req}</label>
-                  <select style={inp} required defaultValue="">
-                    <option value="" disabled>Select College / Institute</option>
+                  <select
+                    style={inp}
+                    required
+                    value={college}
+                    onChange={(e) => setCollege(e.target.value)}
+                  >
+                    <option value="">Select College / Institute</option>
                     {colleges.map((c) => (
                       <option key={c.value} value={c.value}>{c.label}</option>
                     ))}
                   </select>
                 </div>
 
+                {/* Program — enabled only after college is chosen */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Program / Course {req}</label>
-                  <select style={inp} required defaultValue="" disabled>
-                    <option value="" disabled>Select College first</option>
+                  <select
+                    style={{
+                      ...inp,
+                      background: college ? '#fff' : '#f9fafb',
+                      color: college ? '#111827' : '#9ca3af',
+                      cursor: college ? 'pointer' : 'not-allowed',
+                    }}
+                    required
+                    disabled={!college}
+                    defaultValue=""
+                    key={college}
+                  >
+                    <option value="" disabled>
+                      {college ? 'Select Program / Course' : 'Select a college first'}
+                    </option>
+                    {programs.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
                   </select>
+                  {!college && (
+                    <p style={{ margin: '5px 0 0', fontSize: 11, color: '#9ca3af' }}>Choose a college above to unlock this field.</p>
+                  )}
                 </div>
 
                 {/* Year Level */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Year Level {req}</label>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Irregular'].map((yr) => (
-                      <button
-                        key={yr}
-                        type="button"
-                        onClick={() => setYearLevel(yr)}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${yearLevel === yr ? TEAL : '#e5e7eb'}`,
-                          background: yearLevel === yr ? '#e8faf4' : '#fff',
-                          color: yearLevel === yr ? TEAL : '#374151',
-                          fontWeight: yearLevel === yr ? 700 : 500,
-                          fontSize: 13,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {yr}
-                      </button>
-                    ))}
-                  </div>
+                  <ToggleGroup
+                    options={['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Irregular']}
+                    value={yearLevel}
+                    onChange={setYearLevel}
+                  />
                 </div>
 
                 <div>
@@ -321,34 +360,24 @@ export default function Page() {
                 {/* Semester */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Semester {req}</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {['1st Semester', '2nd Semester', 'Summer'].map((sem) => (
-                      <button
-                        key={sem}
-                        type="button"
-                        onClick={() => setSemester(sem)}
-                        style={{
-                          padding: '9px 20px',
-                          borderRadius: 10,
-                          border: `1.5px solid ${semester === sem ? TEAL : '#e5e7eb'}`,
-                          background: semester === sem ? '#e8faf4' : '#fff',
-                          color: semester === sem ? TEAL : '#374151',
-                          fontWeight: semester === sem ? 700 : 500,
-                          fontSize: 13,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {sem}
-                      </button>
-                    ))}
-                  </div>
+                  <ToggleGroup options={['1st Semester', '2nd Semester', 'Summer']} value={semester} onChange={setSemester} />
                 </div>
               </div>
             </div>
 
-            {/* ── Section C: Family Details ── */}
+            {/* ── C: Family Details ── */}
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <SectionHeader icon="👨‍👩‍👧" title="Family Details" />
+              <SectionHeader
+                title="Family Details"
+                icon={
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                }
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
                 <div>
                   <label style={lbl}>Father&apos;s Name {req}</label>
@@ -388,42 +417,37 @@ export default function Page() {
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Guardian&apos;s Contact Number {req}</label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <select style={{ ...inp, width: 96, flexShrink: 0 }}>
-                      <option value="+63">🇵🇭 +63</option>
-                    </select>
+                    <div style={{ ...inp, width: 100, flexShrink: 0, display: 'flex', alignItems: 'center', background: '#f9fafb', color: '#374151', fontWeight: 600, fontSize: 13 }}>
+                      🇵🇭 +63
+                    </div>
                     <input type="tel" style={{ ...inp, flex: 1 }} placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} required />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* ── Section D: Document Uploads ── */}
+            {/* ── D: Documents ── */}
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <SectionHeader icon="📄" title="Required Documents" />
-
-              {/* Required docs list */}
+              <SectionHeader
+                title="Required Documents"
+                icon={
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                }
+              />
               <div style={{ background: '#f8fafc', borderRadius: 10, padding: '14px 16px', marginBottom: 16, border: '1px solid #e5e7eb' }}>
-                {[
-                  'PUP ID (Front)',
-                  'Certificate of Registration (Latest Semester)',
-                  'Grade Slip (Latest Term)',
-                ].map((doc) => (
+                {['PUP ID (Front)', 'Certificate of Registration (Latest Semester)', 'Grade Slip (Latest Term)'].map((doc) => (
                   <div key={doc} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: TEAL, flexShrink: 0 }} />
                     <span style={{ fontSize: 13, color: '#374151' }}>{doc}</span>
                   </div>
                 ))}
               </div>
-
-              {/* Drop zone */}
-              <div style={{
-                border: `2px dashed #d1d5db`,
-                borderRadius: 12,
-                padding: '36px 24px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                background: '#fafafa',
-              }}>
+              <div style={{ border: '2px dashed #d1d5db', borderRadius: 12, padding: '36px 24px', textAlign: 'center', background: '#fafafa', cursor: 'pointer' }}>
                 <div style={{ width: 48, height: 48, borderRadius: 12, background: '#e8faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -461,7 +485,7 @@ export default function Page() {
               Complete Registration
             </button>
 
-            <p style={{ margin: '0 0 32px', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>
+            <p style={{ margin: '0 0 40px', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>
               By registering you agree to our{' '}
               <Link href="/terms" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Terms of Service</Link>
               {' '}and{' '}
