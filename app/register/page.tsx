@@ -259,18 +259,6 @@ export default function Page() {
                     <input type="tel" style={{ ...inp, flex: 1 }} placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} required />
                   </div>
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={lbl}>Email Address {req}</label>
-                  <input type="email" style={inp} placeholder="juan.delacruz@example.com" required />
-                </div>
-                <div>
-                  <label style={lbl}>Password {req}</label>
-                  <input type="password" style={inp} placeholder="Min. 8 characters" minLength={8} required />
-                </div>
-                <div>
-                  <label style={lbl}>Confirm Password {req}</label>
-                  <input type="password" style={inp} placeholder="Re-enter password" required />
-                </div>
               </div>
             </div>
 
