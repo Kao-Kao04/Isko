@@ -24,15 +24,9 @@ export default function Page() {
   const [isSignup, setIsSignup] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
-  const [role, setRole] = useState<'student' | 'osfa'>('student');
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (role === 'osfa') {
-      router.push('/osfa/home');
-    } else {
-      router.push('/student/dashboard');
-    }
+    router.push('/student/dashboard');
   };
 
   const handleSignup = (e: React.FormEvent) => {
@@ -137,26 +131,6 @@ export default function Page() {
                       style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#6b7280' }}>
                       {showPass ? 'Hide' : 'Show'}
                     </button>
-                  </div>
-                </div>
-
-                {/* Role toggle for demo routing */}
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                    Login as
-                  </label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {(['student', 'osfa'] as const).map((r) => (
-                      <button key={r} type="button" onClick={() => setRole(r)}
-                        style={{
-                          flex: 1, padding: '8px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                          border: `1.5px solid ${role === r ? TEAL : '#e5e7eb'}`,
-                          background: role === r ? '#e8faf4' : '#fff',
-                          color: role === r ? TEAL : '#6b7280',
-                        }}>
-                        {r === 'student' ? 'Student' : 'OSFA Staff'}
-                      </button>
-                    ))}
                   </div>
                 </div>
 
