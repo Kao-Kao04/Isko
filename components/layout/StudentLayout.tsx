@@ -64,38 +64,8 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           {/* Center: Nav Links */}
           <StudentNav />
 
-          {/* Right: Search + Sign Out */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-            {/* Search */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: '#f3f4f6',
-              borderRadius: 10,
-              padding: '8px 12px',
-              border: '1px solid #e5e7eb',
-            }}>
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#9ca3af" strokeWidth="2">
-                <circle cx="9" cy="9" r="6"/><path d="m17 17-4-4"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search..."
-                id="searchInput"
-                autoComplete="off"
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  outline: 'none',
-                  fontSize: 13,
-                  color: '#374151',
-                  width: 120,
-                }}
-              />
-            </div>
-
-            {/* Sign Out */}
+          {/* Right: Sign Out */}
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <SignOutButton />
           </div>
         </div>
