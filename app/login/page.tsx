@@ -1,254 +1,348 @@
-'use client';
+"use client"
 
-import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
-
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
-
-const inp: React.CSSProperties = {
-  width: '100%',
-  border: '1.5px solid #e5e7eb',
-  borderRadius: 10,
-  padding: '11px 14px',
-  fontSize: 14,
-  color: '#111827',
-  background: '#fff',
-  boxSizing: 'border-box',
-  outline: 'none',
-};
-
-const lbl: React.CSSProperties = {
-  display: 'block',
-  fontSize: 12,
-  fontWeight: 600,
-  color: '#374151',
-  marginBottom: 6,
-  textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-};
 
 export default function Page() {
-  const [isSignup, setIsSignup] = useState(false);
-  const [showPass, setShowPass] = useState(false);
-  const [showPass2, setShowPass2] = useState(false);
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #f0fdf4 0%, #e8faf4 30%, #d1fae5 60%, #a7f3d0 100%)',
-      padding: '24px 16px',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      {/* Background decoration */}
-      <div style={{ position: 'absolute', top: -120, left: -120, width: 400, height: 400, borderRadius: '50%', background: `${TEAL}18` }} />
-      <div style={{ position: 'absolute', bottom: -80, right: -80, width: 320, height: 320, borderRadius: '50%', background: `${TEAL}12` }} />
-      <div style={{ position: 'absolute', top: '30%', right: '10%', width: 160, height: 160, borderRadius: '50%', background: `${TEAL}0a` }} />
+    <>
 
-      {/* Card */}
-      <div style={{
-        position: 'relative',
-        zIndex: 1,
-        width: '100%',
-        maxWidth: 420,
-        background: '#fff',
-        borderRadius: 24,
-        boxShadow: '0 8px 48px rgba(29,158,117,0.12), 0 2px 12px rgba(0,0,0,0.06)',
-        overflow: 'hidden',
-      }}>
-        {/* Top teal accent */}
-        <div style={{ height: 4, background: `linear-gradient(90deg, ${TEAL}, ${TEAL_DARK})` }} />
 
-        <div style={{ padding: '36px 36px 32px' }}>
 
-          {/* Logo */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
-            <div style={{
-              width: 60, height: 60, borderRadius: 16,
-              background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 12,
-              boxShadow: `0 4px 16px ${TEAL}40`,
-            }}>
-              <Image
-                src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
-                alt="IskoMo"
-                width={34}
-                height={34}
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
+    {/*  Global Toast / Notification Container  */}
+    <div className="toast-container" id="toastContainer"></div>
+
+    {/*  Navigation Bar  */}
+    <nav className="navbar auth-navbar" role="navigation" aria-label="Main navigation">
+        <div className="navbar-container">
+            <div className="navbar-logo">
+                <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" 
+                     alt="IskoMo Logo" 
+                     className="navbar-logo-img" />
+                <span className="navbar-logo-text">IskoMo</span>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>IskoMo</div>
-            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2, fontWeight: 500 }}>Scholarship Platform</div>
-          </div>
-
-          {/* ── Sliding form area ── */}
-          <div style={{ overflow: 'hidden' }}>
-
-            {/* Tab heading */}
-            <div style={{ marginBottom: 24, textAlign: 'center' }}>
-              <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#111827' }}>
-                {isSignup ? 'Create Account' : 'Welcome back'}
-              </h2>
-              <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
-                {isSignup ? 'Fill in your credentials to get started.' : 'Sign in to your IskoMo account.'}
-              </p>
-            </div>
-
-            {/* ── LOGIN fields ── */}
-            <div style={{
-              transform: isSignup ? 'translateY(-16px)' : 'translateY(0)',
-              opacity: isSignup ? 0 : 1,
-              maxHeight: isSignup ? 0 : 400,
-              overflow: 'hidden',
-              transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-              pointerEvents: isSignup ? 'none' : 'auto',
-            }}>
-              <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <label style={lbl}>Email or Username</label>
-                  <input type="text" style={inp} placeholder="Enter your email or username" autoComplete="username" />
-                </div>
-                <div>
-                  <label style={lbl}>Password</label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPass ? 'text' : 'password'}
-                      style={{ ...inp, paddingRight: 56 }}
-                      placeholder="Enter your password"
-                      autoComplete="current-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPass(!showPass)}
-                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#6b7280' }}
-                    >
-                      {showPass ? 'Hide' : 'Show'}
-                    </button>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151', fontWeight: 500 }}>
-                    <input type="checkbox" style={{ accentColor: TEAL }} />
-                    Remember me
-                  </label>
-                  <a href="#" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Forgot password?</a>
-                </div>
-                <button
-                  type="submit"
-                  style={{
-                    width: '100%', padding: '12px', marginTop: 4,
-                    background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
-                    color: '#fff', border: 'none', borderRadius: 10,
-                    fontWeight: 700, fontSize: 15, cursor: 'pointer',
-                    boxShadow: `0 3px 12px ${TEAL}40`,
-                  }}
-                >
-                  Login
-                </button>
-              </form>
-            </div>
-
-            {/* ── SIGNUP fields ── slide up from below */}
-            <div style={{
-              transform: isSignup ? 'translateY(0)' : 'translateY(20px)',
-              opacity: isSignup ? 1 : 0,
-              maxHeight: isSignup ? 600 : 0,
-              overflow: 'hidden',
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              pointerEvents: isSignup ? 'auto' : 'none',
-            }}>
-              <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <label style={lbl}>Email Address</label>
-                  <input type="email" style={inp} placeholder="Enter your email address" autoComplete="email" />
-                </div>
-                <div>
-                  <label style={lbl}>Username</label>
-                  <input type="text" style={inp} placeholder="Choose a username" autoComplete="username" />
-                </div>
-                <div>
-                  <label style={lbl}>Password</label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPass2 ? 'text' : 'password'}
-                      style={{ ...inp, paddingRight: 56 }}
-                      placeholder="Min. 8 characters"
-                      minLength={8}
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPass2(!showPass2)}
-                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#6b7280' }}
-                    >
-                      {showPass2 ? 'Hide' : 'Show'}
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label style={lbl}>Confirm Password</label>
-                  <input type="password" style={inp} placeholder="Re-enter password" autoComplete="new-password" />
-                </div>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
-                  <input type="checkbox" style={{ accentColor: TEAL, marginTop: 2, flexShrink: 0 }} />
-                  <span>
-                    I agree to the{' '}
-                    <Link href="/terms" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Terms of Service</Link>
-                    {' '}and{' '}
-                    <Link href="/privacy" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</Link>.
-                  </span>
-                </label>
-                <button
-                  type="submit"
-                  style={{
-                    width: '100%', padding: '12px', marginTop: 4,
-                    background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
-                    color: '#fff', border: 'none', borderRadius: 10,
-                    fontWeight: 700, fontSize: 15, cursor: 'pointer',
-                    boxShadow: `0 3px 12px ${TEAL}40`,
-                  }}
-                >
-                  Create Account
-                </button>
-              </form>
-            </div>
-
-            {/* ── Toggle between Login / Sign Up ── */}
-            <div style={{ marginTop: 20, textAlign: 'center' }}>
-              <div style={{ height: 1, background: '#f3f4f6', marginBottom: 16 }} />
-              {isSignup ? (
-                <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setIsSignup(false)}
-                    style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 }}
-                  >
-                    Sign in
-                  </button>
-                </p>
-              ) : (
-                <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
-                  Don&apos;t have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setIsSignup(true)}
-                    style={{ background: 'none', border: 'none', color: TEAL, fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 }}
-                  >
-                    Sign up
-                  </button>
-                </p>
-              )}
-            </div>
-          </div>
+            <ul className="navbar-nav" id="navbarNav">
+                <li><Link href="/">Home</Link></li>
+                <li><Link href="/#about">About</Link></li>
+            </ul>
+            <button className="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle mobile menu" aria-expanded="false">
+                ☰
+            </button>
         </div>
-      </div>
+    </nav>
+
+    {/*  Shape-Shifting Auth Container  */}
+    <div className="auth-wrapper-smart">
+        <div className="auth-container-smart">
+            {/*  Static Left Side  */}
+            <div className="auth-static-side">
+                <div className="auth-logo-container">
+                    <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" 
+                         alt="IskoMo Logo" 
+                         className="auth-main-logo" />
+                </div>
+                <h1 className="auth-main-title">Welcome to IskoMo</h1>
+                <p className="auth-subtitle">Sign in or create your account</p>
+            </div>
+
+            {/*  Transformable Right Side  */}
+            <div className="auth-transform-side square-state" id="authTransformSide">
+                {/*  Login Form (Square)  */}
+                <form id="loginFormSquare" className="form-square active" aria-label="Login form">
+                    <div className="form-square-content">
+                        <div className="form-group">
+                            <label htmlFor="loginEmailSquare">Email or Username</label>
+                            <input 
+                                type="text" 
+                                id="loginEmailSquare" 
+                                name="email" 
+                                placeholder="Enter your email or username" 
+                                required
+                                aria-required="true"
+                                autoComplete="username" />
+                            <div className="error-message" id="loginEmailError"></div>
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="loginPasswordSquare">Password</label>
+                            <div className="password-input-wrapper">
+                                <input 
+                                    type="password" 
+                                    id="loginPasswordSquare" 
+                                    name="password" 
+                                    placeholder="Enter your password" 
+                                    required
+                                    aria-required="true"
+                                    autoComplete="current-password" />
+                                <button type="button" className="password-toggle" aria-label="Show password">
+                                    <span className="eye-icon">Show</span>
+                                </button>
+                            </div>
+                            <div className="error-message" id="loginPasswordError"></div>
+                        </div>
+                        <div className="error-message" id="loginError"></div>
+                        <div className="form-group-row">
+                            <label className="checkbox-label">
+                                <input type="checkbox" name="remember" />
+                                <span>Remember me</span>
+                            </label>
+                            <a href="#" className="forgot-link">Forgot password?</a>
+                        </div>
+                        <button type="submit" className="btn btn-primary btn-submit-square" id="loginSubmitBtn" disabled>Login</button>
+                        <button type="button" className="btn-toggle-expand" data-action="expand" aria-label="Switch to sign up">
+                            Sign Up <span className="arrow">→</span>
+                        </button>
+                    </div>
+                </form>
+
+                {/*  Signup Form (Rectangle)  */}
+                <form id="signupFormRectangle" className="form-rectangle" aria-label="Sign up form">
+                    <div className="form-rectangle-content">
+                        <div className="form-grid-2col">
+                            <div className="form-group">
+                                <label htmlFor="signupEmailRect">Email</label>
+                                {/*  Fake hidden field to trick browser autofill  */}
+                                <input type="text" name="fake-email" autoComplete="off" style={{"position":"absolute","left":"-9999px","opacity":"0","pointerEvents":"none"}} tabIndex={-1} aria-hidden="true" />
+                                <input 
+                                    type="email" 
+                                    id="signupEmailRect" 
+                                    name="signup-email" 
+                                    placeholder="Enter your email address" 
+                                    required
+                                    aria-required="true"
+                                    autoComplete="email" />
+                                <div className="error-message" id="signupEmailError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="signupUsernameRect">Username</label>
+                                <input 
+                                    type="text" 
+                                    id="signupUsernameRect" 
+                                    name="username" 
+                                    placeholder="Choose a username" 
+                                    required
+                                    aria-required="true"
+                                    autoComplete="username" />
+                                <div className="error-message" id="signupUsernameError"></div>
+                            </div>
+                            <div className="form-group password-form-group">
+                                <label htmlFor="signupPasswordRect">
+                                    Password
+                                    <span className="password-help" data-tooltip="Password must contain: • At least 8 characters • One uppercase letter • One lowercase letter • One number • One special character • No spaces • Must not be the same as email or username">?</span>
+                                </label>
+                                <div className="password-input-wrapper">
+                                    <input 
+                                        type="password" 
+                                        id="signupPasswordRect" 
+                                        name="password" 
+                                        placeholder="Create a password (min. 8)" 
+                                        required
+                                        minLength={8}
+                                        aria-required="true"
+                                        autoComplete="new-password" />
+                                    <button type="button" className="password-toggle" aria-label="Show password">
+                                        <span className="eye-icon">Show</span>
+                                    </button>
+                                </div>
+                                {/*  Floating Password Strength Indicator  */}
+                                <div className="password-strength-indicator" id="passwordStrengthIndicator">
+                                    <div className="strength-indicator-header">
+                                        <span className="strength-title">Password Requirements</span>
+                                    </div>
+                                    <ul className="strength-requirements-list">
+                                        <li className="requirement-item" data-requirement="length">
+                                            <span className="check-icon">○</span>
+                                            <span className="requirement-text">At least 8 characters</span>
+                                        </li>
+                                        <li className="requirement-item" data-requirement="uppercase">
+                                            <span className="check-icon">○</span>
+                                            <span className="requirement-text">One uppercase letter</span>
+                                        </li>
+                                        <li className="requirement-item" data-requirement="number">
+                                            <span className="check-icon">○</span>
+                                            <span className="requirement-text">One number</span>
+                                        </li>
+                                        <li className="requirement-item" data-requirement="special">
+                                            <span className="check-icon">○</span>
+                                            <span className="requirement-text">One special character</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div className="error-message" id="signupPasswordError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="signupConfirmRect">Confirm Password</label>
+                                <div className="password-input-wrapper">
+                                    <input 
+                                        type="password" 
+                                        id="signupConfirmRect" 
+                                        name="confirmPassword" 
+                                        placeholder="Confirm your password" 
+                                        required
+                                        aria-required="true"
+                                        autoComplete="new-password" />
+                                    <button type="button" className="password-toggle" aria-label="Show password">
+                                        <span className="eye-icon">Show</span>
+                                    </button>
+                                </div>
+                                <div className="error-message" id="signupConfirmError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label className="checkbox-label checkbox-full">
+                                    <input type="checkbox" id="termsCheckbox" required aria-required="true" />
+                                    <span>I agree to the 
+                                        <span className="terms-link" data-tooltip="By using IskoMo, you agree to our terms including eligibility requirements, acceptable use policies, and platform guidelines. You are responsible for maintaining account security and using the platform lawfully.">Terms</span> 
+                                        and 
+                                        <span className="privacy-link" data-tooltip="IskoMo collects information to provide scholarship services, send updates, and improve the platform. We protect your data with industry-standard security. You have rights to access, correct, or delete your information at any time.">Privacy Policy</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div className="form-actions-rectangle">
+                            <button type="button" className="btn-toggle-collapse" data-action="collapse" aria-label="Switch to login">
+                                <span className="arrow">←</span> Login
+                            </button>
+                            <button type="submit" className="btn btn-primary btn-submit-rectangle" id="signupSubmitBtn" disabled>Create Account</button>
+                        </div>
+                    </div>
+                </form>
+
+                {/*  Role Selection Step (Hidden by default)  */}
+                <div id="roleSelectionStep" className="form-rectangle" style={{"display":"none"}}>
+                    <div className="form-rectangle-content">
+                        <h2 style={{"textAlign":"center","marginBottom":"1.5rem","color":"#1f2937","fontSize":"1.5rem"}}>Choose Your Role</h2>
+                        <p style={{"textAlign":"center","color":"#6b7280","marginBottom":"2rem"}}>Select the role that best describes you</p>
+                        
+                        <div className="role-selection-grid">
+                            <div className="role-card" data-role="student">
+                                <div className="role-icon">🎓</div>
+                                <h3 className="role-title">PUP Student (iScholar)</h3>
+                                <p className="role-description">Regular PUP student seeking scholarships</p>
+                                <ul className="role-features">
+                                    <li>Apply for scholarships</li>
+                                    <li>Track applications</li>
+                                    <li>Access PUP opportunities</li>
+                                </ul>
+                            </div>
+                            
+                            <div className="role-card" data-role="leader">
+                                <div className="role-icon">👥</div>
+                                <h3 className="role-title">Student Leader (iSkoMo)</h3>
+                                <p className="role-description">Org officer, class rep, or campus leader</p>
+                                <ul className="role-features">
+                                    <li>Post opportunities</li>
+                                    <li>Verify applications</li>
+                                    <li>Manage referrals</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div className="form-actions-rectangle" style={{"marginTop":"2rem"}}>
+                            <button type="button" className="btn btn-secondary" id="backToSignupBtn">← Back</button>
+                            <button type="button" className="btn btn-primary" id="continueToProfileBtn" disabled>Continue →</button>
+                        </div>
+                    </div>
+                </div>
+
+                {/*  Profile Completion Step - Student (Hidden by default)  */}
+                <div id="studentProfileStep" className="form-rectangle" style={{"display":"none"}}>
+                    <div className="form-rectangle-content">
+                        <h2 style={{"textAlign":"center","marginBottom":"1rem","color":"#1f2937","fontSize":"1.5rem"}}>Complete Your Profile</h2>
+                        <p style={{"textAlign":"center","color":"#6b7280","marginBottom":"2rem"}}>Tell us more about yourself as a PUP student</p>
+                        
+                        <div className="form-grid-2col">
+                            <div className="form-group">
+                                <label htmlFor="studentId">PUP Student ID *</label>
+                                <input type="text" id="studentId" name="studentId" placeholder="e.g., 2021-12345" required />
+                                <div className="error-message" id="studentIdError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="collegeDept">College/Department *</label>
+                                <input type="text" id="collegeDept" name="collegeDept" placeholder="e.g., College of Engineering" required />
+                                <div className="error-message" id="collegeDeptError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="yearLevel">Year Level *</label>
+                                <select id="yearLevel" name="yearLevel" required>
+                                    <option value="">Select year level</option>
+                                    <option value="1st Year">1st Year</option>
+                                    <option value="2nd Year">2nd Year</option>
+                                    <option value="3rd Year">3rd Year</option>
+                                    <option value="4th Year">4th Year</option>
+                                    <option value="5th Year">5th Year</option>
+                                    <option value="Graduate">Graduate</option>
+                                </select>
+                                <div className="error-message" id="yearLevelError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="courseProgram">Course/Program *</label>
+                                <input type="text" id="courseProgram" name="courseProgram" placeholder="e.g., BS Computer Engineering" required />
+                                <div className="error-message" id="courseProgramError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="currentGPA">Current GPA</label>
+                                <input type="number" id="currentGPA" name="currentGPA" step="0.01" min="0" max="4" placeholder="e.g., 3.50" />
+                                <div className="error-message" id="currentGPAError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="contactNumber">Contact Number *</label>
+                                <input type="tel" id="contactNumber" name="contactNumber" placeholder="e.g., 09123456789" required />
+                                <div className="error-message" id="contactNumberError"></div>
+                            </div>
+                        </div>
+                        
+                        <div className="form-actions-rectangle" style={{"marginTop":"1.5rem"}}>
+                            <button type="button" className="btn btn-secondary" id="backToRoleBtn">← Back</button>
+                            <button type="submit" className="btn btn-primary" id="completeStudentProfileBtn">Complete Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+                {/*  Profile Completion Step - Leader (Hidden by default)  */}
+                <div id="leaderProfileStep" className="form-rectangle" style={{"display":"none"}}>
+                    <div className="form-rectangle-content">
+                        <h2 style={{"textAlign":"center","marginBottom":"1rem","color":"#1f2937","fontSize":"1.5rem"}}>Complete Your Leader Profile</h2>
+                        <p style={{"textAlign":"center","color":"#6b7280","marginBottom":"2rem"}}>Tell us about your leadership role</p>
+                        
+                        <div className="form-grid-2col">
+                            <div className="form-group">
+                                <label htmlFor="leadershipPosition">Leadership Position *</label>
+                                <select id="leadershipPosition" name="leadershipPosition" required>
+                                    <option value="">Select position</option>
+                                    <option value="class_president">Class President</option>
+                                    <option value="org_officer">Student Org Officer</option>
+                                    <option value="dept_representative">Department Representative</option>
+                                    <option value="campus_leader">Campus Organization Leader</option>
+                                </select>
+                                <div className="error-message" id="leadershipPositionError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="organizationName">Organization Name *</label>
+                                <input type="text" id="organizationName" name="organizationName" placeholder="e.g., PUP Computer Engineering Society" required />
+                                <div className="error-message" id="organizationNameError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="leaderContactNumber">Contact Number *</label>
+                                <input type="tel" id="leaderContactNumber" name="leaderContactNumber" placeholder="e.g., 09123456789" required />
+                                <div className="error-message" id="leaderContactNumberError"></div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="proofOfPosition">Proof of Position (URL)</label>
+                                <input type="url" id="proofOfPosition" name="proofOfPosition" placeholder="Link to proof (optional)" />
+                                <div className="error-message" id="proofOfPositionError"></div>
+                            </div>
+                        </div>
+                        
+                        <div className="form-actions-rectangle" style={{"marginTop":"1.5rem"}}>
+                            <button type="button" className="btn btn-secondary" id="backToRoleBtnLeader">← Back</button>
+                            <button type="submit" className="btn btn-primary" id="completeLeaderProfileBtn">Complete Profile</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    
+
+    </>
   );
 }
