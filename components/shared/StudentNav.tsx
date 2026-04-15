@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+const TEAL = '#1D9E75';
+
 const studentNavLinks = [
   {
     href: '/student/dashboard',
     label: 'Home',
     icon: (
-      <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
@@ -18,7 +20,7 @@ const studentNavLinks = [
     href: '/student/iskolarships',
     label: 'Iskolarships',
     icon: (
-      <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
       </svg>
@@ -28,9 +30,8 @@ const studentNavLinks = [
     href: '/student/status',
     label: 'Status',
     icon: (
-      <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <polyline points="9 11 12 14 22 4"/>
-        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
     ),
   },
@@ -38,7 +39,7 @@ const studentNavLinks = [
     href: '/student/kapwa',
     label: 'Kapwa',
     icon: (
-      <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -50,7 +51,7 @@ const studentNavLinks = [
     href: '/student/profile',
     label: 'Profile',
     icon: (
-      <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
       </svg>
@@ -62,18 +63,51 @@ export default function StudentNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="navbar-center" role="navigation" aria-label="Student navigation">
-      {studentNavLinks.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className={`nav-link${pathname === link.href ? ' active' : ''}`}
-          aria-current={pathname === link.href ? 'page' : undefined}
-        >
-          {link.icon}
-          <span className="nav-label">{link.label}</span>
-        </Link>
-      ))}
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }} role="navigation" aria-label="Student navigation">
+      {studentNavLinks.map((link) => {
+        const isActive = pathname === link.href;
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={isActive ? 'page' : undefined}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              padding: '8px 16px',
+              borderRadius: 10,
+              textDecoration: 'none',
+              color: isActive ? TEAL : '#6b7280',
+              background: isActive ? '#e8faf4' : 'transparent',
+              fontWeight: isActive ? 700 : 500,
+              fontSize: 11,
+              minWidth: 64,
+              transition: 'all 0.15s ease',
+              position: 'relative',
+            }}
+          >
+            {/* Active indicator bar */}
+            {isActive && (
+              <span style={{
+                position: 'absolute',
+                bottom: -1,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 24,
+                height: 3,
+                borderRadius: 99,
+                background: TEAL,
+              }} />
+            )}
+            <span style={{ color: isActive ? TEAL : '#9ca3af', display: 'flex' }}>
+              {link.icon}
+            </span>
+            <span style={{ letterSpacing: '0.01em' }}>{link.label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }
