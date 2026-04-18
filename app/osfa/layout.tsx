@@ -6,12 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function OsfaRootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <link rel="stylesheet" href="/css/osfa/global-dashboard.css" />
-      <link rel="stylesheet" href="/css/osfa/dashboard-styles.css" />
-      <link rel="stylesheet" href="/css/osfa/responsive.css" />
-      <OsfaLayout>{children}</OsfaLayout>
-    </>
-  );
+  return <OsfaLayout>{children}</OsfaLayout>;
 }
