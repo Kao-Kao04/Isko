@@ -4,9 +4,9 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
-const TEAL_LIGHT = '#e8faf4';
+const TEAL = '#800000';
+const TEAL_DARK = '#5C0000';
+const TEAL_LIGHT = '#fff5f5';
 
 type NotifType = 'application' | 'evaluation' | 'deadline' | 'system' | 'approval';
 type NotifFilter = 'All' | 'Unread' | 'Applications' | 'System';
@@ -28,25 +28,25 @@ const initialNotifications: Notification[] = [
     id: '1', type: 'application', title: 'New Application Received',
     message: 'Juan dela Cruz submitted an application for the Academic Excellence Grant.',
     time: '2 hours ago', group: 'Today', isRead: false,
-    actionLabel: 'Review Application', actionHref: '/osfa/evaluation',
+    actionLabel: 'Review Application', actionHref: '/osfa/applicants',
   },
   {
     id: '2', type: 'evaluation', title: 'Evaluation Completed',
     message: 'Maria Santos\'s application for STEM Innovation Award has been evaluated and approved.',
     time: '5 hours ago', group: 'Today', isRead: false,
-    actionLabel: 'View Evaluation', actionHref: '/osfa/evaluation',
+    actionLabel: 'View Evaluation', actionHref: '/osfa/applicants',
   },
   {
     id: '3', type: 'deadline', title: 'Deadline Approaching',
     message: 'Academic Excellence Grant applications close in 2 days (Apr 20, 2026). 5 applications are still pending review.',
     time: '8 hours ago', group: 'Today', isRead: false,
-    actionLabel: 'Review Pending', actionHref: '/osfa/evaluation',
+    actionLabel: 'Review Pending', actionHref: '/osfa/applicants',
   },
   {
     id: '4', type: 'application', title: 'New Application Received',
     message: 'Liza Garcia submitted an application for the Academic Excellence Grant.',
     time: '1 day ago', group: 'Yesterday', isRead: false,
-    actionLabel: 'Review Application', actionHref: '/osfa/evaluation',
+    actionLabel: 'Review Application', actionHref: '/osfa/applicants',
   },
   {
     id: '5', type: 'approval', title: 'Application Approved',
@@ -85,7 +85,7 @@ const typeStyle: Record<NotifType, { bg: string; color: string; icon: ReactNode 
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
   },
   approval: {
-    bg: '#ecfdf5', color: '#059669',
+    bg: '#fff5f5', color: '#059669',
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
   },
 };
@@ -120,7 +120,7 @@ export default function Page() {
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <Link href="/osfa/home" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
+            <Link href="/osfa/dashboard" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
             <span style={{ fontSize: 12, color: '#d1d5db' }}>/</span>
             <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>Notifications</span>
           </div>
@@ -224,7 +224,7 @@ export default function Page() {
                                   fontSize: 12, fontWeight: 700, color: TEAL,
                                   textDecoration: 'none', padding: '5px 12px',
                                   background: TEAL_LIGHT, borderRadius: 7,
-                                  border: `1px solid #bbf7d0`,
+                                  border: `1px solid #fca5a5`,
                                 }}>{n.actionLabel}</Link>
                               )}
                               {!n.isRead && (
@@ -272,7 +272,7 @@ export default function Page() {
             </div>
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {[
-                { label: 'Review Pending Applications', href: '/osfa/evaluation' },
+                { label: 'Review Pending Applications', href: '/osfa/applicants' },
                 { label: 'View All Applicants', href: '/osfa/applicants' },
                 { label: 'Manage Scholarships', href: '/osfa/scholarships' },
               ].map((link) => (

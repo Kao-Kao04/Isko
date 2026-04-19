@@ -120,7 +120,7 @@
 .search-input:focus {
     outline: none;
     border-color: var(--primary-teal);
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
 }
 
 .scholarships-grid {
@@ -201,7 +201,7 @@
 }
 
 .scholarship-badge.merit {
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     color: var(--primary-teal);
 }
 
@@ -428,7 +428,7 @@
 .search-input:focus {
     outline: none;
     border-color: var(--primary-teal);
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
 }
 
 .scholarships-grid {
@@ -509,7 +509,7 @@
 }
 
 .scholarship-badge.merit {
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     color: var(--primary-teal);
 }
 
@@ -719,7 +719,7 @@
 }
 
 .application-status-badge.status-active {
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     color: var(--primary-teal);
 }
 
@@ -1101,7 +1101,7 @@
 }
 
 .deadline-badge {
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     color: var(--primary-teal);
 }
 
@@ -1292,7 +1292,7 @@
 }
 
 .timeline-status.status-active {
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     color: var(--primary-teal);
 }
 

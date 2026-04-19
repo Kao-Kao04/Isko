@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 
-const TEAL = '#1D9E75';
+const TEAL = '#800000';
 
 const mockDocs = [
   { name: 'Certificate_of_Enrollment.pdf', date: 'Feb 10, 2025', size: '1.2 MB' },
@@ -65,7 +65,7 @@ export default function Page() {
       {/* ── Avatar + Upload ── */}
       <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 24 }}>
         <div style={{ position: 'relative', flexShrink: 0 }}>
-          <div style={{ width: 88, height: 88, borderRadius: '50%', background: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 800, color: '#fff', border: '3px solid #d1fae5' }}>
+          <div style={{ width: 88, height: 88, borderRadius: '50%', background: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 800, color: '#fff', border: '3px solid #fecaca' }}>
             ME
           </div>
           <button

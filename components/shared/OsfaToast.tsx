@@ -11,7 +11,7 @@ export interface Toast {
 }
 
 const CONFIG: Record<ToastType, { bg: string; border: string; iconBg: string; color: string; symbol: string }> = {
-  success: { bg: '#f0fdf9', border: '#6ee7b7', iconBg: '#ecfdf5', color: '#065f46', symbol: '✓' },
+  success: { bg: '#fff5f5', border: '#6ee7b7', iconBg: '#fff5f5', color: '#065f46', symbol: '✓' },
   error:   { bg: '#fff5f5', border: '#fca5a5', iconBg: '#fef2f2', color: '#991b1b', symbol: '✕' },
   warning: { bg: '#fffdf0', border: '#fcd34d', iconBg: '#fffbeb', color: '#92400e', symbol: '!' },
   info:    { bg: '#f0f7ff', border: '#93c5fd', iconBg: '#eff6ff', color: '#1e40af', symbol: 'i' },

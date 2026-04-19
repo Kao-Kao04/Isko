@@ -1,9 +1,10 @@
 import StudentNav from '@/components/shared/StudentNav';
 import SignOutButton from '@/components/shared/SignOutButton';
+import NotificationBell from '@/components/shared/NotificationBell';
 import Image from 'next/image';
 import Link from 'next/link';
 
-const TEAL = '#1D9E75';
+const TEAL = '#800000';
 
 interface StudentLayoutProps {
   children: React.ReactNode;
@@ -22,7 +23,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
         boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
       }}>
         {/* Teal accent line at top */}
-        <div style={{ height: 3, background: `linear-gradient(90deg, ${TEAL}, #178a64, #0f6b4f)` }} />
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${TEAL}, #5C0000, #C9A027)` }} />
 
         <div style={{
           maxWidth: 1200,
@@ -41,7 +42,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
               width: 36,
               height: 36,
               borderRadius: 10,
-              background: `linear-gradient(135deg, ${TEAL}, #178a64)`,
+              background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -64,8 +65,9 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           {/* Center: Nav Links */}
           <StudentNav />
 
-          {/* Right: Sign Out */}
-          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          {/* Right: Bell + Sign Out */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <NotificationBell />
             <SignOutButton />
           </div>
         </div>

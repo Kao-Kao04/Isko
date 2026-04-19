@@ -1,19 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { initialApplicants, type Applicant, type AppStatus } from '@/lib/osfa-data';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
-const TEAL_LIGHT = '#e8faf4';
+const TEAL = '#800000';
+const TEAL_DARK = '#5C0000';
+const TEAL_LIGHT = '#fff5f5';
 
 const statusStyle: Record<AppStatus, { bg: string; color: string; dot: string }> = {
   Pending:        { bg: '#fffbeb', color: '#d97706', dot: '#f59e0b' },
   'Under Review': { bg: '#eff6ff', color: '#2563eb', dot: '#3b82f6' },
-  Approved:       { bg: '#ecfdf5', color: '#059669', dot: '#10b981' },
+  Approved:       { bg: '#fff5f5', color: '#059669', dot: '#10b981' },
   Rejected:       { bg: '#fef2f2', color: '#dc2626', dot: '#ef4444' },
   Incomplete:     { bg: '#fff7ed', color: '#ea580c', dot: '#f97316' },
   Duplicate:      { bg: '#faf5ff', color: '#7c3aed', dot: '#a78bfa' },
@@ -31,12 +31,12 @@ function StatusBadge({ status }: { status: AppStatus }) {
 
 export default function ApplicantProfilePage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const { toasts, addToast, removeToast } = useToast();
 
   const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
-  const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'evaluation' | 'history'>('overview');
   const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [rubric, setRubric] = useState({ financialNeed: 3, essay: 3, interview: 3, community: 3 });
   const [showRejectDialog, setShowRejectDialog]   = useState(false);
   const [rejectReason, setRejectReason]           = useState('');
   const [rejectNote, setRejectNote]               = useState('');
@@ -103,7 +103,7 @@ export default function ApplicantProfilePage() {
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 12 }}>
-        <Link href="/osfa/home" style={{ color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
+        <Link href="/osfa/dashboard" style={{ color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
         <span style={{ color: '#d1d5db' }}>/</span>
         <Link href="/osfa/applicants" style={{ color: '#9ca3af', textDecoration: 'none' }}>Applicants</Link>
         <span style={{ color: '#d1d5db' }}>/</span>
@@ -153,24 +153,27 @@ export default function ApplicantProfilePage() {
           </div>
 
           {/* Actions */}
-          {!isTerminal && (
-            <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignSelf: 'center' }}>
-              <Link href={`/osfa/evaluation?autoOpen=${applicant.id}`} style={{ padding: '9px 18px', background: TEAL_LIGHT, color: TEAL, border: `1.5px solid #bbf7d0`, borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
-                Open Evaluation
-              </Link>
-              <button onClick={() => setShowApproveDialog(true)} disabled={missingDocs > 0} title={missingDocs > 0 ? 'Documents are missing' : undefined} style={{ padding: '9px 18px', background: missingDocs > 0 ? '#d1fae5' : '#059669', color: missingDocs > 0 ? '#6ee7b7' : '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: missingDocs > 0 ? 'not-allowed' : 'pointer' }}>
-                Approve
-              </button>
-              <button onClick={() => setShowRejectDialog(true)} style={{ padding: '9px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Reject
-              </button>
-            </div>
-          )}
-          {isTerminal && (
-            <div style={{ padding: '9px 18px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, color: '#9ca3af', alignSelf: 'center' }}>
-              Application {applicant.status.toLowerCase()} — no further action required
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignSelf: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => window.print()} style={{ padding: '9px 14px', background: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Print
+            </button>
+            {!isTerminal && (
+              <>
+                <button onClick={() => setShowApproveDialog(true)} disabled={missingDocs > 0} title={missingDocs > 0 ? 'Documents are missing' : undefined} style={{ padding: '9px 18px', background: missingDocs > 0 ? '#fecaca' : '#059669', color: missingDocs > 0 ? '#6ee7b7' : '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: missingDocs > 0 ? 'not-allowed' : 'pointer' }}>
+                  Approve
+                </button>
+                <button onClick={() => setShowRejectDialog(true)} style={{ padding: '9px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  Reject
+                </button>
+              </>
+            )}
+            {isTerminal && (
+              <div style={{ padding: '9px 18px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, color: '#9ca3af' }}>
+                Application {applicant.status.toLowerCase()} — no further action required
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Scholarship banner */}
@@ -184,9 +187,23 @@ export default function ApplicantProfilePage() {
         </div>
       </div>
 
+      {/* Completeness bar */}
+      {(() => {
+        const completeness = Math.round((submittedDocs / applicant.docs.length) * 100);
+        return (
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '14px 20px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>Application Completeness</span>
+            <div style={{ flex: 1, height: 8, background: '#f3f4f6', borderRadius: 99 }}>
+              <div style={{ height: '100%', width: `${completeness}%`, borderRadius: 99, background: completeness === 100 ? '#059669' : completeness >= 60 ? '#d97706' : '#dc2626', transition: 'width 0.3s' }} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 800, color: completeness === 100 ? '#059669' : completeness >= 60 ? '#d97706' : '#dc2626', whiteSpace: 'nowrap' }}>{completeness}%</span>
+          </div>
+        );
+      })()}
+
       {/* Tab navigation */}
       <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid #f3f4f6', marginBottom: 22 }}>
-        {([['overview', 'Overview'], ['documents', `Documents (${submittedDocs}/${applicant.docs.length})`], ['history', `Activity (${applicant.audit.length})`]] as const).map(([key, label]) => (
+        {([['overview', 'Overview'], ['documents', `Documents (${submittedDocs}/${applicant.docs.length})`], ['evaluation', 'Evaluation'], ['history', `Activity (${applicant.audit.length})`]] as const).map(([key, label]) => (
           <button key={key} onClick={() => setActiveTab(key)} style={{ padding: '10px 20px', background: 'none', border: 'none', borderBottom: activeTab === key ? `2px solid ${TEAL}` : '2px solid transparent', marginBottom: -2, fontSize: 14, fontWeight: activeTab === key ? 700 : 500, color: activeTab === key ? TEAL : '#6b7280', cursor: 'pointer' }}>
             {label}
           </button>
@@ -247,7 +264,7 @@ export default function ApplicantProfilePage() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
               {applicant.docs.map((doc, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 9, background: doc.submitted ? '#ecfdf5' : '#fef2f2', border: `1px solid ${doc.submitted ? '#a7f3d0' : '#fecaca'}` }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 9, background: doc.submitted ? '#fff5f5' : '#fef2f2', border: `1px solid ${doc.submitted ? '#F5D060' : '#fecaca'}` }}>
                   {doc.submitted
                     ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                     : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
@@ -266,9 +283,9 @@ export default function ApplicantProfilePage() {
           <h3 style={sectionTitle}>Submitted Documents</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {applicant.docs.map((doc, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 10, background: doc.submitted ? '#f0fdf9' : '#fef2f2', border: `1px solid ${doc.submitted ? '#a7f3d0' : '#fecaca'}` }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 10, background: doc.submitted ? '#fff5f5' : '#fef2f2', border: `1px solid ${doc.submitted ? '#F5D060' : '#fecaca'}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 9, background: doc.submitted ? '#ecfdf5' : '#fff', border: `1.5px solid ${doc.submitted ? '#6ee7b7' : '#fecaca'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: doc.submitted ? '#fff5f5' : '#fff', border: `1.5px solid ${doc.submitted ? '#6ee7b7' : '#fecaca'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {doc.submitted
                       ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                       : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
@@ -283,7 +300,7 @@ export default function ApplicantProfilePage() {
                 {doc.submitted
                   ? (
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button style={{ padding: '7px 16px', background: TEAL_LIGHT, color: TEAL, border: `1px solid #bbf7d0`, borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>View</button>
+                      <button style={{ padding: '7px 16px', background: TEAL_LIGHT, color: TEAL, border: `1px solid #fca5a5`, borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>View</button>
                       <button style={{ padding: '7px 14px', background: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Download</button>
                     </div>
                   ) : (
@@ -309,6 +326,74 @@ export default function ApplicantProfilePage() {
           )}
         </div>
       )}
+
+      {/* ─── Tab: Evaluation ─────────────────────────────────────── */}
+      {activeTab === 'evaluation' && (() => {
+        const gwaScore = gwaNum <= 1.5 ? 5 : gwaNum <= 1.75 ? 4 : gwaNum <= 2.0 ? 3 : gwaNum <= 2.25 ? 2 : 1;
+        const docScore = Math.round((submittedDocs / applicant.docs.length) * 5);
+        const totalScore = gwaScore + docScore + rubric.financialNeed + rubric.essay + rubric.interview + rubric.community;
+        const maxScore = 30;
+        const pct = Math.round((totalScore / maxScore) * 100);
+        const criteria = [
+          { key: 'gwa' as const,           label: 'Academic Performance (GWA)', score: gwaScore,              max: 5, auto: true,  note: `GWA ${applicant.gwa}` },
+          { key: 'doc' as const,           label: 'Document Completeness',       score: docScore,              max: 5, auto: true,  note: `${submittedDocs}/${applicant.docs.length} submitted` },
+          { key: 'financialNeed' as const, label: 'Financial Need',              score: rubric.financialNeed,  max: 5, auto: false, note: 'Based on income declaration' },
+          { key: 'essay' as const,         label: 'Motivation Letter / Essay',   score: rubric.essay,          max: 5, auto: false, note: 'Quality and relevance' },
+          { key: 'interview' as const,     label: 'Interview Performance',        score: rubric.interview,      max: 5, auto: false, note: 'Optional — set 0 if N/A' },
+          { key: 'community' as const,     label: 'Community Involvement',        score: rubric.community,      max: 5, auto: false, note: 'Activities / org participation' },
+        ];
+        return (
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '28px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={sectionTitle}>Evaluation Rubric</h3>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: pct >= 70 ? '#059669' : pct >= 50 ? '#d97706' : '#dc2626' }}>{totalScore}<span style={{ fontSize: 14, color: '#9ca3af', fontWeight: 500 }}>/{maxScore}</span></div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>{pct}% overall</div>
+              </div>
+            </div>
+
+            <div style={{ height: 8, background: '#f3f4f6', borderRadius: 99, marginBottom: 24 }}>
+              <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: pct >= 70 ? '#059669' : pct >= 50 ? '#d97706' : '#dc2626', transition: 'width 0.3s' }} />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {criteria.map(c => (
+                <div key={c.key} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 16, alignItems: 'center', padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #f3f4f6' }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{c.label}</div>
+                    <div style={{ fontSize: 12, color: '#9ca3af' }}>{c.note} {c.auto && <span style={{ color: '#3b82f6', fontWeight: 600 }}>· Auto-scored</span>}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {c.auto ? (
+                      <span style={{ fontSize: 20, fontWeight: 800, color: c.score >= 4 ? '#059669' : c.score >= 3 ? '#d97706' : '#dc2626', minWidth: 40, textAlign: 'center' }}>
+                        {c.score}<span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>/{c.max}</span>
+                      </span>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {[1,2,3,4,5].map(n => (
+                          <button key={n} onClick={() => setRubric(prev => ({ ...prev, [c.key]: n }))} style={{
+                            width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                            background: c.score >= n ? TEAL : '#e5e7eb',
+                            color: c.score >= n ? '#fff' : '#9ca3af',
+                            transition: 'all 0.1s',
+                          }}>{n}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 20, padding: '14px 18px', borderRadius: 10, background: pct >= 70 ? '#f0fdf4' : pct >= 50 ? '#fffbeb' : '#fef2f2', border: `1px solid ${pct >= 70 ? '#bbf7d0' : pct >= 50 ? '#fde68a' : '#fecaca'}` }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: pct >= 70 ? '#15803d' : pct >= 50 ? '#92400e' : '#dc2626' }}>
+                Recommendation: {pct >= 70 ? '✓ Recommend for Approval' : pct >= 50 ? '⚠ Needs Further Review' : '✗ Does Not Meet Threshold'}
+              </div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Threshold: 70% ({Math.round(maxScore * 0.7)}/{maxScore} points) for automatic approval recommendation.</div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ─── Tab: History ─────────────────────────────────────────── */}
       {activeTab === 'history' && (
@@ -337,7 +422,7 @@ export default function ApplicantProfilePage() {
       {showApproveDialog && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowApproveDialog(false)}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Confirm Approval</h2>

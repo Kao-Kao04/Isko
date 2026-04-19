@@ -1,12 +1,41 @@
 'use client';
 
 import { useState } from 'react';
+import { useOsfaContext } from '@/lib/osfa-context';
+import Link from 'next/link';
 
-const TEAL = '#1D9E75';
+const TEAL = '#800000';
+const CURRENT_STUDENT_EMAIL = 'juan.delacruz@student.edu.ph';
 
 type StepStatus = 'done' | 'active' | 'pending';
-
 const STEPS = ['Submitted', 'Under Review', 'Interview', 'Doc Validation', 'Approved'];
+
+const STATUS_STEP: Record<string, number> = {
+  'Pending': 0,
+  'Under Review': 1,
+  'Interview': 2,
+  'Incomplete': 0,
+  'Approved': 4,
+  'Rejected': 4,
+  'Duplicate': 0,
+};
+
+const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
+  'Pending':      { bg: '#fef3c7', color: '#92400e' },
+  'Under Review': { bg: '#e0f2fe', color: '#0369a1' },
+  'Interview':    { bg: '#ede9fe', color: '#5b21b6' },
+  'Incomplete':   { bg: '#fef9c3', color: '#713f12' },
+  'Approved':     { bg: '#dcfce7', color: '#15803d' },
+  'Rejected':     { bg: '#fee2e2', color: '#dc2626' },
+  'Duplicate':    { bg: '#f3f4f6', color: '#374151' },
+};
+
+const SCHOLAR_STATUS_BADGE: Record<string, { bg: string; color: string; label: string }> = {
+  'Active':        { bg: '#dcfce7', color: '#15803d', label: 'Active Scholar' },
+  'Probationary':  { bg: '#fef3c7', color: '#92400e', label: 'Probationary' },
+  'Terminated':    { bg: '#fee2e2', color: '#dc2626', label: 'Terminated' },
+  'Graduated':     { bg: '#e0f2fe', color: '#0369a1', label: 'Graduated' },
+};
 
 function getStepStatus(stepIndex: number, currentStep: number): StepStatus {
   if (stepIndex < currentStep) return 'done';
@@ -14,29 +43,21 @@ function getStepStatus(stepIndex: number, currentStep: number): StepStatus {
   return 'pending';
 }
 
-const applications = [
-  { id: 1, name: 'PUP Scholarship Program',        status: 'Under Review', badge: '#0369a1', badgeBg: '#e0f2fe', submitted: 'Feb 15, 2025', amount: '₱30,000',  currentStep: 1 },
-  { id: 2, name: 'CHED Merit Scholarship Program',  status: 'Interview',    badge: '#7c3aed', badgeBg: '#ede9fe', submitted: 'Jan 15, 2025', amount: '₱25,000',  currentStep: 2 },
-  { id: 3, name: 'Academic Excellence Grant',       status: 'Approved',     badge: '#15803d', badgeBg: '#dcfce7', submitted: 'Nov 10, 2024', amount: '₱20,000',  currentStep: 4 },
-  { id: 4, name: 'STEM Innovation Award',           status: 'Pending',      badge: '#92400e', badgeBg: '#fef3c7', submitted: 'Feb 05, 2025', amount: '₱35,000',  currentStep: 0 },
-  { id: 5, name: 'DOST-SEI Scholarship',           status: 'Under Review', badge: '#0369a1', badgeBg: '#e0f2fe', submitted: 'Dec 20, 2024', amount: '₱40,000',  currentStep: 1 },
-];
-
-const deadlines = [
-  { name: 'Ayala Foundation STEM', date: 'May 15, 2025' },
-  { name: 'SM Foundation Scholarship', date: 'Apr 30, 2025' },
-  { name: 'CHED Merit Renewal', date: 'Sep 21, 2025' },
-];
-
 export default function Page() {
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const { applicants } = useOsfaContext();
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const myApps = applicants.filter(a => a.email === CURRENT_STUDENT_EMAIL);
 
   const stats = {
-    total: applications.length,
-    approved: applications.filter(a => a.status === 'Approved').length,
-    review: applications.filter(a => a.status === 'Under Review').length,
-    pending: applications.filter(a => ['Pending', 'Interview'].includes(a.status)).length,
+    total: myApps.length,
+    approved: myApps.filter(a => a.status === 'Approved').length,
+    review: myApps.filter(a => a.status === 'Under Review').length,
+    pending: myApps.filter(a => ['Pending', 'Interview'].includes(a.status)).length,
   };
+
+  const scholarStatus = myApps.find(a => a.scholarStatus)?.scholarStatus;
+  const semesterRecords = myApps.find(a => a.scholarStatus)?.semesterRecords ?? [];
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
@@ -69,21 +90,42 @@ export default function Page() {
         {/* Left — Application list */}
         <div>
           <h2 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 700, color: '#111827' }}>My Applications</h2>
+
+          {myApps.length === 0 && (
+            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '48px 24px', textAlign: 'center', color: '#6b7280' }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ marginBottom: 12 }}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <p style={{ margin: '0 0 16px', fontWeight: 500 }}>No applications yet.</p>
+              <Link href="/student/iskolarships" style={{ padding: '8px 20px', background: TEAL, color: '#fff', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                Browse Scholarships
+              </Link>
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {applications.map((app) => {
+            {myApps.map((app) => {
               const isOpen = expanded === app.id;
+              const currentStep = STATUS_STEP[app.status] ?? 0;
+              const badge = STATUS_BADGE[app.status] ?? STATUS_BADGE['Pending'];
+              const missingDocs = app.docs.filter(d => !d.submitted).length;
               return (
                 <div key={app.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                   {/* Card header */}
                   <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <div>
-                      <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#111827' }}>{app.name}</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#6b7280' }}>
-                        <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, background: app.badgeBg, color: app.badge, fontWeight: 600, fontSize: 12 }}>
+                      <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#111827' }}>{app.scholarship}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#6b7280', flexWrap: 'wrap' }}>
+                        <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, background: badge.bg, color: badge.color, fontWeight: 600, fontSize: 12 }}>
                           {app.status}
                         </span>
-                        <span>Submitted {app.submitted}</span>
-                        <span style={{ color: TEAL, fontWeight: 600 }}>{app.amount}/sem</span>
+                        <span>Submitted {app.applied}</span>
+                        {missingDocs > 0 && (
+                          <span style={{ color: '#dc2626', fontWeight: 600, fontSize: 12 }}>
+                            ⚠ {missingDocs} doc{missingDocs > 1 ? 's' : ''} missing
+                          </span>
+                        )}
                       </div>
                     </div>
                     <button
@@ -103,7 +145,7 @@ export default function Page() {
                     <div style={{ padding: '0 20px 20px', borderTop: '1px solid #f3f4f6' }}>
                       <div style={{ display: 'flex', alignItems: 'center', paddingTop: 20 }}>
                         {STEPS.map((step, i) => {
-                          const s = getStepStatus(i, app.currentStep);
+                          const s = getStepStatus(i, currentStep);
                           return (
                             <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 0 }}>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -133,6 +175,25 @@ export default function Page() {
                           );
                         })}
                       </div>
+
+                      {/* Document checklist */}
+                      <div style={{ marginTop: 16 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Documents</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {app.docs.map((doc, di) => (
+                            <div key={di} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                              <div style={{ width: 18, height: 18, borderRadius: '50%', background: doc.submitted ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                {doc.submitted ? (
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                ) : (
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                )}
+                              </div>
+                              <span style={{ color: doc.submitted ? '#374151' : '#dc2626' }}>{doc.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -144,45 +205,65 @@ export default function Page() {
         {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Success Rate */}
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Success Rate</h3>
-            {[
-              { label: 'Approval Rate', value: 20, color: TEAL },
-              { label: 'Avg Match Score', value: 92, color: '#0369a1' },
-              { label: 'Completion Rate', value: 75, color: '#7c3aed' },
-            ].map((item) => (
-              <div key={item.label} style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 5 }}>
-                  <span style={{ color: '#374151', fontWeight: 500 }}>{item.label}</span>
-                  <span style={{ fontWeight: 700, color: item.color }}>{item.value}%</span>
+          {/* Scholar Status card */}
+          {scholarStatus && (
+            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Scholar Status</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: SCHOLAR_STATUS_BADGE[scholarStatus]?.bg, color: SCHOLAR_STATUS_BADGE[scholarStatus]?.color }}>
+                    {SCHOLAR_STATUS_BADGE[scholarStatus]?.label ?? scholarStatus}
+                  </span>
                 </div>
-                <div style={{ height: 6, borderRadius: 99, background: '#f3f4f6', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${item.value}%`, background: item.color, borderRadius: 99 }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Upcoming Deadlines */}
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Upcoming Deadlines</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {deadlines.map((d, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, paddingBottom: 12, borderBottom: i < deadlines.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 8, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                    </svg>
-                  </div>
+                {semesterRecords.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', lineHeight: 1.3 }}>{d.name}</div>
-                    <div style={{ fontSize: 12, color: '#dc2626', fontWeight: 600, marginTop: 2 }}>{d.date}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Semester Records</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {[...semesterRecords].reverse().map((rec, i) => (
+                        <div key={i} style={{ background: '#f9fafb', borderRadius: 8, padding: '10px 12px', border: '1px solid #f3f4f6' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{rec.semester}, {rec.academicYear}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: TEAL }}>GWA {rec.gwa}</span>
+                          </div>
+                          {rec.notes && <div style={{ fontSize: 11, color: '#6b7280' }}>{rec.notes}</div>}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Apply prompt if no applications */}
+          {myApps.length === 0 && (
+            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 20, textAlign: 'center' }}>
+              <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>Start by browsing available scholarships.</div>
+              <Link href="/student/iskolarships" style={{ display: 'inline-block', padding: '8px 20px', background: TEAL, color: '#fff', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                Browse Scholarships
+              </Link>
+            </div>
+          )}
+
+          {/* Appeal status if any */}
+          {myApps.map(a => a.appeal ? (
+            <div key={a.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 700, color: '#111827' }}>Appeal — {a.scholarship}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                  background: a.appeal.status === 'Approved' ? '#dcfce7' : a.appeal.status === 'Denied' ? '#fee2e2' : '#fef3c7',
+                  color: a.appeal.status === 'Approved' ? '#15803d' : a.appeal.status === 'Denied' ? '#dc2626' : '#92400e',
+                }}>
+                  {a.appeal.status}
+                </span>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>Filed {a.appeal.submittedDate}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 12, color: '#374151', lineHeight: 1.5 }}>{a.appeal.reason}</p>
+              {a.appeal.reviewNote && (
+                <p style={{ margin: '8px 0 0', fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>Note: {a.appeal.reviewNote}</p>
+              )}
+            </div>
+          ) : null)}
 
         </div>
       </div>

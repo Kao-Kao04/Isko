@@ -113,7 +113,7 @@
 
 .action-btn.primary:hover {
     background: var(--primary-teal-dark);
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    box-shadow: 0 4px 12px rgba(128, 0, 0, 0.3);
 }
 
 .action-btn.secondary {
@@ -123,7 +123,7 @@
 }
 
 .action-btn.secondary:hover {
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
 }
 
 .btn-icon {

@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
-const TEAL_LIGHT = '#e8faf4';
+const TEAL = '#800000';
+const TEAL_DARK = '#5C0000';
+const TEAL_LIGHT = '#fff5f5';
 
 type ProfileTab = 'Personal' | 'Organization' | 'Security';
 
@@ -46,7 +46,7 @@ export default function Page() {
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-        <Link href="/osfa/home" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
+        <Link href="/osfa/dashboard" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
         <span style={{ fontSize: 12, color: '#d1d5db' }}>/</span>
         <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>Profile</span>
       </div>
@@ -54,7 +54,7 @@ export default function Page() {
       {/* Profile header card */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         {/* Cover banner */}
-        <div style={{ height: 120, background: `linear-gradient(135deg, ${TEAL} 0%, ${TEAL_DARK} 50%, #0f6b4f 100%)`, position: 'relative' }}>
+        <div style={{ height: 120, background: `linear-gradient(135deg, ${TEAL} 0%, ${TEAL_DARK} 50%, #C9A027 100%)`, position: 'relative' }}>
           <div style={{ position: 'absolute', top: -30, right: -30, width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
           <div style={{ position: 'absolute', bottom: -40, right: 80, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
           <button style={{ position: 'absolute', bottom: 12, right: 16, padding: '6px 12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 7, color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
@@ -102,7 +102,7 @@ export default function Page() {
           </div>
 
           <div style={{ display: 'flex', gap: 10, paddingTop: 36 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, background: TEAL_LIGHT, color: TEAL, fontSize: 12, fontWeight: 700, border: `1px solid #bbf7d0` }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, background: TEAL_LIGHT, color: TEAL, fontSize: 12, fontWeight: 700, border: `1px solid #fca5a5` }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               Verified Staff
             </span>
@@ -285,9 +285,9 @@ export default function Page() {
             </div>
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
               {[
-                { label: 'Dashboard', href: '/osfa/home' },
+                { label: 'Dashboard', href: '/osfa/dashboard' },
                 { label: 'Manage Applicants', href: '/osfa/applicants' },
-                { label: 'Evaluation Queue', href: '/osfa/evaluation' },
+                { label: 'Evaluation Queue', href: '/osfa/applicants' },
                 { label: 'Scholarships', href: '/osfa/scholarships' },
               ].map((link) => (
                 <Link key={link.label} href={link.href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, textDecoration: 'none', color: '#374151', fontSize: 13, fontWeight: 500, background: '#fafafa', border: '1px solid #f3f4f6' }}>

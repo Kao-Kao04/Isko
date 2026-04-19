@@ -9,9 +9,9 @@
 
 /* CSS Variables for Consistency */
 :root {
-    --primary-teal: #0d9488;
-    --primary-teal-light: #14b8a6;
-    --primary-teal-dark: #0f766e;
+    --primary-teal: #800000;
+    --primary-teal-light: #9B1C1C;
+    --primary-teal-dark: #5C0000;
     --accent-amber: #f59e0b;
     --text-dark: #1f2937;
     --text-medium: #6b7280;
@@ -163,7 +163,7 @@ body {
 /* Active State */
 .nav-link.active {
     color: var(--primary-teal);
-    background: rgba(13, 148, 136, 0.08);
+    background: rgba(128, 0, 0, 0.08);
     animation: activePulse 0.4s ease-out;
 }
 
@@ -449,7 +449,7 @@ body {
 }
 
 .btn-view-profile:hover {
-    background: rgba(13, 148, 136, 0.05);
+    background: rgba(128, 0, 0, 0.05);
     border-color: var(--primary-teal-dark);
 }
 
@@ -772,7 +772,7 @@ body {
 }
 
 .stat-icon.teal {
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     color: var(--primary-teal);
 }
 
@@ -974,7 +974,7 @@ body {
 .form-textarea:focus {
     outline: none;
     border-color: var(--primary-teal);
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
 }
 
 .form-textarea {
@@ -1005,7 +1005,7 @@ body {
 }
 
 .badge.info {
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     color: var(--primary-teal);
 }
 
@@ -1019,8 +1019,8 @@ body {
    ============================================ */
 @keyframes activePulse {
     0% { background: transparent; }
-    50% { background: rgba(13, 148, 136, 0.15); }
-    100% { background: rgba(13, 148, 136, 0.08); }
+    50% { background: rgba(128, 0, 0, 0.15); }
+    100% { background: rgba(128, 0, 0, 0.08); }
 }
 
 @keyframes iconBounce {
@@ -1608,7 +1608,7 @@ body {
 
 .evaluation-item:hover {
     border-color: var(--primary-teal);
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1);
+    box-shadow: 0 4px 12px rgba(128, 0, 0, 0.1);
     transform: translateY(-1px);
 }
 
@@ -1955,7 +1955,7 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2066,7 +2066,7 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 6px;
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(128, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2171,7 +2171,7 @@ body {
 .announcement-item-modern:hover {
     background: var(--bg-white);
     border-color: var(--primary-teal);
-    box-shadow: 0 1px 3px rgba(13, 148, 136, 0.08);
+    box-shadow: 0 1px 3px rgba(128, 0, 0, 0.08);
 }
 
 .announcement-icon {
@@ -2184,7 +2184,7 @@ body {
     background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%);
     color: white;
     flex-shrink: 0;
-    box-shadow: 0 1px 2px rgba(13, 148, 136, 0.2);
+    box-shadow: 0 1px 2px rgba(128, 0, 0, 0.2);
 }
 
 .announcement-icon svg {
@@ -2586,7 +2586,7 @@ input:checked + .toggle-slider:before {
 .unified-profile-container .btn-primary:hover {
     background: var(--primary-teal-dark);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    box-shadow: 0 4px 12px rgba(128, 0, 0, 0.3);
 }
 
 .unified-profile-container .btn-secondary {

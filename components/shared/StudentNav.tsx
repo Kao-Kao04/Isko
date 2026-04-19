@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useOsfaContext } from '@/lib/osfa-context';
+import { MOCK_STUDENT } from '@/lib/data/mock-user';
 
-const TEAL = '#1D9E75';
+const MAROON = '#800000';
 
 const studentNavLinks = [
   {
@@ -27,23 +29,11 @@ const studentNavLinks = [
     ),
   },
   {
-    href: '/student/status',
-    label: 'Status',
+    href: '/student/applications',
+    label: 'Applications',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-      </svg>
-    ),
-  },
-  {
-    href: '/student/kapwa',
-    label: 'Kapwa',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
     ),
   },
@@ -61,11 +51,15 @@ const studentNavLinks = [
 
 export default function StudentNav() {
   const pathname = usePathname();
+  const { applicants } = useOsfaContext();
+  const pendingCount = applicants.filter(
+    a => a.email === MOCK_STUDENT.email && ['Pending', 'Incomplete'].includes(a.status)
+  ).length;
 
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }} role="navigation" aria-label="Student navigation">
       {studentNavLinks.map((link) => {
-        const isActive = pathname === link.href;
+        const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
         return (
           <Link
             key={link.href}
@@ -79,8 +73,8 @@ export default function StudentNav() {
               padding: '8px 16px',
               borderRadius: 10,
               textDecoration: 'none',
-              color: isActive ? TEAL : '#6b7280',
-              background: isActive ? '#e8faf4' : 'transparent',
+              color: isActive ? MAROON : '#6b7280',
+              background: isActive ? '#fff5f5' : 'transparent',
               fontWeight: isActive ? 700 : 500,
               fontSize: 11,
               minWidth: 64,
@@ -88,7 +82,6 @@ export default function StudentNav() {
               position: 'relative',
             }}
           >
-            {/* Active indicator bar */}
             {isActive && (
               <span style={{
                 position: 'absolute',
@@ -98,13 +91,24 @@ export default function StudentNav() {
                 width: 24,
                 height: 3,
                 borderRadius: 99,
-                background: TEAL,
+                background: MAROON,
               }} />
             )}
-            <span style={{ color: isActive ? TEAL : '#9ca3af', display: 'flex' }}>
+            <span style={{ color: isActive ? MAROON : '#9ca3af', display: 'flex' }}>
               {link.icon}
             </span>
-            <span style={{ letterSpacing: '0.01em' }}>{link.label}</span>
+            <span style={{ letterSpacing: '0.01em', display: 'flex', alignItems: 'center', gap: 4 }}>
+              {link.label}
+              {link.href === '/student/applications' && pendingCount > 0 && (
+                <span style={{
+                  fontSize: 9, fontWeight: 800, lineHeight: 1,
+                  padding: '2px 5px', borderRadius: 99,
+                  background: MAROON, color: '#fff',
+                }}>
+                  {pendingCount}
+                </span>
+              )}
+            </span>
           </Link>
         );
       })}

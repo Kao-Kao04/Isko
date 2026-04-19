@@ -5,9 +5,9 @@
 
 /* CSS Variables - Consistent across both profiles */
 :root {
-    --primary-teal: #0d9488;
-    --primary-teal-dark: #0f766e;
-    --primary-teal-light: #14b8a6;
+    --primary-teal: #800000;
+    --primary-teal-dark: #5C0000;
+    --primary-teal-light: #9B1C1C;
     --accent-amber: #f59e0b;
     --bg-white: #ffffff;
     --bg-gray: #f9fafb;
@@ -197,7 +197,7 @@ body {
 
 .nav-link.active {
     color: var(--primary-teal);
-    background: rgba(13, 148, 136, 0.08);
+    background: rgba(128, 0, 0, 0.08);
     animation: activePulse 0.4s ease-out;
 }
 
@@ -454,7 +454,7 @@ body {
 .btn-primary:hover {
     background: var(--primary-teal-dark);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    box-shadow: 0 4px 12px rgba(128, 0, 0, 0.3);
 }
 
 .btn-secondary {
@@ -679,7 +679,7 @@ body {
 .form-textarea:focus {
     outline: none;
     border-color: var(--primary-teal);
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
 }
 
 /* ============================================
@@ -754,10 +754,10 @@ body {
         background: transparent;
     }
     50% {
-        background: rgba(13, 148, 136, 0.15);
+        background: rgba(128, 0, 0, 0.15);
     }
     100% {
-        background: rgba(13, 148, 136, 0.08);
+        background: rgba(128, 0, 0, 0.08);
     }
 }
 

@@ -4,8 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
+const TEAL = '#800000';
+const TEAL_DARK = '#5C0000';
 
 const inp: React.CSSProperties = {
   width: '100%',
@@ -70,7 +70,7 @@ const colleges = [
 function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22, paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>
-      <div style={{ width: 34, height: 34, borderRadius: 9, background: '#e8faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {icon}
       </div>
       <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>{title}</span>
@@ -90,7 +90,7 @@ function ToggleGroup({ options, value, onChange }: { options: string[]; value: s
             padding: '9px 18px',
             borderRadius: 10,
             border: `1.5px solid ${value === opt ? TEAL : '#e5e7eb'}`,
-            background: value === opt ? '#e8faf4' : '#fff',
+            background: value === opt ? '#fff5f5' : '#fff',
             color: value === opt ? TEAL : '#6b7280',
             fontWeight: value === opt ? 700 : 500,
             fontSize: 13,
@@ -122,7 +122,7 @@ export default function Page() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
         <div style={{ textAlign: 'center', padding: '48px 32px', background: '#fff', borderRadius: 20, border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.07)', maxWidth: 440 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#e8faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.5">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
@@ -146,7 +146,7 @@ export default function Page() {
       <div style={{
         width: 360,
         flexShrink: 0,
-        background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 55%, #0f6b4f 100%)`,
+        background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 55%, #C9A027 100%)`,
         display: 'flex',
         flexDirection: 'column',
         padding: '44px 36px',
@@ -436,7 +436,7 @@ export default function Page() {
                 ))}
               </div>
               <div style={{ border: '2px dashed #d1d5db', borderRadius: 12, padding: '36px 24px', textAlign: 'center', background: '#fafafa', cursor: 'pointer' }}>
-                <div style={{ width: 48, height: 48, borderRadius: 12, background: '#e8faf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>

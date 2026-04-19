@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { type Applicant, type AppStatus } from '@/lib/osfa-data';
+import { type AppStatus } from '@/lib/osfa-data';
 import { useOsfaContext } from '@/lib/osfa-context';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
-const TEAL_LIGHT = '#e8faf4';
+const TEAL = '#800000';
+const TEAL_DARK = '#5C0000';
+const TEAL_LIGHT = '#fff5f5';
 const CARD_SHADOW = '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)';
 
 const statusStyle: Record<AppStatus, { bg: string; color: string; dot: string }> = {
   Pending:        { bg: '#fffbeb', color: '#d97706', dot: '#f59e0b' },
   'Under Review': { bg: '#eff6ff', color: '#2563eb', dot: '#3b82f6' },
-  Approved:       { bg: '#ecfdf5', color: '#059669', dot: '#10b981' },
+  Approved:       { bg: '#fff5f5', color: '#059669', dot: '#10b981' },
   Rejected:       { bg: '#fef2f2', color: '#dc2626', dot: '#ef4444' },
   Incomplete:     { bg: '#fff7ed', color: '#ea580c', dot: '#f97316' },
   Duplicate:      { bg: '#faf5ff', color: '#7c3aed', dot: '#a78bfa' },
@@ -47,7 +47,6 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 }
 
 function ApplicantsContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { toasts, addToast, removeToast } = useToast();
   const { applicants, setApplicants } = useOsfaContext();
@@ -203,7 +202,7 @@ function ApplicantsContent() {
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <Link href="/osfa/home" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
+            <Link href="/osfa/dashboard" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
             <span style={{ fontSize: 12, color: '#d1d5db' }}>/</span>
             <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>Applicants</span>
           </div>
@@ -345,7 +344,7 @@ function ApplicantsContent() {
                   <td style={{ padding: '12px 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
                       <Link href={`/osfa/applicants/${a.id}`} style={{ padding: '5px 10px', background: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>View</Link>
-                      <Link href={`/osfa/evaluation?autoOpen=${a.id}`} style={{ padding: '5px 10px', background: TEAL_LIGHT, color: TEAL, border: `1px solid #bbf7d0`, borderRadius: 6, fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>Evaluate</Link>
+                      <Link href={`/osfa/applicants?autoOpen=${a.id}`} style={{ padding: '5px 10px', background: TEAL_LIGHT, color: TEAL, border: `1px solid #fca5a5`, borderRadius: 6, fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>Evaluate</Link>
                       <div style={{ position: 'relative' }}>
                         <button onClick={() => setOpenMenuId(openMenuId === a.id ? null : a.id)} style={{ padding: '5px 8px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', color: '#6b7280', display: 'flex', alignItems: 'center' }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
@@ -400,7 +399,7 @@ function ApplicantsContent() {
       {confirmAction?.type === 'approve' && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setConfirmAction(null)}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 440, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Confirm Approval</h2>

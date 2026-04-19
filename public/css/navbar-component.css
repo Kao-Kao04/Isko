@@ -6,8 +6,8 @@
 /* CSS Variables for Navbar */
 :root {
     --navbar-height: 72px;
-    --navbar-teal: #0d9488;
-    --navbar-teal-hover: #0f766e;
+    --navbar-teal: #800000;
+    --navbar-teal-hover: #5C0000;
     --navbar-text-primary: #1f2937;
     --navbar-text-secondary: #6b7280;
     --navbar-border: #e5e7eb;
@@ -63,7 +63,7 @@
 }
 
 .navbar-logo-link:hover {
-    background-color: rgba(13, 148, 136, 0.05);
+    background-color: rgba(128, 0, 0, 0.05);
 }
 
 .navbar-logo img {
@@ -151,13 +151,13 @@
 
 .nav-link:hover {
     color: var(--navbar-teal);
-    background-color: rgba(13, 148, 136, 0.08);
+    background-color: rgba(128, 0, 0, 0.08);
     transform: translateY(-1px);
 }
 
 .nav-link.active {
     color: var(--navbar-teal);
-    background-color: rgba(13, 148, 136, 0.08);
+    background-color: rgba(128, 0, 0, 0.08);
 }
 
 .nav-link.active::after {
@@ -214,7 +214,7 @@
 
 .notification-btn:hover {
     color: var(--navbar-teal);
-    background-color: rgba(13, 148, 136, 0.08);
+    background-color: rgba(128, 0, 0, 0.08);
     transform: translateY(-1px);
 }
 
@@ -274,7 +274,7 @@
 }
 
 .notification-header {
-    background: linear-gradient(135deg, var(--navbar-teal) 0%, #14b8a6 100%);
+    background: linear-gradient(135deg, var(--navbar-teal) 0%, #9B1C1C 100%);
     padding: 1rem 1.25rem;
     color: white;
 }
@@ -347,7 +347,7 @@
 
 .profile-trigger:hover {
     color: var(--navbar-teal);
-    background-color: rgba(13, 148, 136, 0.08);
+    background-color: rgba(128, 0, 0, 0.08);
     transform: translateY(-1px);
 }
 
@@ -488,7 +488,7 @@
 }
 
 .dropdown-item:hover {
-    background-color: rgba(13, 148, 136, 0.08);
+    background-color: rgba(128, 0, 0, 0.08);
     color: var(--navbar-teal);
 }
 

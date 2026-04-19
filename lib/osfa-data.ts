@@ -8,6 +8,15 @@ export type ApplicantType  = 'incoming' | 'continuing';
 
 export interface DocItem      { label: string; submitted: boolean; }
 export interface AuditEntry   { date: string; action: string; by: string; }
+export interface Requirement  { id: string; label: string; required: boolean; hint?: string; }
+
+export interface Appeal {
+  status: 'Pending' | 'Approved' | 'Denied';
+  reason: string;
+  submittedDate: string;
+  reviewNote?: string;
+  reviewedDate?: string;
+}
 
 export interface SemesterRecord {
   semester: string;         // '1st Sem' | '2nd Sem'
@@ -45,6 +54,7 @@ export interface Applicant {
   isGraduating?: boolean;
   expectedGraduation?: string;   // e.g. 'May 2026'
   semesterRecords?: SemesterRecord[];
+  appeal?: Appeal;
 }
 
 export interface Scholarship {
@@ -62,6 +72,10 @@ export interface Scholarship {
   status: ScholarshipStatus;
   type: string;
   eligibility: string;
+  colleges?: string[];
+  programs?: string[];
+  coverImage?: string;
+  requirements?: Requirement[];
 }
 
 export const initialApplicants: Applicant[] = [
@@ -225,7 +239,7 @@ export const initialApplicants: Applicant[] = [
     initials: 'JM',
     email: 'jose.mendoza@student.edu.ph',
     contact: '09226789012',
-    school: 'UP Diliman',
+    school: 'PUP Main',
     program: 'BS Mathematics',
     yearLevel: '2nd Year',
     scholarship: 'STEM Innovation Award',
@@ -255,7 +269,7 @@ export const initialApplicants: Applicant[] = [
     initials: 'RV',
     email: 'rosa.villanueva@student.edu.ph',
     contact: '09237890123',
-    school: 'Ateneo',
+    school: 'PUP Main',
     program: 'AB Economics',
     yearLevel: '3rd Year',
     scholarship: 'Academic Excellence Grant',
@@ -284,7 +298,7 @@ export const initialApplicants: Applicant[] = [
     initials: 'MT',
     email: 'marco.delatorre@student.edu.ph',
     contact: '09248901234',
-    school: 'DLSU',
+    school: 'PUP Main',
     program: 'BS Management',
     yearLevel: '4th Year',
     scholarship: 'Community Service Scholarship',
@@ -314,7 +328,7 @@ export const initialApplicants: Applicant[] = [
     initials: 'PL',
     email: 'patricia.lim@student.edu.ph',
     contact: '09259012345',
-    school: 'UST',
+    school: 'PUP Main',
     program: 'BS Nursing',
     yearLevel: '2nd Year',
     scholarship: 'Financial Assistance Program',
@@ -342,7 +356,7 @@ export const initialApplicants: Applicant[] = [
     initials: 'RT',
     email: 'rafael.torres@student.edu.ph',
     contact: '09260123456',
-    school: 'FEU',
+    school: 'PUP Main',
     program: 'BS Accountancy',
     yearLevel: '3rd Year',
     scholarship: 'Financial Assistance Program',
@@ -495,6 +509,16 @@ export const initialScholarships: Scholarship[] = [
     status: 'Active',
     type: 'Merit-Based',
     eligibility: 'GWA of 1.75 or better, full-time enrollment',
+    colleges: [],
+    programs: [],
+    requirements: [
+      { id: 'req_tor',    label: 'Copy of Grades / Transcript of Records (screenshot from SIS accepted)', required: true,  hint: 'PDF or image' },
+      { id: 'req_cor',    label: 'Latest Certificate of Registration / Registration Card',                required: true,  hint: 'PDF or image' },
+      { id: 'req_id',     label: 'Valid Government ID',                                                  required: true,  hint: 'PDF or image' },
+      { id: 'req_form',   label: 'Personal Data Sheet or Application Form',                              required: true,  hint: 'PDF or DOC' },
+      { id: 'req_moral',  label: 'Certificate of Good Moral Character',                                  required: true,  hint: 'PDF or image' },
+      { id: 'req_pic',    label: '2×2 Picture (white background)',                                       required: true,  hint: 'JPG or PNG' },
+    ],
   },
   {
     id: '2',
@@ -511,6 +535,15 @@ export const initialScholarships: Scholarship[] = [
     status: 'Active',
     type: 'STEM Only',
     eligibility: 'STEM course, GWA of 1.80 or better',
+    colleges: ['CE', 'CS', 'CCIS'],
+    programs: [],
+    requirements: [
+      { id: 'req_grades', label: 'Copy of Grades from 1st year to current (screenshot from SIS accepted)', required: true,  hint: 'PDF or image' },
+      { id: 'req_cor',    label: 'Latest Registration Card / Certificate of Registration',                 required: true,  hint: 'PDF or image' },
+      { id: 'req_itr',    label: "Parents'/Guardian's ITR or Certificate of Indigency / Non-payment of ITR", required: true, hint: 'PDF or image' },
+      { id: 'req_form',   label: 'Personal Data Sheet or Application Form',                                required: true,  hint: 'PDF or DOC' },
+      { id: 'req_app',    label: 'Student Application Form (from OSFA)',                                   required: true,  hint: 'PDF or DOC' },
+    ],
   },
   {
     id: '3',
@@ -527,6 +560,16 @@ export const initialScholarships: Scholarship[] = [
     status: 'Draft',
     type: 'Service-Based',
     eligibility: 'Minimum 100 hours of documented community service',
+    colleges: [],
+    programs: [],
+    requirements: [
+      { id: 'req_cor',       label: 'Proof of Enrollment / Certificate of Registration',            required: true,  hint: 'PDF or image' },
+      { id: 'req_service',   label: 'Community service documentation (minimum 100 hours)',           required: true,  hint: 'PDF or image' },
+      { id: 'req_id',        label: 'Valid Government ID',                                          required: true,  hint: 'PDF or image' },
+      { id: 'req_endorse',   label: 'Letter of endorsement from the service organization',          required: true,  hint: 'PDF' },
+      { id: 'req_form',      label: 'Application Form',                                             required: true,  hint: 'PDF or DOC' },
+      { id: 'req_pic',       label: '2×2 Picture (white background)',                               required: false, hint: 'JPG or PNG' },
+    ],
   },
   {
     id: '4',
@@ -543,5 +586,16 @@ export const initialScholarships: Scholarship[] = [
     status: 'Active',
     type: 'Need-Based',
     eligibility: 'Monthly family income below ₱20,000',
+    colleges: [],
+    programs: [],
+    requirements: [
+      { id: 'req_cfwp',     label: 'CFWP Profile Form / Beneficiary Agreement (proceed to Room W119, OSFA, PUP Main to fill out)', required: true,  hint: 'PDF or image' },
+      { id: 'req_id',       label: 'Valid Government ID',                                                                         required: true,  hint: 'PDF or image' },
+      { id: 'req_brgy',     label: 'Barangay Certificate of Eligibility / Indigency',                                             required: true,  hint: 'PDF or image' },
+      { id: 'req_cor',      label: 'Proof of Enrollment — Certificate of Registration (currently enrolled) or Proof of Graduation', required: true, hint: 'PDF or image' },
+      { id: 'req_itr',      label: "Parents'/Guardian's ITR or Certificate of Indigency / Non-payment of ITR",                    required: true,  hint: 'PDF or image' },
+      { id: 'req_consent',  label: 'Parental Consent (required for applicants aged 15–17)',                                       required: false, hint: 'PDF or image' },
+      { id: 'req_pic',      label: '2×2 Picture (white background)',                                                              required: true,  hint: 'JPG or PNG' },
+    ],
   },
 ];

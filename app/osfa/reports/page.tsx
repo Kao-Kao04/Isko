@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
-const TEAL_LIGHT = '#e8faf4';
+const TEAL = '#800000';
+const TEAL_DARK = '#5C0000';
+const TEAL_LIGHT = '#fff5f5';
 
 type ReportTab = 'Overview' | 'Applications' | 'Scholarships' | 'Financial';
 type ReportStatus = 'Completed' | 'Processing' | 'Failed';
@@ -20,7 +20,7 @@ interface Report {
 }
 
 const reportStatusStyle: Record<ReportStatus, { bg: string; color: string; dot: string }> = {
-  Completed:  { bg: '#ecfdf5', color: '#059669', dot: '#10b981' },
+  Completed:  { bg: '#fff5f5', color: '#059669', dot: '#10b981' },
   Processing: { bg: '#eff6ff', color: '#2563eb', dot: '#3b82f6' },
   Failed:     { bg: '#fef2f2', color: '#dc2626', dot: '#ef4444' },
 };
@@ -36,7 +36,7 @@ const reports: Report[] = [
 const overviewStats = [
   { label: 'Total Applicants', value: '128', change: '+12%', up: true, color: '#2563eb', bg: '#eff6ff' },
   { label: 'Active Scholarships', value: '3', change: '+1 this quarter', up: true, color: TEAL, bg: TEAL_LIGHT },
-  { label: 'Approved Applications', value: '67', change: '52.3% approval rate', up: true, color: '#059669', bg: '#ecfdf5' },
+  { label: 'Approved Applications', value: '67', change: '52.3% approval rate', up: true, color: '#059669', bg: '#fff5f5' },
   { label: 'Total Disbursed', value: '₱3.75M', change: '+15% YTD', up: true, color: '#7c3aed', bg: '#f5f3ff' },
 ];
 
@@ -86,7 +86,7 @@ export default function Page() {
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <Link href="/osfa/home" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
+            <Link href="/osfa/dashboard" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
             <span style={{ fontSize: 12, color: '#d1d5db' }}>/</span>
             <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>Reports</span>
           </div>
@@ -250,7 +250,7 @@ export default function Page() {
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
               {[
                 { label: 'View All Applicants', href: '/osfa/applicants' },
-                { label: 'Review Evaluations', href: '/osfa/evaluation' },
+                { label: 'Review Evaluations', href: '/osfa/applicants' },
               ].map((link) => (
                 <Link key={link.label} href={link.href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8, textDecoration: 'none', color: '#374151', fontSize: 13, fontWeight: 500, background: '#fafafa', border: '1px solid #f3f4f6' }}>
                   {link.label}

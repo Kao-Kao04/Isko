@@ -4,8 +4,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
+const TEAL = '#800000';
+const TEAL_DARK = '#5C0000';
 
 const inp: React.CSSProperties = {
   width: '100%',
@@ -40,7 +40,7 @@ export default function Page() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #fffde7 0%, #e8faf4 50%, #b2dfdb 100%)',
+      background: 'linear-gradient(135deg, #fffde7 0%, #fff5f5 50%, #b2dfdb 100%)',
       padding: 24,
     }}>
       {/* Card */}
@@ -59,7 +59,7 @@ export default function Page() {
         <div style={{
           width: 300,
           flexShrink: 0,
-          background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 60%, #0f6b4f 100%)`,
+          background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 60%, #C9A027 100%)`,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "IskoMo",
@@ -29,7 +30,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="/css/ui-polish.css" />
         <script src="https://unpkg.com/@supabase/supabase-js@2" async></script>
       </head>
-      <body>{children}</body>
+      <body><Providers>{children}</Providers></body>
     </html>
   );
 }

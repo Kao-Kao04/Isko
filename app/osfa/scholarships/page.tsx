@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { type Scholarship, type ScholarshipStatus } from '@/lib/osfa-data';
+import { type Scholarship, type ScholarshipStatus, type Requirement } from '@/lib/osfa-data';
 import { useOsfaContext } from '@/lib/osfa-context';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 
-const TEAL = '#1D9E75';
-const TEAL_DARK = '#178a64';
-const TEAL_LIGHT = '#e8faf4';
+const TEAL = '#800000';
+const TEAL_DARK = '#5C0000';
+const TEAL_LIGHT = '#fff5f5';
 
 const statusStyle: Record<ScholarshipStatus, { bg: string; color: string; dot: string }> = {
-  Active:   { bg: '#ecfdf5', color: '#059669', dot: '#10b981' },
+  Active:   { bg: '#fff5f5', color: '#059669', dot: '#10b981' },
   Draft:    { bg: '#f8fafc', color: '#64748b', dot: '#94a3b8' },
   Closed:   { bg: '#fff7ed', color: '#ea580c', dot: '#f97316' },
   Archived: { bg: '#f8fafc', color: '#9ca3af', dot: '#d1d5db' },
@@ -24,9 +24,51 @@ const urgencyStyle: Record<string, { color: string; bg: string }> = {
 };
 
 const SCHOLARSHIP_TYPES = ['Merit-Based', 'Need-Based', 'STEM Only', 'Service-Based', 'Government-Funded', 'Other'];
+
+const PUP_COLLEGES = [
+  { code: 'CAF',   label: 'College of Accountancy and Finance' },
+  { code: 'CADBE', label: 'College of Architecture, Design and the Built Environment' },
+  { code: 'CAL',   label: 'College of Arts and Letters' },
+  { code: 'CBA',   label: 'College of Business Administration' },
+  { code: 'COC',   label: 'College of Communication' },
+  { code: 'CCIS',  label: 'College of Computer and Information Sciences' },
+  { code: 'COED',  label: 'College of Education' },
+  { code: 'CE',    label: 'College of Engineering' },
+  { code: 'CHK',   label: 'College of Human Kinetics' },
+  { code: 'CL',    label: 'College of Law' },
+  { code: 'CPSPA', label: 'College of Political Science and Public Administration' },
+  { code: 'CS',    label: 'College of Science' },
+  { code: 'CSSD',  label: 'College of Social Sciences and Development' },
+  { code: 'CTHTM', label: 'College of Tourism, Hospitality and Transportation Management' },
+];
+
+const COMMON_REQS = [
+  'Copy of Grades / Transcript of Records',
+  'Certificate of Registration / Proof of Enrollment',
+  'Valid Government ID',
+  'Barangay Certificate of Indigency / Eligibility',
+  "Parents'/Guardian's ITR or Certificate of Non-payment",
+  'Personal Data Sheet or Application Form',
+  'Student Application Form (from OSFA)',
+  'Certificate of Good Moral Character',
+  'CFWP Profile Form / Beneficiary Agreement',
+  'Parental Consent (Age 15–17)',
+  '2×2 Picture (white background)',
+  'Community Service Documentation',
+  'Letter of Endorsement',
+  'Proof of Graduation',
+];
+
 const EMPTY_FORM = {
   title: '', description: '', amount: '', period: 'per semester',
-  deadline: '', slots: '', type: 'Merit-Based', eligibility: '', status: 'Draft' as ScholarshipStatus,
+  deadline: '', slots: '', type: 'Merit-Based', eligibility: '',
+  status: 'Draft' as ScholarshipStatus,
+  colleges: [] as string[],
+  programs: [] as string[],
+  coverImage: '',
+  programInput: '',
+  requirements: [] as Requirement[],
+  reqInput: '',
 };
 
 export default function Page() {
@@ -43,6 +85,7 @@ export default function Page() {
   const [confirmArchive, setConfirmArchive]   = useState<Scholarship | null>(null);
   const [confirmClose, setConfirmClose]       = useState<Scholarship | null>(null);
   const [confirmPublish, setConfirmPublish]   = useState<Scholarship | null>(null);
+  const [confirmDelete, setConfirmDelete]     = useState<Scholarship | null>(null);
   const [archiveConfirmText, setArchiveConfirmText] = useState('');
 
   const filtered = scholarships.filter(s => {
@@ -79,6 +122,12 @@ export default function Page() {
       type: s.type,
       eligibility: s.eligibility,
       status: s.status,
+      colleges: s.colleges ?? [],
+      programs: s.programs ?? [],
+      coverImage: s.coverImage ?? '',
+      requirements: s.requirements ?? [],
+      programInput: '',
+      reqInput: '',
     });
     setShowForm(true);
     setOpenMenuId(null);
@@ -96,7 +145,7 @@ export default function Page() {
 
     if (editingId) {
       setScholarships(prev => prev.map(s => s.id === editingId
-        ? { ...s, title: form.title, description: form.description, amount: `₱${amountRaw.toLocaleString()}`, amountRaw, period: form.period, deadline, daysLeft, urgency, slots: parseInt(form.slots) || s.slots, type: form.type, eligibility: form.eligibility }
+        ? { ...s, title: form.title, description: form.description, amount: `₱${amountRaw.toLocaleString()}`, amountRaw, period: form.period, deadline, daysLeft, urgency, slots: parseInt(form.slots) || s.slots, type: form.type, eligibility: form.eligibility, colleges: form.colleges, programs: form.programs, coverImage: form.coverImage || undefined, requirements: form.requirements }
         : s
       ));
       addToast('success', `"${form.title}" updated successfully.`);
@@ -116,6 +165,10 @@ export default function Page() {
         status: 'Draft',
         type: form.type,
         eligibility: form.eligibility,
+        colleges: form.colleges,
+        programs: form.programs,
+        coverImage: form.coverImage || undefined,
+        requirements: form.requirements.length > 0 ? form.requirements : undefined,
       };
       setScholarships(prev => [newScholarship, ...prev]);
       addToast('success', `"${form.title}" created as a Draft.`);
@@ -159,8 +212,70 @@ export default function Page() {
     setArchiveConfirmText('');
   }
 
-  function setField(key: keyof typeof EMPTY_FORM, value: string) {
+  function deleteScholarship(id: string) {
+    setScholarships(prev => prev.filter(s => s.id !== id));
+    addToast('error', 'Scholarship permanently deleted.');
+    setConfirmDelete(null);
+  }
+
+  function setField(key: keyof typeof EMPTY_FORM, value: string | string[]) {
     setForm(prev => ({ ...prev, [key]: value }));
+  }
+
+  function toggleCollege(code: string) {
+    setForm(prev => ({
+      ...prev,
+      colleges: prev.colleges.includes(code)
+        ? prev.colleges.filter(c => c !== code)
+        : [...prev.colleges, code],
+    }));
+  }
+
+  function addProgram() {
+    const val = form.programInput.trim();
+    if (!val || form.programs.includes(val)) return;
+    setForm(prev => ({ ...prev, programs: [...prev.programs, val], programInput: '' }));
+  }
+
+  function removeProgram(p: string) {
+    setForm(prev => ({ ...prev, programs: prev.programs.filter(x => x !== p) }));
+  }
+
+  function addRequirement(label: string) {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    if (form.requirements.some(r => r.label.toLowerCase() === trimmed.toLowerCase())) return;
+    const req: Requirement = { id: `req_${Date.now()}`, label: trimmed, required: true };
+    setForm(prev => ({ ...prev, requirements: [...prev.requirements, req], reqInput: '' }));
+  }
+
+  function removeRequirement(id: string) {
+    setForm(prev => ({ ...prev, requirements: prev.requirements.filter(r => r.id !== id) }));
+  }
+
+  function toggleReqRequired(id: string) {
+    setForm(prev => ({
+      ...prev,
+      requirements: prev.requirements.map(r => r.id === id ? { ...r, required: !r.required } : r),
+    }));
+  }
+
+  function moveReq(index: number, dir: -1 | 1) {
+    setForm(prev => {
+      const arr = [...prev.requirements];
+      const target = index + dir;
+      if (target < 0 || target >= arr.length) return prev;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      return { ...prev, requirements: arr };
+    });
+  }
+
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setForm(prev => ({ ...prev, coverImage: ev.target?.result as string }));
+    reader.readAsDataURL(file);
   }
 
   const inputStyle: React.CSSProperties = {
@@ -178,7 +293,7 @@ export default function Page() {
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <Link href="/osfa/home" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
+            <Link href="/osfa/dashboard" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
             <span style={{ fontSize: 12, color: '#d1d5db' }}>/</span>
             <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>Scholarships</span>
           </div>
@@ -229,7 +344,12 @@ export default function Page() {
             const isArchived  = s.status === 'Archived';
             return (
               <div key={s.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', opacity: isArchived ? 0.72 : 1 }}>
-                <div style={{ height: 4, background: s.status === 'Active' ? `linear-gradient(90deg, ${TEAL}, ${TEAL_DARK})` : s.status === 'Draft' ? '#94a3b8' : s.status === 'Closed' ? '#f97316' : '#d1d5db' }} />
+                {s.coverImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={s.coverImage} alt={s.title} style={{ width: '100%', height: 120, objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ height: 4, background: s.status === 'Active' ? `linear-gradient(90deg, ${TEAL}, ${TEAL_DARK})` : s.status === 'Draft' ? '#94a3b8' : s.status === 'Closed' ? '#f97316' : '#d1d5db' }} />
+                )}
 
                 <div style={{ padding: '18px 20px', flex: 1 }}>
                   {/* Header */}
@@ -251,6 +371,7 @@ export default function Page() {
                             { label: 'Reopen Applications',color: '#2563eb', show: s.status === 'Closed',            action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
                             { label: 'Close Applications', color: '#ea580c', show: s.status === 'Active',            action: () => { setConfirmClose(s); setOpenMenuId(null); } },
                             { label: 'Archive',            color: '#dc2626', show: !isArchived,                     action: () => { setConfirmArchive(s); setArchiveConfirmText(''); setOpenMenuId(null); } },
+                            { label: 'Delete',             color: '#dc2626', show: true,                             action: () => { setConfirmDelete(s); setOpenMenuId(null); } },
                           ].filter(item => item.show).map(item => (
                             <button key={item.label} onClick={item.action} style={{ width: '100%', padding: '10px 16px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, fontWeight: 500, color: item.color, cursor: 'pointer', display: 'block' }}
                               onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
@@ -301,6 +422,16 @@ export default function Page() {
                       <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                         <span style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.4 }}>{s.eligibility}</span>
+                      </div>
+                    )}
+                    {(s.colleges ?? []).length > 0 && (
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0, marginTop: 3 }}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {(s.colleges ?? []).map(c => (
+                            <span key={c} style={{ fontSize: 11, fontWeight: 600, color: TEAL_DARK, background: TEAL_LIGHT, padding: '2px 8px', borderRadius: 20, border: `1px solid #F5D060` }}>{c}</span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -388,6 +519,144 @@ export default function Page() {
               <div>
                 <label style={labelStyle}>Eligibility Requirements</label>
                 <input type="text" value={form.eligibility} onChange={e => setField('eligibility', e.target.value)} placeholder="e.g., GWA of 1.75 or better, full-time enrollment" style={inputStyle} />
+              </div>
+
+              {/* Colleges / Departments */}
+              <div>
+                <label style={labelStyle}>Eligible Colleges / Departments</label>
+                <p style={{ margin: '0 0 10px', fontSize: 12, color: '#94a3b8' }}>Leave all unchecked to allow all colleges.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  {PUP_COLLEGES.map(col => {
+                    const checked = form.colleges.includes(col.code);
+                    return (
+                      <label key={col.code} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, border: `1px solid ${checked ? '#86efac' : '#e5e7eb'}`, background: checked ? '#f0fdf4' : '#f9fafb', cursor: 'pointer', fontSize: 12, color: checked ? '#065f46' : '#374151', fontWeight: checked ? 600 : 400 }}>
+                        <input type="checkbox" checked={checked} onChange={() => toggleCollege(col.code)} style={{ accentColor: TEAL, width: 13, height: 13, flexShrink: 0 }} />
+                        <span><strong>{col.code}</strong> — {col.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Specific Programs */}
+              <div>
+                <label style={labelStyle}>Specific Programs <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+                <p style={{ margin: '0 0 8px', fontSize: 12, color: '#94a3b8' }}>Add specific degree programs if this scholarship is not open to all programs in the selected colleges.</p>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                  <input
+                    type="text"
+                    value={form.programInput}
+                    onChange={e => setField('programInput', e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addProgram())}
+                    placeholder="e.g., BS Computer Science — press Enter to add"
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button type="button" onClick={addProgram} style={{ padding: '9px 14px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Add</button>
+                </div>
+                {form.programs.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {form.programs.map(p => (
+                      <span key={p} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: TEAL_LIGHT, border: `1px solid #F5D060`, fontSize: 12, color: TEAL_DARK, fontWeight: 600 }}>
+                        {p}
+                        <button onClick={() => removeProgram(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEAL_DARK, padding: 0, display: 'flex', alignItems: 'center', lineHeight: 1 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Required Documents / Checklist ─────────────────── */}
+              <div>
+                <label style={labelStyle}>
+                  Required Documents Checklist
+                  <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginLeft: 6 }}>(students upload these when applying)</span>
+                </label>
+
+                {/* Quick-add chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                  {COMMON_REQS.filter(r => !form.requirements.some(req => req.label === r)).map(r => (
+                    <button key={r} type="button" onClick={() => addRequirement(r)}
+                      style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px dashed #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer', fontWeight: 500 }}>
+                      + {r}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Manual add */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  <input
+                    type="text"
+                    value={form.reqInput}
+                    onChange={e => setForm(prev => ({ ...prev, reqInput: e.target.value }))}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addRequirement(form.reqInput))}
+                    placeholder="Type a custom requirement and press Enter..."
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button type="button" onClick={() => addRequirement(form.reqInput)}
+                    style={{ padding: '9px 14px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                    Add
+                  </button>
+                </div>
+
+                {/* Requirements list */}
+                {form.requirements.length === 0 ? (
+                  <div style={{ padding: '14px 16px', background: '#f9fafb', borderRadius: 8, border: '1px dashed #e5e7eb', fontSize: 13, color: '#9ca3af', textAlign: 'center' }}>
+                    No requirements added yet. Use the chips above or type a custom one.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {form.requirements.map((req, i) => (
+                      <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                        <span style={{ fontSize: 13, color: '#374151', flex: 1, lineHeight: 1.4 }}>{i + 1}. {req.label}</span>
+                        <button type="button" onClick={() => toggleReqRequired(req.id)}
+                          style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                            background: req.required ? '#fee2e2' : '#f3f4f6',
+                            color: req.required ? '#dc2626' : '#9ca3af',
+                          }}>
+                          {req.required ? 'REQUIRED' : 'OPTIONAL'}
+                        </button>
+                        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                          <button type="button" onClick={() => moveReq(i, -1)} disabled={i === 0}
+                            style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #e5e7eb', background: '#fff', cursor: i === 0 ? 'not-allowed' : 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="18 15 12 9 6 15"/></svg>
+                          </button>
+                          <button type="button" onClick={() => moveReq(i, 1)} disabled={i === form.requirements.length - 1}
+                            style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #e5e7eb', background: '#fff', cursor: i === form.requirements.length - 1 ? 'not-allowed' : 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"/></svg>
+                          </button>
+                        </div>
+                        <button type="button" onClick={() => removeRequirement(req.id)}
+                          style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 5, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cover Image */}
+              <div>
+                <label style={labelStyle}>Scholarship Poster / Cover Image <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+                <p style={{ margin: '0 0 8px', fontSize: 12, color: '#94a3b8' }}>Upload the official poster from the awarding organization (e.g., CHED, DOST announcement).</p>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', border: '1.5px dashed #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 13, color: '#6b7280', background: '#f9fafb', flexShrink: 0 }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    {form.coverImage ? 'Change Image' : 'Upload Image'}
+                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                  </label>
+                  {form.coverImage && (
+                    <div style={{ position: 'relative' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={form.coverImage} alt="Cover preview" style={{ height: 64, borderRadius: 8, border: '1px solid #e5e7eb', objectFit: 'cover' }} />
+                      <button onClick={() => setField('coverImage', '')} style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: '#dc2626', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -487,6 +756,30 @@ export default function Page() {
                 style={{ flex: 1, padding: 10, background: archiveConfirmText === confirmArchive.title ? '#dc2626' : '#fca5a5', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: archiveConfirmText === confirmArchive.title ? 'pointer' : 'not-allowed', color: '#fff' }}>
                 Archive Scholarship
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Delete confirmation ──────────────────────────────────── */}
+      {confirmDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setConfirmDelete(null)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </div>
+            <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Delete Scholarship</h2>
+            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
+              <strong>{confirmDelete.title}</strong> will be permanently deleted. This cannot be undone.
+            </p>
+            {confirmDelete.applicants > 0 && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#991b1b' }}>
+                <strong>Warning:</strong> This scholarship has <strong>{confirmDelete.applicants}</strong> existing applicant{confirmDelete.applicants !== 1 ? 's' : ''}. Their applications will also be removed.
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
+              <button onClick={() => deleteScholarship(confirmDelete.id)} style={{ flex: 1, padding: 10, background: '#dc2626', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff' }}>Delete Permanently</button>
             </div>
           </div>
         </div>

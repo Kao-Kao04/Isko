@@ -4,19 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-const TEAL = '#1D9E75';
-const TEAL_LIGHT = '#e8faf4';
-
-const navBadges: Record<string, number> = {
-  '/osfa/notifications': 3,
-  '/osfa/applicants': 12,
-  '/osfa/evaluation': 5,
-};
+const MAROON       = '#800000';
+const MAROON_LIGHT = '#fff5f5';
 
 const osfaNavLinks = [
   {
-    href: '/osfa/home',
-    label: 'Home',
+    href: '/osfa/dashboard',
+    label: 'Dashboard',
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -47,12 +41,12 @@ const osfaNavLinks = [
     ),
   },
   {
-    href: '/osfa/evaluation',
-    label: 'Evaluation',
+    href: '/osfa/scholars',
+    label: 'Scholars',
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 11l3 3L22 4"/>
-        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
       </svg>
     ),
   },
@@ -95,9 +89,8 @@ export default function OsfaNav() {
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 1 }} role="navigation" aria-label="OSFA navigation">
       {osfaNavLinks.map((link) => {
-        const isActive = pathname === link.href;
-        const isHov = hovered === link.href;
-        const badge = navBadges[link.href];
+        const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+        const isHov    = hovered === link.href;
 
         return (
           <Link
@@ -114,8 +107,8 @@ export default function OsfaNav() {
               padding: '6px 11px',
               borderRadius: 9,
               textDecoration: 'none',
-              color: isActive ? TEAL : isHov ? '#374151' : '#6b7280',
-              background: isActive ? TEAL_LIGHT : isHov ? '#f3f4f6' : 'transparent',
+              color: isActive ? MAROON : isHov ? '#374151' : '#6b7280',
+              background: isActive ? MAROON_LIGHT : isHov ? '#f3f4f6' : 'transparent',
               fontWeight: isActive ? 700 : 500,
               fontSize: 10.5,
               minWidth: 52,
@@ -123,7 +116,6 @@ export default function OsfaNav() {
               transition: 'all 0.15s ease',
             }}
           >
-            {/* Active indicator dot */}
             {isActive && (
               <span style={{
                 position: 'absolute',
@@ -133,29 +125,12 @@ export default function OsfaNav() {
                 width: 18,
                 height: 2.5,
                 borderRadius: 99,
-                background: TEAL,
+                background: MAROON,
               }} />
             )}
-
-            <span style={{
-              color: isActive ? TEAL : isHov ? '#374151' : '#9ca3af',
-              display: 'flex',
-              position: 'relative',
-              transition: 'color 0.15s ease',
-            }}>
+            <span style={{ color: isActive ? MAROON : isHov ? '#374151' : '#9ca3af', display: 'flex', transition: 'color 0.15s ease' }}>
               {link.icon}
-              {badge && !isActive && (
-                <span style={{
-                  position: 'absolute', top: -5, right: -7,
-                  background: '#ef4444', color: '#fff',
-                  fontSize: 8, fontWeight: 700, lineHeight: 1,
-                  padding: '2px 4px', borderRadius: 99,
-                  border: '1.5px solid #fff',
-                  minWidth: 14, textAlign: 'center',
-                }}>{badge}</span>
-              )}
             </span>
-
             <span style={{ letterSpacing: '0.01em' }}>{link.label}</span>
           </Link>
         );
