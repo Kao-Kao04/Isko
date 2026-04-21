@@ -35,6 +35,7 @@ const PUP_COLLEGES = [
   { code: 'COED',  label: 'College of Education' },
   { code: 'CE',    label: 'College of Engineering' },
   { code: 'CHK',   label: 'College of Human Kinetics' },
+  { code: 'ITECH', label: 'Institute of Technology' },
   { code: 'CL',    label: 'College of Law' },
   { code: 'CPSPA', label: 'College of Political Science and Public Administration' },
   { code: 'CS',    label: 'College of Science' },

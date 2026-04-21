@@ -47,6 +47,7 @@ export interface Applicant {
   income: string;
   docs: DocItem[];
   audit: AuditEntry[];
+  rejectedDocs?: string[];  // doc labels OSFA flagged as missing/invalid
   // ── Scholar lifecycle fields ──────────────────────────────────────
   applicantType: ApplicantType;
   hsGrade?: string;              // HS final grade % — for incoming students only
@@ -55,6 +56,15 @@ export interface Applicant {
   expectedGraduation?: string;   // e.g. 'May 2026'
   semesterRecords?: SemesterRecord[];
   appeal?: Appeal;
+}
+
+export interface AppNotification {
+  id: string;
+  type: 'status' | 'deadline' | 'info' | 'approved' | 'rejected' | 'incomplete' | 'resubmit';
+  message: string;
+  time: string;
+  read: boolean;
+  scholarshipId?: string;
 }
 
 export interface Scholarship {
@@ -87,7 +97,7 @@ export const initialApplicants: Applicant[] = [
     email: 'juan.delacruz@student.edu.ph',
     contact: '09171234567',
     school: 'PUP Main',
-    program: 'BS Computer Science',
+    program: 'BS Computer Science (BSCS)',
     yearLevel: '3rd Year',
     scholarship: 'Academic Excellence Grant',
     scholarshipId: '1',

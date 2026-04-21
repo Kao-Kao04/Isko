@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useOsfaContext } from '@/lib/osfa-context';
 import { COLORS } from '@/lib/theme';
+import { MOCK_STUDENT, isEligible } from '@/lib/data/mock-user';
 import ScholarshipCard from '@/components/scholarship/ScholarshipCard';
 import EmptyState from '@/components/ui/EmptyState';
 
 const PUP_COLLEGES = [
   'CAF', 'CADBE', 'CAL', 'CBA', 'COC', 'CCIS', 'COED',
-  'CE', 'CHK', 'CL', 'CPSPA', 'CS', 'CSSD', 'CTHTM',
+  'CE', 'CHK', 'ITECH', 'CL', 'CPSPA', 'CS', 'CSSD', 'CTHTM',
 ];
 
 const TYPES = ['Merit-Based', 'Need-Based', 'STEM Only', 'Service-Based', 'Sports', 'Arts'];
@@ -123,7 +124,7 @@ export default function IskolarshipsPage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
             {filtered.map(s => (
-              <ScholarshipCard key={s.id} scholarship={s} variant="grid" bookmarked={bookmarked.has(s.id)} onBookmark={toggleBookmark} />
+              <ScholarshipCard key={s.id} scholarship={s} variant="grid" bookmarked={bookmarked.has(s.id)} onBookmark={toggleBookmark} eligible={isEligible(s.colleges, s.programs, MOCK_STUDENT)} />
             ))}
           </div>
         )}

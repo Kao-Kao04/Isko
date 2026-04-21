@@ -1,7 +1,5 @@
+import LoadingScreen from '@/components/ui/LoadingScreen';
+
 export default function OsfaLoading() {
-  return (
-    <div className="dashboard-container" style={{ padding: '2rem' }}>
-      <div className="skeleton-loader" aria-label="Loading..." />
-    </div>
-  );
+  return <LoadingScreen label="Loading OSFA Portal…" />;
 }

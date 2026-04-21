@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useOsfaContext } from '@/lib/osfa-context';
 
 const MAROON       = '#800000';
 const MAROON_LIGHT = '#fff5f5';
@@ -85,12 +86,16 @@ const osfaNavLinks = [
 export default function OsfaNav() {
   const pathname = usePathname();
   const [hovered, setHovered] = useState<string | null>(null);
+  const { applicants } = useOsfaContext();
+
+  const pendingCount = applicants.filter(a => a.status === 'Pending').length;
 
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 1 }} role="navigation" aria-label="OSFA navigation">
       {osfaNavLinks.map((link) => {
         const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
         const isHov    = hovered === link.href;
+        const badge    = link.href === '/osfa/applicants' && pendingCount > 0 ? pendingCount : null;
 
         return (
           <Link
@@ -128,8 +133,20 @@ export default function OsfaNav() {
                 background: MAROON,
               }} />
             )}
-            <span style={{ color: isActive ? MAROON : isHov ? '#374151' : '#9ca3af', display: 'flex', transition: 'color 0.15s ease' }}>
+            <span style={{ color: isActive ? MAROON : isHov ? '#374151' : '#9ca3af', display: 'flex', transition: 'color 0.15s ease', position: 'relative' }}>
               {link.icon}
+              {badge !== null && (
+                <span style={{
+                  position: 'absolute', top: -5, right: -7,
+                  minWidth: 15, height: 15, borderRadius: 99,
+                  background: MAROON, color: '#fff',
+                  fontSize: 8, fontWeight: 800,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1.5px solid #fff', padding: '0 3px', lineHeight: 1,
+                }}>
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
             </span>
             <span style={{ letterSpacing: '0.01em' }}>{link.label}</span>
           </Link>

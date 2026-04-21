@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useOsfaContext } from '@/lib/osfa-context';
 import { COLORS } from '@/lib/theme';
-import { MOCK_STUDENT } from '@/lib/data/mock-user';
+import { MOCK_STUDENT, isEligible } from '@/lib/data/mock-user';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import type { Applicant } from '@/lib/osfa-data';
@@ -24,7 +24,7 @@ export default function ApplyPage() {
   const router      = useRouter();
   const searchParams = useSearchParams();
   const isResubmit  = searchParams.get('resubmit') === 'true';
-  const { scholarships, applicants, setApplicants } = useOsfaContext();
+  const { scholarships, applicants, setApplicants, setScholarships, addNotification } = useOsfaContext();
 
   const scholarship    = scholarships.find(s => s.id === id);
   const existingApp    = applicants.find(a => a.email === MOCK_STUDENT.email && a.scholarshipId === id);
@@ -40,6 +40,7 @@ export default function ApplyPage() {
 
   const [files,      setFiles]      = useState<Record<string, string>>({});
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+  const [uploading,  setUploading]  = useState<Record<string, number>>({});
   const [essay,      setEssay]      = useState('');
   const [agreed,     setAgreed]     = useState({ declaration: false, terms: false });
   const [submitted,  setSubmitted]  = useState(false);
@@ -75,13 +76,11 @@ export default function ApplyPage() {
     const f = e.target.files?.[0];
     if (!f) return;
 
-    // Size validation
     if (f.size > MAX_FILE_BYTES) {
       setFileErrors(prev => ({ ...prev, [key]: `File too large (${(f.size / 1024 / 1024).toFixed(1)}MB). Max is 5MB.` }));
       e.target.value = '';
       return;
     }
-    // Type validation
     const allowed = e.target.accept.split(',').map(s => s.trim().replace('.', ''));
     const ext = f.name.split('.').pop()?.toLowerCase() ?? '';
     if (!allowed.includes(ext)) {
@@ -91,7 +90,21 @@ export default function ApplyPage() {
     }
 
     setFileErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
-    setFiles(prev => ({ ...prev, [key]: f.name }));
+
+    // Simulate upload progress
+    const fileName = f.name;
+    setUploading(prev => ({ ...prev, [key]: 0 }));
+    let pct = 0;
+    const tick = setInterval(() => {
+      pct += Math.random() * 28 + 12;
+      if (pct >= 100) {
+        clearInterval(tick);
+        setUploading(prev => { const n = { ...prev }; delete n[key]; return n; });
+        setFiles(prev => ({ ...prev, [key]: fileName }));
+      } else {
+        setUploading(prev => ({ ...prev, [key]: Math.round(pct) }));
+      }
+    }, 100);
   }
 
   function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -104,13 +117,14 @@ export default function ApplyPage() {
     const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     if (isResubmit && existingApp) {
-      // Update existing Incomplete application
       setApplicants(prev => prev.map(a => a.id === existingApp.id ? {
         ...a,
         status: 'Pending' as const,
+        rejectedDocs: [],
         docs: docsConfig.map(d => ({ label: d.label, submitted: !!files[d.id] })),
         audit: [...a.audit, { date: today, action: 'Documents resubmitted via Student Portal', by: 'Student' }],
       } : a));
+      addNotification({ type: 'resubmit', message: `Your updated documents for ${scholarship.title} have been received. Your application is back under review.`, scholarshipId: scholarship.id });
     } else {
       const newApplicant: Applicant = {
         id: String(Date.now()),
@@ -127,6 +141,11 @@ export default function ApplyPage() {
         audit: [{ date: today, action: 'Application submitted via Student Portal', by: 'Student' }],
       };
       setApplicants(prev => [...prev, newApplicant]);
+      // Increment scholarship applicant count
+      setScholarships(prev => prev.map(s =>
+        s.id === scholarship.id ? { ...s, applicants: s.applicants + 1 } : s
+      ));
+      addNotification({ type: 'info', message: `Your application for ${scholarship.title} has been received by OSFA. You will be notified of updates.`, scholarshipId: scholarship.id });
     }
     clearDraft();
     setShowModal(false);
@@ -172,6 +191,62 @@ export default function ApplyPage() {
         <button onClick={() => router.push('/student/iskolarships')} style={{ marginTop: 16, padding: '10px 24px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
           Back to Iskolarships
         </button>
+      </div>
+    );
+  }
+
+  // ── Not eligible ─────────────────────────────────────────────────────────
+  if (!isEligible(scholarship.colleges, scholarship.programs, MOCK_STUDENT)) {
+    const restrictedColleges = scholarship.colleges ?? [];
+    const restrictedPrograms = scholarship.programs ?? [];
+    return (
+      <div style={{ maxWidth: 600, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '48px 40px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Not Eligible</div>
+          <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 16, lineHeight: 1.6 }}>
+            <strong>{scholarship.title}</strong> is restricted to specific colleges or programs and you do not meet the requirements.
+          </div>
+          {(restrictedColleges.length > 0 || restrictedPrograms.length > 0) && (
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '14px 18px', marginBottom: 24, textAlign: 'left' }}>
+              {restrictedColleges.length > 0 && (
+                <div style={{ marginBottom: restrictedPrograms.length > 0 ? 10 : 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Open to Colleges</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {restrictedColleges.map(c => (
+                      <span key={c} style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: c === MOCK_STUDENT.college ? '#fef2f2' : '#f3f4f6', color: c === MOCK_STUDENT.college ? '#dc2626' : '#374151', border: `1px solid ${c === MOCK_STUDENT.college ? '#fca5a5' : '#e5e7eb'}` }}>{c}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {restrictedPrograms.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Open to Programs</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {restrictedPrograms.map(p => (
+                      <span key={p} style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}>{p}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{ marginTop: 12, fontSize: 12, color: '#6b7280' }}>
+                Your college: <strong>{MOCK_STUDENT.college}</strong> · Program: <strong>{MOCK_STUDENT.program}</strong>
+              </div>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <button onClick={() => router.push('/student/iskolarships')} style={{ background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              Browse Other Scholarships
+            </button>
+            <button onClick={() => router.back()} style={{ background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 8, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              Go Back
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -290,33 +365,55 @@ export default function ApplyPage() {
         <div style={sectionStyle}>
           <div style={sectionTitle}>Required Documents</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
-            {docsConfig.map(doc => (
-              <div key={doc.id}>
-                <label style={labelStyle}>
-                  {doc.label} {doc.required && <span style={{ color: '#dc2626' }}>*</span>}
-                </label>
-                <label htmlFor={doc.id} style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  border: `2px dashed ${fileErrors[doc.id] ? '#dc2626' : files[doc.id] ? COLORS.maroon : '#d1d5db'}`,
-                  borderRadius: 10, padding: '20px 16px', cursor: 'pointer',
-                  background: fileErrors[doc.id] ? '#fef2f2' : files[doc.id] ? '#fff5f5' : '#fafafa',
-                  transition: 'all 0.15s',
-                }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={fileErrors[doc.id] ? '#dc2626' : files[doc.id] ? COLORS.maroon : '#9ca3af'} strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                  </svg>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: fileErrors[doc.id] ? '#dc2626' : files[doc.id] ? COLORS.maroonD : '#374151', textAlign: 'center' }}>
-                    {files[doc.id] || 'Click to upload'}
-                  </span>
-                  <span style={{ fontSize: 11, color: '#9ca3af' }}>{doc.hint}</span>
-                  <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required} style={{ display: 'none' }} onChange={e => handleFileChange(e, doc.id)} />
-                </label>
-                {fileErrors[doc.id] && (
-                  <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{fileErrors[doc.id]}</p>
-                )}
-              </div>
-            ))}
+            {docsConfig.map(doc => {
+              const isUploading = uploading[doc.id] !== undefined;
+              const pct = uploading[doc.id] ?? 0;
+              const hasFile = !!files[doc.id];
+              const hasError = !!fileErrors[doc.id];
+              return (
+                <div key={doc.id}>
+                  <label style={labelStyle}>
+                    {doc.label} {doc.required && <span style={{ color: '#dc2626' }}>*</span>}
+                  </label>
+                  <label htmlFor={doc.id} style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    border: `2px dashed ${hasError ? '#dc2626' : hasFile ? COLORS.maroon : isUploading ? COLORS.maroon : '#d1d5db'}`,
+                    borderRadius: 10, padding: '20px 16px', cursor: isUploading ? 'default' : 'pointer',
+                    background: hasError ? '#fef2f2' : hasFile ? '#fff5f5' : isUploading ? '#fff5f5' : '#fafafa',
+                    transition: 'all 0.15s', position: 'relative', overflow: 'hidden',
+                  }}>
+                    {isUploading ? (
+                      <>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={COLORS.maroon} strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                        </svg>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.maroon }}>Uploading… {pct}%</span>
+                        <div style={{ width: '100%', height: 4, background: '#fecaca', borderRadius: 99, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${COLORS.maroon}, #C9A027)`, borderRadius: 99, transition: 'width 0.1s linear' }} />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#9ca3af'} strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: hasError ? '#dc2626' : hasFile ? COLORS.maroonD : '#374151', textAlign: 'center' }}>
+                          {hasFile ? (
+                            <><span style={{ color: '#15803d', marginRight: 4 }}>✓</span>{files[doc.id]}</>
+                          ) : 'Click to upload'}
+                        </span>
+                        <span style={{ fontSize: 11, color: '#9ca3af' }}>{doc.hint}</span>
+                      </>
+                    )}
+                    <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required && !hasFile} style={{ display: 'none' }} onChange={e => handleFileChange(e, doc.id)} disabled={isUploading} />
+                  </label>
+                  {hasError && (
+                    <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{fileErrors[doc.id]}</p>
+                  )}
+                </div>
+              );
+            })}
 
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>

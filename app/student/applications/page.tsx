@@ -147,6 +147,12 @@ export default function ApplicationsPage() {
                         <h3 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#111827' }}>{app.scholarship}</h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <Badge label={app.status} bg={badge.bg} color={badge.color} />
+                          {app.evalStatus === 'In Progress' && app.status !== 'Approved' && app.status !== 'Rejected' && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 9px', borderRadius: 20, background: '#eff6ff', color: '#0369a1', fontSize: 11, fontWeight: 700, border: '1px solid #bfdbfe' }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0369a1', animation: 'pulse 1.5s infinite' }} />
+                              Evaluating
+                            </span>
+                          )}
                           <span style={{ fontSize: 12, color: '#6b7280' }}>Submitted {app.applied}</span>
                           {lastAudit && (
                             <span style={{ fontSize: 12, color: '#9ca3af' }}>· Updated {lastAudit.date}</span>
@@ -182,11 +188,17 @@ export default function ApplicationsPage() {
                             Withdraw
                           </button>
                         )}
+                        <Link
+                          href={`/student/applications/${app.id}`}
+                          style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, color: '#374151', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          View Details
+                        </Link>
                         <button
                           onClick={() => setExpanded(isOpen ? null : app.id)}
                           style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#374151', display: 'flex', alignItems: 'center', gap: 4 }}
                         >
-                          {isOpen ? 'Collapse' : 'View Progress'}
+                          {isOpen ? 'Collapse' : 'Progress'}
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
                             style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
                             <polyline points="6 9 12 15 18 9"/>

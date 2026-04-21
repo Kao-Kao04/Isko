@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { PUP_COLLEGE_PROGRAMS } from '@/lib/data/mock-user';
 
 const TEAL = '#800000';
 const TEAL_DARK = '#5C0000';
@@ -31,40 +32,23 @@ const lbl: React.CSSProperties = {
 
 const req = <span style={{ color: '#ef4444', marginLeft: 2 }}>*</span>;
 
-const collegePrograms: Record<string, string[]> = {
-  CAF:   ['BS Accountancy', 'BS Internal Auditing', 'BS Management Accounting'],
-  CADBE: ['BS Architecture', 'BS Interior Design', 'Bachelor of Landscape Architecture'],
-  CAL:   ['AB Communication Arts', 'AB English Language Studies', 'AB Filipino', 'AB Literature in English'],
-  CBA:   ['BS Business Administration – Business Economics', 'BS Business Administration – Financial Management', 'BS Business Administration – Human Resource Development Management', 'BS Business Administration – Marketing Management', 'BS Business Administration – Operations Management'],
-  COC:   ['BA Communication – Broadcasting', 'BA Communication – Journalism', 'BA Communication – Media Studies'],
-  CCIS:  ['BS Computer Science', 'BS Information Technology', 'BS Information Systems'],
-  COED:  ['Bachelor of Elementary Education', 'Bachelor of Secondary Education', 'Bachelor of Early Childhood Education'],
-  CE:    ['BS Chemical Engineering', 'BS Civil Engineering', 'BS Electrical Engineering', 'BS Electronics Engineering', 'BS Industrial Engineering', 'BS Mechanical Engineering'],
-  CHK:   ['BS Exercise and Sports Science', 'Bachelor of Physical Education'],
-  CL:    ['Juris Doctor'],
-  CPSPA: ['AB Political Science', 'BS Public Administration'],
-  CSSD:  ['BS Social Work', 'AB Sociology', 'BS Economics'],
-  CS:    ['BS Applied Physics', 'BS Biology', 'BS Chemistry', 'BS Mathematics', 'BS Statistics'],
-  CTHTM: ['BS Hotel and Restaurant Management', 'BS Tourism Management', 'BS Transportation Management'],
-  ITECH: ['BS Industrial Technology'],
-};
 
 const colleges = [
   { value: 'CAF',   label: 'College of Accountancy and Finance (CAF)' },
-  { value: 'CADBE', label: 'College of Architecture, Design and the Built Environment (CADBE)' },
-  { value: 'CAL',   label: 'College of Arts and Letters (CAL)' },
   { value: 'CBA',   label: 'College of Business Administration (CBA)' },
   { value: 'COC',   label: 'College of Communication (COC)' },
   { value: 'CCIS',  label: 'College of Computer and Information Sciences (CCIS)' },
   { value: 'COED',  label: 'College of Education (COED)' },
   { value: 'CE',    label: 'College of Engineering (CE)' },
-  { value: 'CHK',   label: 'College of Human Kinetics (CHK)' },
-  { value: 'CL',    label: 'College of Law (CL)' },
+  { value: 'CADBE', label: 'College of Architecture, Design and the Built Environment (CADBE)' },
+  { value: 'CAL',   label: 'College of Arts and Letters (CAL)' },
   { value: 'CPSPA', label: 'College of Political Science and Public Administration (CPSPA)' },
   { value: 'CSSD',  label: 'College of Social Sciences and Development (CSSD)' },
   { value: 'CS',    label: 'College of Science (CS)' },
-  { value: 'CTHTM', label: 'College of Tourism, Hospitality and Transportation Management (CTHTM)' },
+  { value: 'CL',    label: 'College of Law (CL)' },
   { value: 'ITECH', label: 'Institute of Technology (ITECH)' },
+  { value: 'CHK',   label: 'College of Human Kinetics (CHK)' },
+  { value: 'CTHTM', label: 'College of Tourism, Hospitality and Transportation Management (CTHTM)' },
 ];
 
 function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
@@ -111,7 +95,7 @@ export default function Page() {
   const [college, setCollege] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const programs = college ? collegePrograms[college] ?? [] : [];
+  const programs = college ? PUP_COLLEGE_PROGRAMS[college] ?? [] : [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

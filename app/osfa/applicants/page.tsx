@@ -22,7 +22,6 @@ const statusStyle: Record<AppStatus, { bg: string; color: string; dot: string }>
 };
 
 const TERMINAL_STATUSES: AppStatus[] = ['Approved', 'Rejected', 'Duplicate'];
-const scholarships = ['All Scholarships', 'Academic Excellence Grant', 'STEM Innovation Award', 'Community Service Scholarship', 'Financial Assistance Program'];
 const statusFilters: Array<'All' | AppStatus> = ['All', 'Pending', 'Under Review', 'Approved', 'Rejected', 'Incomplete', 'Duplicate'];
 const perPageOptions = [5, 10, 20, 50];
 type SortKey = 'name' | 'school' | 'scholarship' | 'status' | 'applied' | 'gwa';
@@ -49,7 +48,8 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 function ApplicantsContent() {
   const searchParams = useSearchParams();
   const { toasts, addToast, removeToast } = useToast();
-  const { applicants, setApplicants } = useOsfaContext();
+  const { applicants, setApplicants, scholarships: allScholarships, setScholarships, addNotification } = useOsfaContext();
+  const scholarshipOptions = ['All Scholarships', ...allScholarships.map(s => s.title)];
   const [searchQuery, setSearchQuery]   = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState<'All' | AppStatus>((searchParams.get('status') as AppStatus) || 'All');
   const [scholarshipFilter, setScholarshipFilter] = useState(searchParams.get('scholarship') || 'All Scholarships');
@@ -137,7 +137,17 @@ function ApplicantsContent() {
       const a = applicants.find(x => x.id === id);
       return a && !TERMINAL_STATUSES.includes(a.status);
     });
-    setApplicants(prev => prev.map(a => eligibleIds.includes(a.id) ? { ...a, status: 'Approved' as AppStatus } : a));
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    setApplicants(prev => prev.map(a => {
+      if (!eligibleIds.includes(a.id)) return a;
+      addNotification({ type: 'approved', message: `Congratulations! Your application for ${a.scholarship} has been approved.`, scholarshipId: a.scholarshipId });
+      return { ...a, status: 'Approved' as AppStatus, scholarStatus: 'Active' as const, evalStatus: 'Completed' as const, audit: [...a.audit, { date: today, action: 'Application approved', by: 'OSFA Staff' }] };
+    }));
+    // Decrement slots for each approved scholarship
+    const approvedScholarshipIds = eligibleIds.map(id => applicants.find(a => a.id === id)?.scholarshipId).filter(Boolean) as string[];
+    setScholarships(prev => prev.map(s =>
+      approvedScholarshipIds.includes(s.id) ? { ...s, slots: Math.max(0, s.slots - 1) } : s
+    ));
     addToast('success', `${eligibleIds.length} applicant${eligibleIds.length > 1 ? 's' : ''} approved successfully.`);
     setConfirmAction(null);
     setSelectedRows(new Set());
@@ -148,7 +158,12 @@ function ApplicantsContent() {
       const a = applicants.find(x => x.id === id);
       return a && !TERMINAL_STATUSES.includes(a.status);
     });
-    setApplicants(prev => prev.map(a => eligibleIds.includes(a.id) ? { ...a, status: 'Rejected' as AppStatus } : a));
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    setApplicants(prev => prev.map(a => {
+      if (!eligibleIds.includes(a.id)) return a;
+      addNotification({ type: 'rejected', message: `Your application for ${a.scholarship} has been rejected. Reason: ${rejectReason.replace(/_/g, ' ')}${rejectNote ? ' — ' + rejectNote : ''}.`, scholarshipId: a.scholarshipId });
+      return { ...a, status: 'Rejected' as AppStatus, evalStatus: 'Completed' as const, audit: [...a.audit, { date: today, action: `Application rejected — ${rejectReason.replace(/_/g, ' ')}${rejectNote ? ': ' + rejectNote : ''}`, by: 'OSFA Staff' }] };
+    }));
     addToast('error', `${eligibleIds.length} applicant${eligibleIds.length > 1 ? 's' : ''} rejected.`);
     setConfirmAction(null);
     setRejectReason('');
@@ -255,7 +270,7 @@ function ApplicantsContent() {
           <input type="text" placeholder="Search by name, school, email, or program..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }} style={{ width: '100%', paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8, border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#111827', outline: 'none', background: '#f9fafb', boxSizing: 'border-box' }} />
         </div>
         <select value={scholarshipFilter} onChange={e => { setScholarshipFilter(e.target.value); setCurrentPage(1); }} style={{ padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#374151', background: '#f9fafb', outline: 'none', cursor: 'pointer' }}>
-          {scholarships.map(s => <option key={s} value={s}>{s}</option>)}
+          {scholarshipOptions.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         {(searchQuery || statusFilter !== 'All' || scholarshipFilter !== 'All Scholarships') && (
           <button onClick={() => { setSearchQuery(''); setStatusFilter('All'); setScholarshipFilter('All Scholarships'); setCurrentPage(1); }} style={{ padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, color: '#6b7280', background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -338,7 +353,17 @@ function ApplicantsContent() {
                   <td style={{ padding: '12px 14px', color: '#374151', maxWidth: 200 }}>
                     <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.scholarship}</span>
                   </td>
-                  <td style={{ padding: '12px 14px' }}><StatusBadge status={a.status} /></td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <StatusBadge status={a.status} />
+                      {a.status === 'Pending' && a.audit.some(e => e.action.toLowerCase().includes('resubmit')) && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#0369a1', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, padding: '1px 7px', animation: 'pulse 2s infinite' }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#3b82f6' }} />
+                          Resubmitted
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td style={{ padding: '12px 14px', color: '#6b7280', whiteSpace: 'nowrap' }}>{a.applied}</td>
                   <td style={{ padding: '12px 14px', fontWeight: 600, color: parseFloat(a.gwa) <= 1.75 ? '#059669' : parseFloat(a.gwa) <= 2.0 ? '#d97706' : '#dc2626' }}>{a.gwa}</td>
                   <td style={{ padding: '12px 14px' }}>

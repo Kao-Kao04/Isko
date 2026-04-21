@@ -9,9 +9,10 @@ interface Props {
   variant?: 'grid' | 'row';
   bookmarked?: boolean;
   onBookmark?: (id: string) => void;
+  eligible?: boolean;
 }
 
-export default function ScholarshipCard({ scholarship: s, variant = 'grid', bookmarked = false, onBookmark }: Props) {
+export default function ScholarshipCard({ scholarship: s, variant = 'grid', bookmarked = false, onBookmark, eligible = true }: Props) {
   const badge   = TYPE_BADGE[s.type] ?? TYPE_BADGE['Merit-Based'];
   const initials = s.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const colleges = s.colleges ?? [];
@@ -59,14 +60,23 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
             </svg>
           </button>
         )}
-        <Link href={`/student/iskolarships/${s.id}/apply`} style={{
-          flexShrink: 0, padding: '9px 20px',
-          background: `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`,
-          color: '#fff', borderRadius: 10, textDecoration: 'none',
-          fontSize: 13, fontWeight: 700, boxShadow: `0 3px 10px ${COLORS.maroon}50`, whiteSpace: 'nowrap',
-        }}>
-          Apply Now
-        </Link>
+        {eligible ? (
+          <Link href={`/student/iskolarships/${s.id}/apply`} style={{
+            flexShrink: 0, padding: '9px 20px',
+            background: `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`,
+            color: '#fff', borderRadius: 10, textDecoration: 'none',
+            fontSize: 13, fontWeight: 700, boxShadow: `0 3px 10px ${COLORS.maroon}50`, whiteSpace: 'nowrap',
+          }}>
+            Apply Now
+          </Link>
+        ) : (
+          <span style={{
+            flexShrink: 0, padding: '9px 14px', borderRadius: 10,
+            background: '#f3f4f6', color: '#9ca3af', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+          }}>
+            Not Eligible
+          </span>
+        )}
       </div>
     );
   }
@@ -150,9 +160,15 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
         <Link href={`/student/iskolarships/${s.id}`} style={{ flex: 1, padding: '9px 0', border: `1.5px solid ${COLORS.maroon}`, borderRadius: 8, background: '#fff', color: COLORS.maroon, fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           View Details
         </Link>
-        <Link href={`/student/iskolarships/${s.id}/apply`} style={{ flex: 1, padding: '9px 0', border: 'none', borderRadius: 8, background: COLORS.maroon, color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          Apply Now
-        </Link>
+        {eligible ? (
+          <Link href={`/student/iskolarships/${s.id}/apply`} style={{ flex: 1, padding: '9px 0', border: 'none', borderRadius: 8, background: COLORS.maroon, color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            Apply Now
+          </Link>
+        ) : (
+          <span style={{ flex: 1, padding: '9px 0', borderRadius: 8, background: '#f3f4f6', color: '#9ca3af', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            Not Eligible
+          </span>
+        )}
       </div>
     </div>
   );
