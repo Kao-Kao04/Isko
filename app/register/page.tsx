@@ -2,8 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { PUP_COLLEGE_PROGRAMS } from '@/lib/data/mock-user';
+import { register } from '@/lib/auth';
 
 const TEAL = '#800000';
 const TEAL_DARK = '#5C0000';
@@ -32,7 +34,6 @@ const lbl: React.CSSProperties = {
 
 const req = <span style={{ color: '#ef4444', marginLeft: 2 }}>*</span>;
 
-
 const colleges = [
   { value: 'CAF',   label: 'College of Accountancy and Finance (CAF)' },
   { value: 'CBA',   label: 'College of Business Administration (CBA)' },
@@ -50,6 +51,15 @@ const colleges = [
   { value: 'CHK',   label: 'College of Human Kinetics (CHK)' },
   { value: 'CTHTM', label: 'College of Tourism, Hospitality and Transportation Management (CTHTM)' },
 ];
+
+const yearLevelMap: Record<string, number> = {
+  '1st Year': 1,
+  '2nd Year': 2,
+  '3rd Year': 3,
+  '4th Year': 4,
+  '5th Year': 5,
+  'Irregular': 0,
+};
 
 function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
@@ -88,19 +98,65 @@ function ToggleGroup({ options, value, onChange }: { options: string[]; value: s
   );
 }
 
-export default function Page() {
-  const [gender, setGender] = useState('');
-  const [yearLevel, setYearLevel] = useState('');
-  const [semester, setSemester] = useState('');
-  const [college, setCollege] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+function RegisterForm() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const token = searchParams.get('token');
+
+  const [firstName, setFirstName]     = useState('');
+  const [middleName, setMiddleName]   = useState('');
+  const [lastName, setLastName]       = useState('');
+  const [studentNumber, setStudentNumber] = useState('');
+  const [college, setCollege]         = useState('');
+  const [program, setProgram]         = useState('');
+  const [yearLevel, setYearLevel]     = useState('');
+  const [gender, setGender]           = useState('');
+  const [semester, setSemester]       = useState('');
+  const [error, setError]             = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [submitted, setSubmitted]     = useState(false);
 
   const programs = college ? PUP_COLLEGE_PROGRAMS[college] ?? [] : [];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!token) {
+      router.replace('/login');
+    }
+  }, [token, router]);
+
+  useEffect(() => {
+    setProgram('');
+  }, [college]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (!token) return;
+    if (!yearLevel) { setError('Please select your year level.'); return; }
+    if (!program)   { setError('Please select your program.'); return; }
+
+    setError('');
+    setLoading(true);
+    try {
+      await register({
+        token,
+        student_number: studentNumber,
+        first_name:     firstName,
+        last_name:      lastName,
+        middle_name:    middleName || undefined,
+        college,
+        program,
+        year_level:     yearLevelMap[yearLevel] ?? 1,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (!token) return null;
 
   if (submitted) {
     return (
@@ -111,9 +167,9 @@ export default function Page() {
               <polyline points="20 6 9 17 4 12"/>
             </svg>
           </div>
-          <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: '#111827' }}>Account Created!</h2>
+          <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: '#111827' }}>Registration Submitted!</h2>
           <p style={{ margin: '0 0 24px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
-            Your IskoMo account has been submitted for review. You&apos;ll receive an email once your profile is verified.
+            Your account is now <strong>pending OSFA approval</strong>. You will be notified once your account has been reviewed.
           </p>
           <Link href="/login" style={{ display: 'inline-block', padding: '12px 32px', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
             Go to Login
@@ -128,33 +184,18 @@ export default function Page() {
 
       {/* ── Left Panel ── */}
       <div style={{
-        width: 360,
-        flexShrink: 0,
+        width: 360, flexShrink: 0,
         background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 55%, #C9A027 100%)`,
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '44px 36px',
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
-        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+        padding: '44px 36px', position: 'sticky', top: 0, height: '100vh', overflow: 'hidden',
       }}>
-        {/* Decorative blobs */}
         <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
         <div style={{ position: 'absolute', bottom: -80, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-        <div style={{ position: 'absolute', top: '40%', right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Image
-                src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
-                alt="IskoMo"
-                width={26}
-                height={26}
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
+              <Image src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo" width={26} height={26} style={{ filter: 'brightness(0) invert(1)' }} />
             </div>
             <div>
               <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>IskoMo</div>
@@ -163,18 +204,17 @@ export default function Page() {
           </div>
 
           <h2 style={{ margin: '0 0 14px', fontSize: 28, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-            Start your scholarship journey today.
+            Complete your profile.
           </h2>
           <p style={{ margin: '0 0 36px', fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7 }}>
-            Create your IskoMo account and gain access to hundreds of scholarship opportunities made for Filipino students.
+            Fill in your academic details to finish setting up your IskoMo account.
           </p>
 
-          {/* Features */}
           {[
-            'Find scholarships that match your profile',
-            'Track your application status in real time',
-            'Secure document submission & storage',
-            'Connect with OSFA and scholarship sponsors',
+            'Your email has been verified',
+            'Fill in your academic information',
+            'Submit for OSFA review',
+            'Once approved, start applying for scholarships',
           ].map((feat) => (
             <div key={feat} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
               <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
@@ -193,38 +233,33 @@ export default function Page() {
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
 
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 800, color: '#111827' }}>Create Your Account</h1>
+            <h1 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 800, color: '#111827' }}>Complete Your Registration</h1>
             <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
-              Fill in your details below to register as an IskoMo student.
-              Already have an account?{' '}
+              Fill in your academic details below. Already have an account?{' '}
               <Link href="/login" style={{ color: TEAL, fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
             </p>
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* ── A: Personal Identity ── */}
+            {/* ── Personal Identity ── */}
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <SectionHeader
                 title="Personal Identity"
-                icon={
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                  </svg>
-                }
+                icon={<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
               />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
                 <div>
                   <label style={lbl}>First Name {req}</label>
-                  <input type="text" style={inp} placeholder="Juan" required />
+                  <input type="text" style={inp} placeholder="Juan" required value={firstName} onChange={e => setFirstName(e.target.value)} />
                 </div>
                 <div>
                   <label style={lbl}>Middle Name</label>
-                  <input type="text" style={inp} placeholder="Santos" />
+                  <input type="text" style={inp} placeholder="Santos" value={middleName} onChange={e => setMiddleName(e.target.value)} />
                 </div>
                 <div>
                   <label style={lbl}>Last Name {req}</label>
-                  <input type="text" style={inp} placeholder="Dela Cruz" required />
+                  <input type="text" style={inp} placeholder="Dela Cruz" required value={lastName} onChange={e => setLastName(e.target.value)} />
                 </div>
                 <div>
                   <label style={lbl}>Date of Birth {req}</label>
@@ -246,71 +281,41 @@ export default function Page() {
               </div>
             </div>
 
-            {/* ── B: Academic Information ── */}
+            {/* ── Academic Information ── */}
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <SectionHeader
                 title="PUP Academic Information"
-                icon={
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                  </svg>
-                }
+                icon={<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>}
               />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
                 <div>
                   <label style={lbl}>Student Number {req}</label>
-                  <input type="text" style={inp} placeholder="2023-12345-MN-0" pattern="\d{4}-\d{5}-[A-Za-z]{2}-\d" maxLength={15} required />
+                  <input type="text" style={inp} placeholder="2023-12345-MN-0" required value={studentNumber} onChange={e => setStudentNumber(e.target.value)} />
                 </div>
                 <div>
                   <label style={lbl}>Campus</label>
                   <input type="text" style={{ ...inp, background: '#f9fafb', color: '#6b7280', cursor: 'not-allowed' }} value="PUP Sta. Mesa" readOnly />
                 </div>
 
-                {/* College */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>College / Institute {req}</label>
-                  <select
-                    style={inp}
-                    required
-                    value={college}
-                    onChange={(e) => setCollege(e.target.value)}
-                  >
+                  <select style={inp} required value={college} onChange={e => setCollege(e.target.value)}>
                     <option value="">Select College / Institute</option>
-                    {colleges.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
+                    {colleges.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </div>
 
-                {/* Program — enabled only after college is chosen */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Program / Course {req}</label>
                   <select
-                    style={{
-                      ...inp,
-                      background: college ? '#fff' : '#f9fafb',
-                      color: college ? '#111827' : '#9ca3af',
-                      cursor: college ? 'pointer' : 'not-allowed',
-                    }}
-                    required
-                    disabled={!college}
-                    defaultValue=""
-                    key={college}
+                    style={{ ...inp, background: college ? '#fff' : '#f9fafb', color: college ? '#111827' : '#9ca3af', cursor: college ? 'pointer' : 'not-allowed' }}
+                    required disabled={!college} value={program} onChange={e => setProgram(e.target.value)}
                   >
-                    <option value="" disabled>
-                      {college ? 'Select Program / Course' : 'Select a college first'}
-                    </option>
-                    {programs.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
+                    <option value="">{college ? 'Select Program / Course' : 'Select a college first'}</option>
+                    {programs.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
-                  {!college && (
-                    <p style={{ margin: '5px 0 0', fontSize: 11, color: '#9ca3af' }}>Choose a college above to unlock this field.</p>
-                  )}
                 </div>
 
-                {/* Year Level */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Year Level {req}</label>
                   <ToggleGroup
@@ -321,15 +326,14 @@ export default function Page() {
                 </div>
 
                 <div>
-                  <label style={lbl}>Section / Block {req}</label>
-                  <input type="text" style={inp} placeholder="e.g., 3-1" required />
+                  <label style={lbl}>Section / Block</label>
+                  <input type="text" style={inp} placeholder="e.g., 3-1" />
                 </div>
                 <div>
-                  <label style={lbl}>Academic Year {req}</label>
-                  <input type="text" style={inp} placeholder="e.g., 2025–2026" required />
+                  <label style={lbl}>Academic Year</label>
+                  <input type="text" style={inp} placeholder="e.g., 2025–2026" />
                 </div>
 
-                {/* Semester */}
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Semester {req}</label>
                   <ToggleGroup options={['1st Semester', '2nd Semester', 'Summer']} value={semester} onChange={setSemester} />
@@ -337,39 +341,32 @@ export default function Page() {
               </div>
             </div>
 
-            {/* ── C: Family Details ── */}
+            {/* ── Family Details ── */}
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <SectionHeader
                 title="Family Details"
-                icon={
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                  </svg>
-                }
+                icon={<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
               />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 20px' }}>
                 <div>
-                  <label style={lbl}>Father&apos;s Name {req}</label>
-                  <input type="text" style={inp} placeholder="Full name" required />
+                  <label style={lbl}>Father&apos;s Name</label>
+                  <input type="text" style={inp} placeholder="Full name" />
                 </div>
                 <div>
-                  <label style={lbl}>Father&apos;s Occupation {req}</label>
-                  <input type="text" style={inp} placeholder="Occupation" required />
+                  <label style={lbl}>Father&apos;s Occupation</label>
+                  <input type="text" style={inp} placeholder="Occupation" />
                 </div>
                 <div>
-                  <label style={lbl}>Mother&apos;s Name {req}</label>
-                  <input type="text" style={inp} placeholder="Full name" required />
+                  <label style={lbl}>Mother&apos;s Name</label>
+                  <input type="text" style={inp} placeholder="Full name" />
                 </div>
                 <div>
-                  <label style={lbl}>Mother&apos;s Occupation {req}</label>
-                  <input type="text" style={inp} placeholder="Occupation" required />
+                  <label style={lbl}>Mother&apos;s Occupation</label>
+                  <input type="text" style={inp} placeholder="Occupation" />
                 </div>
                 <div>
-                  <label style={lbl}>Annual Gross Income {req}</label>
-                  <select style={inp} required defaultValue="">
+                  <label style={lbl}>Annual Gross Income</label>
+                  <select style={inp} defaultValue="">
                     <option value="" disabled>Select income bracket</option>
                     <option value="Below 120,000">Below ₱120,000</option>
                     <option value="120,000 - 240,000">₱120,000 – ₱240,000</option>
@@ -379,82 +376,52 @@ export default function Page() {
                   </select>
                 </div>
                 <div>
-                  <label style={lbl}>Number of Siblings {req}</label>
-                  <input type="number" style={inp} min="0" placeholder="0" required />
+                  <label style={lbl}>Number of Siblings</label>
+                  <input type="number" style={inp} min="0" placeholder="0" />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={lbl}>Guardian&apos;s Name {req}</label>
-                  <input type="text" style={inp} placeholder="Full name" required />
+                  <label style={lbl}>Guardian&apos;s Name</label>
+                  <input type="text" style={inp} placeholder="Full name" />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={lbl}>Guardian&apos;s Contact Number {req}</label>
+                  <label style={lbl}>Guardian&apos;s Contact Number</label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <div style={{ ...inp, width: 100, flexShrink: 0, display: 'flex', alignItems: 'center', background: '#f9fafb', color: '#374151', fontWeight: 600, fontSize: 13 }}>
                       🇵🇭 +63
                     </div>
-                    <input type="tel" style={{ ...inp, flex: 1 }} placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} required />
+                    <input type="tel" style={{ ...inp, flex: 1 }} placeholder="9xxxxxxxxx" pattern="9\d{9}" maxLength={10} />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* ── D: Documents ── */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <SectionHeader
-                title="Required Documents"
-                icon={
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                  </svg>
-                }
-              />
-              <div style={{ background: '#f8fafc', borderRadius: 10, padding: '14px 16px', marginBottom: 16, border: '1px solid #e5e7eb' }}>
-                {['PUP ID (Front)', 'Certificate of Registration (Latest Semester)', 'Grade Slip (Latest Term)'].map((doc) => (
-                  <div key={doc} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: TEAL, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: '#374151' }}>{doc}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ border: '2px dashed #d1d5db', borderRadius: 12, padding: '36px 24px', textAlign: 'center', background: '#fafafa', cursor: 'pointer' }}>
-                <div style={{ width: 48, height: 48, borderRadius: 12, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                  </svg>
-                </div>
-                <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, color: '#374151' }}>Drag and drop files here</p>
-                <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>PDF, JPG, or PNG — max 10 MB each</p>
-              </div>
-            </div>
+            {error && (
+              <p style={{ margin: 0, fontSize: 13, color: '#dc2626', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '12px 16px' }}>
+                {error}
+              </p>
+            )}
 
-            {/* ── Submit ── */}
             <button
               type="submit"
+              disabled={loading}
               style={{
-                width: '100%',
-                padding: '14px',
-                background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
-                color: '#fff',
-                border: 'none',
-                borderRadius: 12,
-                fontWeight: 700,
-                fontSize: 16,
-                cursor: 'pointer',
-                boxShadow: `0 4px 16px ${TEAL}50`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 10,
+                width: '100%', padding: '14px',
+                background: loading ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
+                color: '#fff', border: 'none', borderRadius: 12,
+                fontWeight: 700, fontSize: 16,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: loading ? 'none' : `0 4px 16px ${TEAL}50`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              Complete Registration
+              {loading ? 'Submitting...' : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Complete Registration
+                </>
+              )}
             </button>
 
             <p style={{ margin: '0 0 40px', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>
@@ -467,5 +434,13 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -5,6 +5,7 @@ import { useOsfaContext } from '@/lib/osfa-context';
 import { COLORS } from '@/lib/theme';
 import { MOCK_STUDENT } from '@/lib/data/mock-user';
 import ScholarshipCard from '@/components/scholarship/ScholarshipCard';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const TEAL       = COLORS.maroon;
 const TEAL_DARK  = COLORS.maroonD;
@@ -46,6 +47,9 @@ const announcements = [
 
 export default function Page() {
   const { scholarships, applicants } = useOsfaContext();
+  const { user } = useCurrentUser();
+  const isPending  = user?.account_status === 'pending';
+  const isRejected = user?.account_status === 'rejected';
 
   const activeScholarships = scholarships.filter(s => s.status === 'Active').slice(0, 3);
   const myApps = applicants.filter(a => a.email === CURRENT_STUDENT_EMAIL);
@@ -54,6 +58,48 @@ export default function Page() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
+
+      {/* ── Pending Approval Banner ── */}
+      {isPending && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 14,
+          background: '#fffbeb', border: '1.5px solid #fcd34d',
+          borderRadius: 14, padding: '16px 20px', marginBottom: 20,
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <div>
+            <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: '#92400e' }}>Account Pending OSFA Approval</p>
+            <p style={{ margin: 0, fontSize: 13, color: '#b45309', lineHeight: 1.5 }}>
+              Your registration is under review. You can browse available scholarships but cannot apply until your account is approved by OSFA.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Rejected Banner ── */}
+      {isRejected && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 14,
+          background: '#fef2f2', border: '1.5px solid #fca5a5',
+          borderRadius: 14, padding: '16px 20px', marginBottom: 20,
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div>
+            <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: '#991b1b' }}>Account Registration Rejected</p>
+            <p style={{ margin: 0, fontSize: 13, color: '#b91c1c', lineHeight: 1.5 }}>
+              Your registration was not approved by OSFA. Please contact the OSFA office for more information.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Hero Banner ── */}
       <div style={{

@@ -6,6 +6,7 @@ import { COLORS } from '@/lib/theme';
 import { MOCK_STUDENT, isEligible } from '@/lib/data/mock-user';
 import ScholarshipCard from '@/components/scholarship/ScholarshipCard';
 import EmptyState from '@/components/ui/EmptyState';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const PUP_COLLEGES = [
   'CAF', 'CADBE', 'CAL', 'CBA', 'COC', 'CCIS', 'COED',
@@ -16,6 +17,8 @@ const TYPES = ['Merit-Based', 'Need-Based', 'STEM Only', 'Service-Based', 'Sport
 
 export default function IskolarshipsPage() {
   const { scholarships } = useOsfaContext();
+  const { user } = useCurrentUser();
+  const isPending = user?.account_status === 'pending';
   const [search,        setSearch]        = useState('');
   const [filterType,    setFilterType]    = useState('all');
   const [filterCollege, setFilterCollege] = useState('all');
@@ -100,6 +103,22 @@ export default function IskolarshipsPage() {
 
       {/* Main */}
       <main style={{ flex: 1, minWidth: 0 }}>
+
+        {isPending && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: '#fffbeb', border: '1.5px solid #fcd34d',
+            borderRadius: 12, padding: '14px 18px', marginBottom: 16,
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p style={{ margin: 0, fontSize: 13, color: '#92400e', lineHeight: 1.5 }}>
+              <strong>Account pending OSFA approval.</strong> You can browse scholarships but the Apply button will be disabled until your account is approved.
+            </p>
+          </div>
+        )}
+
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#111827' }}>
             Available Iskolarships
@@ -124,7 +143,7 @@ export default function IskolarshipsPage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
             {filtered.map(s => (
-              <ScholarshipCard key={s.id} scholarship={s} variant="grid" bookmarked={bookmarked.has(s.id)} onBookmark={toggleBookmark} eligible={isEligible(s.colleges, s.programs, MOCK_STUDENT)} />
+              <ScholarshipCard key={s.id} scholarship={s} variant="grid" bookmarked={bookmarked.has(s.id)} onBookmark={toggleBookmark} eligible={isEligible(s.colleges, s.programs, MOCK_STUDENT)} applyDisabled={isPending} />
             ))}
           </div>
         )}

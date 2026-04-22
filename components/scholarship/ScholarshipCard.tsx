@@ -10,9 +10,10 @@ interface Props {
   bookmarked?: boolean;
   onBookmark?: (id: string) => void;
   eligible?: boolean;
+  applyDisabled?: boolean;
 }
 
-export default function ScholarshipCard({ scholarship: s, variant = 'grid', bookmarked = false, onBookmark, eligible = true }: Props) {
+export default function ScholarshipCard({ scholarship: s, variant = 'grid', bookmarked = false, onBookmark, eligible = true, applyDisabled = false }: Props) {
   const badge   = TYPE_BADGE[s.type] ?? TYPE_BADGE['Merit-Based'];
   const initials = s.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const colleges = s.colleges ?? [];
@@ -60,22 +61,18 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
             </svg>
           </button>
         )}
-        {eligible ? (
-          <Link href={`/student/iskolarships/${s.id}/apply`} style={{
-            flexShrink: 0, padding: '9px 20px',
-            background: `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`,
-            color: '#fff', borderRadius: 10, textDecoration: 'none',
-            fontSize: 13, fontWeight: 700, boxShadow: `0 3px 10px ${COLORS.maroon}50`, whiteSpace: 'nowrap',
-          }}>
-            Apply Now
-          </Link>
-        ) : (
-          <span style={{
-            flexShrink: 0, padding: '9px 14px', borderRadius: 10,
-            background: '#f3f4f6', color: '#9ca3af', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
-          }}>
+        {!eligible ? (
+          <span style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, background: '#f3f4f6', color: '#9ca3af', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
             Not Eligible
           </span>
+        ) : applyDisabled ? (
+          <span title="Your account is pending OSFA approval" style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, background: '#fef3c7', color: '#d97706', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', cursor: 'not-allowed' }}>
+            Pending Approval
+          </span>
+        ) : (
+          <Link href={`/student/iskolarships/${s.id}/apply`} style={{ flexShrink: 0, padding: '9px 20px', background: `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`, color: '#fff', borderRadius: 10, textDecoration: 'none', fontSize: 13, fontWeight: 700, boxShadow: `0 3px 10px ${COLORS.maroon}50`, whiteSpace: 'nowrap' }}>
+            Apply Now
+          </Link>
         )}
       </div>
     );
@@ -160,14 +157,18 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
         <Link href={`/student/iskolarships/${s.id}`} style={{ flex: 1, padding: '9px 0', border: `1.5px solid ${COLORS.maroon}`, borderRadius: 8, background: '#fff', color: COLORS.maroon, fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           View Details
         </Link>
-        {eligible ? (
-          <Link href={`/student/iskolarships/${s.id}/apply`} style={{ flex: 1, padding: '9px 0', border: 'none', borderRadius: 8, background: COLORS.maroon, color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            Apply Now
-          </Link>
-        ) : (
+        {!eligible ? (
           <span style={{ flex: 1, padding: '9px 0', borderRadius: 8, background: '#f3f4f6', color: '#9ca3af', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             Not Eligible
           </span>
+        ) : applyDisabled ? (
+          <span title="Your account is pending OSFA approval" style={{ flex: 1, padding: '9px 0', borderRadius: 8, background: '#fef3c7', color: '#d97706', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'not-allowed' }}>
+            Pending Approval
+          </span>
+        ) : (
+          <Link href={`/student/iskolarships/${s.id}/apply`} style={{ flex: 1, padding: '9px 0', border: 'none', borderRadius: 8, background: COLORS.maroon, color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            Apply Now
+          </Link>
         )}
       </div>
     </div>
