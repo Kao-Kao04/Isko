@@ -32,7 +32,7 @@ const lbl: React.CSSProperties = {
   letterSpacing: '0.04em',
 };
 
-const req = <span style={{ color: '#ef4444', marginLeft: 2 }}>*</span>;
+const req = <span style={{ color: '#dc2626', marginLeft: 2 }}>*</span>;
 
 const colleges = [
   { value: 'CAF',   label: 'College of Accountancy and Finance (CAF)' },

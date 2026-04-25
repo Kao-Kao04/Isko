@@ -51,6 +51,7 @@ const studentNavLinks = [
 
 export default function StudentNav() {
   const pathname = usePathname();
+  const [hovered,      setHovered]      = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
@@ -60,24 +61,28 @@ export default function StudentNav() {
   }, []);
 
   return (
-    <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }} role="navigation" aria-label="Student navigation">
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 2 }} role="navigation" aria-label="Student navigation">
       {studentNavLinks.map((link) => {
         const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+        const isHov    = hovered === link.href;
+
         return (
           <Link
             key={link.href}
             href={link.href}
             aria-current={isActive ? 'page' : undefined}
+            onMouseEnter={() => setHovered(link.href)}
+            onMouseLeave={() => setHovered(null)}
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               gap: 3,
-              padding: '8px 16px',
+              padding: '8px 14px',
               borderRadius: 10,
               textDecoration: 'none',
-              color: isActive ? MAROON : '#6b7280',
-              background: isActive ? '#fff5f5' : 'transparent',
+              color: isActive ? MAROON : isHov ? '#374151' : '#6b7280',
+              background: isActive ? '#fff5f5' : isHov ? '#f3f4f6' : 'transparent',
               fontWeight: isActive ? 700 : 500,
               fontSize: 11,
               minWidth: 64,
@@ -87,24 +92,19 @@ export default function StudentNav() {
           >
             {isActive && (
               <span style={{
-                position: 'absolute',
-                bottom: -1,
-                left: '50%',
+                position: 'absolute', bottom: -1, left: '50%',
                 transform: 'translateX(-50%)',
-                width: 24,
-                height: 3,
-                borderRadius: 99,
-                background: MAROON,
+                width: 24, height: 3, borderRadius: 99, background: MAROON,
               }} />
             )}
-            <span style={{ color: isActive ? MAROON : '#9ca3af', display: 'flex' }}>
+            <span style={{ color: isActive ? MAROON : isHov ? '#374151' : '#9ca3af', display: 'flex', transition: 'color 0.15s ease' }}>
               {link.icon}
             </span>
             <span style={{ letterSpacing: '0.01em', display: 'flex', alignItems: 'center', gap: 4 }}>
               {link.label}
               {link.href === '/student/applications' && pendingCount > 0 && (
                 <span style={{
-                  fontSize: 9, fontWeight: 800, lineHeight: 1,
+                  fontSize: 11, fontWeight: 800, lineHeight: 1,
                   padding: '2px 5px', borderRadius: 99,
                   background: MAROON, color: '#fff',
                 }}>

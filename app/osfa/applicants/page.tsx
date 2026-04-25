@@ -14,7 +14,7 @@ const CARD_SHADOW = '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)';
 const statusStyle: Record<string, { bg: string; color: string; dot: string }> = {
   pending:    { bg: '#fffbeb', color: '#d97706', dot: '#f59e0b' },
   approved:   { bg: '#f0fdf4', color: '#059669', dot: '#10b981' },
-  rejected:   { bg: '#fef2f2', color: '#dc2626', dot: '#ef4444' },
+  rejected:   { bg: '#fef2f2', color: '#dc2626', dot: '#dc2626' },
   incomplete: { bg: '#fff7ed', color: '#ea580c', dot: '#f97316' },
   withdrawn:  { bg: '#f8fafc', color: '#9ca3af', dot: '#d1d5db' },
 };
@@ -383,7 +383,7 @@ function ApplicantsContent() {
 
       {/* Approve confirmation */}
       {confirmAction?.type === 'approve' && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setConfirmAction(null)}>
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setConfirmAction(null)}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 440, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
             <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Confirm Approval</h2>
             <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
@@ -401,7 +401,7 @@ function ApplicantsContent() {
 
       {/* Reject dialog */}
       {confirmAction?.type === 'reject' && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => { setConfirmAction(null); setRejectReason(''); setRejectNote(''); }}>
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => { setConfirmAction(null); setRejectReason(''); setRejectNote(''); }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 440, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
             <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Reject Application</h2>
             <p style={{ margin: '0 0 18px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>

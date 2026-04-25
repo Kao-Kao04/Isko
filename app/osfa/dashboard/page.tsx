@@ -106,7 +106,7 @@ export default function Page() {
     { label: 'Pending',    count: pendingCount,    color: '#f59e0b', status: 'pending'    },
     { label: 'In Review',  count: inReviewCount,   color: '#3b82f6', status: 'in_review'  },
     { label: 'Approved',   count: approvedCount,   color: '#10b981', status: 'approved'   },
-    { label: 'Rejected',   count: rejectedCount,   color: '#ef4444', status: 'rejected'   },
+    { label: 'Rejected',   count: rejectedCount,   color: '#dc2626', status: 'rejected'   },
     { label: 'Incomplete', count: incompleteCount, color: '#f97316', status: 'incomplete' },
   ];
   const summaryTotal = applicationSummary.reduce((s, r) => s + r.count, 0);
@@ -148,7 +148,7 @@ export default function Page() {
       </div>
 
       {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 24 }}>
         {stats.map(s => {
           const isHov = hoveredCard === s.label;
           return (
@@ -192,7 +192,7 @@ export default function Page() {
               {applications.slice(0, 5).map((a, idx) => {
                 const isHov = hoveredActivity === String(a.id);
                 const name = a.student ? `${a.student.first_name ?? ''} ${a.student.last_name ?? ''}`.trim() : `Student #${a.student_id}`;
-                const dotColors: Record<string, string> = { pending: '#f59e0b', approved: '#10b981', rejected: '#ef4444', incomplete: '#f97316', withdrawn: '#94a3b8' };
+                const dotColors: Record<string, string> = { pending: '#f59e0b', approved: '#10b981', rejected: '#dc2626', incomplete: '#f97316', withdrawn: '#94a3b8' };
                 return (
                   <div key={a.id} onMouseEnter={() => setHoveredActivity(String(a.id))} onMouseLeave={() => setHoveredActivity(null)}
                     style={{ display: 'flex', alignItems: 'flex-start', padding: '13px 24px', background: isHov ? '#f8fafc' : 'transparent', transition: 'background 0.15s ease' }}>

@@ -87,32 +87,3 @@ export const PUP_COLLEGE_PROGRAMS: Record<string, string[]> = {
     'BS Transportation Management',
   ],
 };
-
-export const MOCK_STUDENT = {
-  name:       'Juan dela Cruz',
-  initials:   'JC',
-  email:      'juan.delacruz@student.edu.ph',
-  contact:    '09171234567',
-  school:     'PUP Main',
-  college:    'CCIS',
-  program:    'BS Computer Science (BSCS)',
-  yearLevel:  '3rd Year',
-  studentId:  '2021-10001',
-} as const;
-
-/** Returns true if the student is eligible for the given scholarship. */
-export function isEligible(
-  colleges: string[] | undefined,
-  programs: string[] | undefined,
-  student: typeof MOCK_STUDENT,
-): boolean {
-  const restrictedColleges = colleges ?? [];
-  const restrictedPrograms = programs ?? [];
-  if (restrictedColleges.length === 0 && restrictedPrograms.length === 0) return true;
-  const collegeOk = restrictedColleges.length === 0 || restrictedColleges.includes(student.college);
-  const programOk = restrictedPrograms.length === 0 || restrictedPrograms.some(
-    p => student.program.toLowerCase().includes(p.toLowerCase()) ||
-         p.toLowerCase().includes(student.program.toLowerCase()),
-  );
-  return collegeOk && programOk;
-}

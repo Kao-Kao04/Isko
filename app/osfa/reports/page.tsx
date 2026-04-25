@@ -23,7 +23,7 @@ interface Report {
 const reportStatusStyle: Record<ReportStatus, { bg: string; color: string; dot: string }> = {
   Completed:  { bg: '#fff5f5', color: '#059669', dot: '#10b981' },
   Processing: { bg: '#eff6ff', color: '#2563eb', dot: '#3b82f6' },
-  Failed:     { bg: '#fef2f2', color: '#dc2626', dot: '#ef4444' },
+  Failed:     { bg: '#fef2f2', color: '#dc2626', dot: '#dc2626' },
 };
 
 const reports: Report[] = [
@@ -144,7 +144,7 @@ export default function Page() {
       </div>
 
       {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
         {overviewStats.map((s) => (
           <div key={s.label} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 26, fontWeight: 800, color: s.color, marginBottom: 4 }}>{s.value}</div>

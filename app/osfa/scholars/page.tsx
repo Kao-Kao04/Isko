@@ -13,7 +13,7 @@ type TabFilter = 'Active' | 'Probationary' | 'Terminated' | 'Graduated';
 const statusStyle: Record<string, { bg: string; color: string; dot: string }> = {
   active:       { bg: '#f0fdf4', color: '#059669', dot: '#10b981' },
   probationary: { bg: '#fffbeb', color: '#d97706', dot: '#f59e0b' },
-  terminated:   { bg: '#fef2f2', color: '#dc2626', dot: '#ef4444' },
+  terminated:   { bg: '#fef2f2', color: '#dc2626', dot: '#dc2626' },
   graduated:    { bg: '#f5f3ff', color: '#7c3aed', dot: '#8b5cf6' },
 };
 
@@ -96,7 +96,7 @@ export default function Page() {
       </div>
 
       {/* Stats tabs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 22 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 22 }}>
         {tabConfig.map(({ key, color, bg, border }) => (
           <div key={key} onClick={() => setActiveTab(key)}
             style={{ background: activeTab === key ? bg : '#fff', border: `1px solid ${activeTab === key ? border : '#e2e8f0'}`, borderRadius: 11, padding: '14px 18px', cursor: 'pointer', transition: 'all 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>

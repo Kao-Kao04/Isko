@@ -119,7 +119,7 @@ export default function OsfaNav() {
               color: isActive ? MAROON : isHov ? '#374151' : '#6b7280',
               background: isActive ? MAROON_LIGHT : isHov ? '#f3f4f6' : 'transparent',
               fontWeight: isActive ? 700 : 500,
-              fontSize: 10.5,
+              fontSize: 11,
               minWidth: 52,
               position: 'relative',
               transition: 'all 0.15s ease',

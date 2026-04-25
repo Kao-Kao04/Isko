@@ -67,10 +67,18 @@ export default function ScholarshipDetailPage() {
 
       {/* Header card */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-        <div style={{ height: 6, background: `linear-gradient(90deg, ${COLORS.maroon}, ${COLORS.maroonD}, ${COLORS.gold})` }} />
+        {s.coverImage ? (
+          <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={s.coverImage} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.55))' }} />
+          </div>
+        ) : (
+          <div style={{ height: 6, background: `linear-gradient(90deg, ${COLORS.maroon}, ${COLORS.maroonD}, ${COLORS.gold})` }} />
+        )}
         <div style={{ padding: '28px 32px' }}>
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            <div style={{ width: 64, height: 64, borderRadius: 16, background: badge.avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22, fontWeight: 800, flexShrink: 0 }}>
+            <div style={{ width: 64, height: 64, borderRadius: 16, background: badge.avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22, fontWeight: 800, flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', marginTop: s.coverImage ? -36 : 0, border: '3px solid #fff' }}>
               {initials}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>

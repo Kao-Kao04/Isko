@@ -77,7 +77,7 @@ export default function Page() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #fffde7 0%, #fff5f5 50%, #b2dfdb 100%)',
+      background: 'linear-gradient(135deg, #fff5f5 0%, #fffbf0 50%, #fef2f2 100%)',
       padding: 24,
     }}>
       {/* Card */}

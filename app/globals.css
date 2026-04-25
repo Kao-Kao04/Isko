@@ -1,16 +1,114 @@
-/* Global reset - minimal, won't fight with existing CSS */
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+/* ── Base ──────────────────────────────────────────────────────────────────── */
 body {
   margin: 0;
   padding: 0;
   background: #f0f4f8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Enforce minimum readable font size */
+* {
+  font-size: max(var(--font-size, inherit), 11px);
+}
+
+/* ── CSS Variables ─────────────────────────────────────────────────────────── */
+:root {
+  --maroon:      #800000;
+  --maroon-dark: #5C0000;
+  --gold:        #C9A027;
+
+  /* Border radius scale */
+  --r-xs:  6px;
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  20px;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+  --shadow-lg:  0 8px 28px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-xl:  0 20px 60px rgba(0,0,0,0.18);
+}
+
+/* ── Focus Accessibility ───────────────────────────────────────────────────── */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #800000 !important;
+  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.12);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:focus-visible {
+  outline: 2px solid #800000;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+button {
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+              transform 0.1s ease, opacity 0.15s ease,
+              border-color 0.15s ease, color 0.15s ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* Sign out button style */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-secondary {
+  background: #f9fafb;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  padding: 7px 14px;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+/* ── Links ─────────────────────────────────────────────────────────────────── */
+a {
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -19,4 +117,25 @@ body {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Scrollbars ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

@@ -84,7 +84,7 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 28 }}>
         {[
           { label: 'Total',       value: stats.total,    color: '#374151', bg: '#f9fafb' },
           { label: 'Approved',    value: stats.approved, color: '#15803d', bg: '#f0fdf4' },

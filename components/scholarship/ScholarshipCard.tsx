@@ -44,7 +44,7 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
           <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 4 }}>{s.title}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 15, fontWeight: 800, color: COLORS.maroon }}>{s.amount}</span>
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>{s.period}</span>
+            <span style={{ fontSize: 11, color: '#6b7280' }}>{s.period}</span>
             <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, background: badge.bg, color: badge.color, fontSize: 11, fontWeight: 600 }}>
               {s.type}
             </span>
@@ -58,7 +58,7 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
             <span style={{ fontSize: 11, color: s.urgency === 'critical' ? '#dc2626' : s.urgency === 'warning' ? '#d97706' : '#15803d', fontWeight: 600 }}>
               ⏰ {s.deadline}
             </span>
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>{slotsLeft} slots left</span>
+            <span style={{ fontSize: 11, color: '#6b7280' }}>{slotsLeft} slots left</span>
           </div>
         </div>
         {onBookmark && (
@@ -93,7 +93,7 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
     <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {s.coverImage ? (
-        <img src={s.coverImage} alt={s.title} style={{ width: '100%', height: 90, objectFit: 'cover' }} />
+        <img src={s.coverImage} alt={s.title} style={{ width: '100%', height: 140, objectFit: 'cover' }} />
       ) : (
         <div style={{ height: 4, background: badge.avatarBg }} />
       )}
