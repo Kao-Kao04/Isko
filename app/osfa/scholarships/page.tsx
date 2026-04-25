@@ -1,20 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { type Scholarship, type ScholarshipStatus, type Requirement } from '@/lib/osfa-data';
-import { useOsfaContext } from '@/lib/osfa-context';
+import { scholarshipApi, type ScholarshipResponse, type ScholarshipStatus } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 
 const TEAL = '#800000';
 const TEAL_DARK = '#5C0000';
 const TEAL_LIGHT = '#fff5f5';
 
-const statusStyle: Record<ScholarshipStatus, { bg: string; color: string; dot: string }> = {
-  Active:   { bg: '#fff5f5', color: '#059669', dot: '#10b981' },
-  Draft:    { bg: '#f8fafc', color: '#64748b', dot: '#94a3b8' },
-  Closed:   { bg: '#fff7ed', color: '#ea580c', dot: '#f97316' },
-  Archived: { bg: '#f8fafc', color: '#9ca3af', dot: '#d1d5db' },
+const statusStyle: Record<string, { bg: string; color: string; dot: string }> = {
+  active:   { bg: '#f0fdf4', color: '#059669', dot: '#10b981' },
+  draft:    { bg: '#f8fafc', color: '#64748b', dot: '#94a3b8' },
+  closed:   { bg: '#fff7ed', color: '#ea580c', dot: '#f97316' },
+  archived: { bg: '#f8fafc', color: '#9ca3af', dot: '#d1d5db' },
 };
 
 const urgencyStyle: Record<string, { color: string; bg: string }> = {
@@ -60,162 +59,208 @@ const COMMON_REQS = [
   'Proof of Graduation',
 ];
 
+type FormReq = { tempId: string; name: string; description?: string; is_required: boolean };
+
 const EMPTY_FORM = {
-  title: '', description: '', amount: '', period: 'per semester',
-  deadline: '', slots: '', type: 'Merit-Based', eligibility: '',
-  status: 'Draft' as ScholarshipStatus,
-  colleges: [] as string[],
-  programs: [] as string[],
-  coverImage: '',
+  name: '', description: '', amount_raw: '', period: 'per semester',
+  deadline: '', slots: '', scholarship_type: 'Merit-Based', eligibility_text: '',
+  eligible_colleges: [] as string[],
+  eligible_programs: [] as string[],
+  cover_image_url: '',
   programInput: '',
-  requirements: [] as Requirement[],
+  requirements: [] as FormReq[],
   reqInput: '',
 };
 
+function getDaysLeft(deadline: string | null): number {
+  if (!deadline) return 999;
+  return Math.max(0, Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000));
+}
+
+function getUrgency(daysLeft: number): 'critical' | 'warning' | 'normal' {
+  if (daysLeft <= 3) return 'critical';
+  if (daysLeft <= 10) return 'warning';
+  return 'normal';
+}
+
+function formatDeadline(deadline: string | null): string {
+  if (!deadline) return 'Not set';
+  return new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export default function Page() {
   const { toasts, addToast, removeToast } = useToast();
-  const { scholarships, setScholarships } = useOsfaContext();
-  const [filterStatus, setFilterStatus] = useState<'All' | ScholarshipStatus>('All');
-  const [searchQuery, setSearchQuery]   = useState('');
-  const [openMenuId, setOpenMenuId]     = useState<string | null>(null);
+  const [scholarships, setScholarships]   = useState<ScholarshipResponse[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [filterStatus, setFilterStatus]   = useState<'All' | ScholarshipStatus>('All');
+  const [searchQuery, setSearchQuery]     = useState('');
+  const [openMenuId, setOpenMenuId]       = useState<number | null>(null);
+  const [formLoading, setFormLoading]     = useState(false);
 
   // Modals
-  const [showForm, setShowForm]               = useState(false);
-  const [editingId, setEditingId]             = useState<string | null>(null);
-  const [form, setForm]                       = useState(EMPTY_FORM);
-  const [confirmArchive, setConfirmArchive]   = useState<Scholarship | null>(null);
-  const [confirmClose, setConfirmClose]       = useState<Scholarship | null>(null);
-  const [confirmPublish, setConfirmPublish]   = useState<Scholarship | null>(null);
-  const [confirmDelete, setConfirmDelete]     = useState<Scholarship | null>(null);
-  const [archiveConfirmText, setArchiveConfirmText] = useState('');
+  const [showForm, setShowForm]                       = useState(false);
+  const [editingId, setEditingId]                     = useState<number | null>(null);
+  const [form, setForm]                               = useState(EMPTY_FORM);
+  const [confirmArchive, setConfirmArchive]           = useState<ScholarshipResponse | null>(null);
+  const [confirmClose, setConfirmClose]               = useState<ScholarshipResponse | null>(null);
+  const [confirmPublish, setConfirmPublish]           = useState<ScholarshipResponse | null>(null);
+  const [confirmDelete, setConfirmDelete]             = useState<ScholarshipResponse | null>(null);
+  const [archiveConfirmText, setArchiveConfirmText]   = useState('');
+
+  const fetchScholarships = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await scholarshipApi.list(1, 100);
+      setScholarships(res.items);
+    } catch {
+      addToast('error', 'Failed to load scholarships.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchScholarships(); }, [fetchScholarships]);
 
   const filtered = scholarships.filter(s => {
     const matchStatus = filterStatus === 'All' || s.status === filterStatus;
-    const matchSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.type.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.scholarship_type ?? '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchStatus && matchSearch;
   });
 
   const counts = {
     All:      scholarships.length,
-    Active:   scholarships.filter(s => s.status === 'Active').length,
-    Draft:    scholarships.filter(s => s.status === 'Draft').length,
-    Closed:   scholarships.filter(s => s.status === 'Closed').length,
-    Archived: scholarships.filter(s => s.status === 'Archived').length,
+    active:   scholarships.filter(s => s.status === 'active').length,
+    draft:    scholarships.filter(s => s.status === 'draft').length,
+    closed:   scholarships.filter(s => s.status === 'closed').length,
+    archived: scholarships.filter(s => s.status === 'archived').length,
   };
 
-  // ── Scholarship actions ──────────────────────────────────────
   function openCreate() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setShowForm(true);
   }
 
-  function openEdit(s: Scholarship) {
+  function openEdit(s: ScholarshipResponse) {
     setEditingId(s.id);
     setForm({
-      title: s.title,
-      description: s.description,
-      amount: s.amountRaw.toString(),
-      period: s.period,
-      deadline: s.deadline === 'Not set' ? '' : s.deadline,
-      slots: s.slots.toString(),
-      type: s.type,
-      eligibility: s.eligibility,
-      status: s.status,
-      colleges: s.colleges ?? [],
-      programs: s.programs ?? [],
-      coverImage: s.coverImage ?? '',
-      requirements: s.requirements ?? [],
-      programInput: '',
-      reqInput: '',
+      name:               s.name,
+      description:        s.description ?? '',
+      amount_raw:         s.amount_raw?.toString() ?? '',
+      period:             s.period ?? 'per semester',
+      deadline:           s.deadline ? new Date(s.deadline).toISOString().split('T')[0] : '',
+      slots:              s.slots?.toString() ?? '',
+      scholarship_type:   s.scholarship_type ?? 'Merit-Based',
+      eligibility_text:   s.eligibility_text ?? '',
+      eligible_colleges:  s.eligible_colleges ?? [],
+      eligible_programs:  s.eligible_programs ?? [],
+      cover_image_url:    s.cover_image_url ?? '',
+      programInput:       '',
+      requirements:       s.requirements.map(r => ({ tempId: String(r.id), name: r.name, description: r.description ?? undefined, is_required: r.is_required })),
+      reqInput:           '',
     });
     setShowForm(true);
     setOpenMenuId(null);
   }
 
-  function handleSaveForm() {
-    if (!form.title.trim() || !form.amount || !form.slots) {
-      addToast('error', 'Title, amount, and number of slots are required.');
+  async function handleSaveForm() {
+    if (!form.name.trim() || !form.slots) {
+      addToast('error', 'Title and number of slots are required.');
       return;
     }
-    const amountRaw = parseInt(form.amount.replace(/[^\d]/g, '')) || 0;
-    const deadline  = form.deadline || 'Not set';
-    const daysLeft  = form.deadline ? Math.max(0, Math.ceil((new Date(form.deadline).getTime() - Date.now()) / 86400000)) : 999;
-    const urgency   = daysLeft <= 3 ? 'critical' : daysLeft <= 10 ? 'warning' : 'normal';
-
-    if (editingId) {
-      setScholarships(prev => prev.map(s => s.id === editingId
-        ? { ...s, title: form.title, description: form.description, amount: `₱${amountRaw.toLocaleString()}`, amountRaw, period: form.period, deadline, daysLeft, urgency, slots: parseInt(form.slots) || s.slots, type: form.type, eligibility: form.eligibility, colleges: form.colleges, programs: form.programs, coverImage: form.coverImage || undefined, requirements: form.requirements }
-        : s
-      ));
-      addToast('success', `"${form.title}" updated successfully.`);
-    } else {
-      const newScholarship: Scholarship = {
-        id: Date.now().toString(),
-        title: form.title,
-        description: form.description,
-        amount: `₱${amountRaw.toLocaleString()}`,
-        amountRaw,
-        period: form.period,
-        deadline,
-        daysLeft,
-        urgency,
-        applicants: 0,
-        slots: parseInt(form.slots) || 0,
-        status: 'Draft',
-        type: form.type,
-        eligibility: form.eligibility,
-        colleges: form.colleges,
-        programs: form.programs,
-        coverImage: form.coverImage || undefined,
-        requirements: form.requirements.length > 0 ? form.requirements : undefined,
+    setFormLoading(true);
+    try {
+      const data = {
+        name:               form.name,
+        description:        form.description || undefined,
+        slots:              parseInt(form.slots) || undefined,
+        deadline:           form.deadline ? new Date(form.deadline).toISOString() : undefined,
+        eligible_colleges:  form.eligible_colleges.length > 0 ? form.eligible_colleges : undefined,
+        eligible_programs:  form.eligible_programs.length > 0 ? form.eligible_programs : undefined,
+        amount_raw:         form.amount_raw ? parseInt(form.amount_raw) : undefined,
+        period:             form.period || undefined,
+        scholarship_type:   form.scholarship_type || undefined,
+        eligibility_text:   form.eligibility_text || undefined,
+        cover_image_url:    form.cover_image_url || undefined,
+        requirements:       form.requirements.map(r => ({ name: r.name, description: r.description, is_required: r.is_required })),
       };
-      setScholarships(prev => [newScholarship, ...prev]);
-      addToast('success', `"${form.title}" created as a Draft.`);
+
+      if (editingId) {
+        const updated = await scholarshipApi.update(editingId, data);
+        setScholarships(prev => prev.map(s => s.id === editingId ? updated : s));
+        addToast('success', `"${form.name}" updated successfully.`);
+      } else {
+        const created = await scholarshipApi.create(data);
+        setScholarships(prev => [created, ...prev]);
+        addToast('success', `"${form.name}" created as a Draft.`);
+      }
+      setShowForm(false);
+      setEditingId(null);
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Failed to save scholarship.');
+    } finally {
+      setFormLoading(false);
     }
-    setShowForm(false);
-    setEditingId(null);
   }
 
-  function duplicateScholarship(s: Scholarship) {
-    const copy: Scholarship = {
-      ...s,
-      id: Date.now().toString(),
-      title: `${s.title} (Copy)`,
-      status: 'Draft',
-      applicants: 0,
-      deadline: 'Not set',
-      daysLeft: 999,
-      urgency: 'normal',
-    };
-    setScholarships(prev => [copy, ...prev]);
-    addToast('info', `"${s.title}" duplicated as a Draft.`);
+  async function duplicateScholarship(s: ScholarshipResponse) {
+    try {
+      const copy = await scholarshipApi.duplicate(s.id);
+      setScholarships(prev => [copy, ...prev]);
+      addToast('info', `"${s.name}" duplicated as a Draft.`);
+    } catch {
+      addToast('error', 'Failed to duplicate scholarship.');
+    }
     setOpenMenuId(null);
   }
 
-  function publishScholarship(id: string) {
-    setScholarships(prev => prev.map(s => s.id === id ? { ...s, status: 'Active' } : s));
-    addToast('success', `Scholarship published and now visible to students.`);
+  async function publishScholarship(id: number) {
+    try {
+      const updated = await scholarshipApi.updateStatus(id, 'active');
+      setScholarships(prev => prev.map(s => s.id === id ? updated : s));
+      addToast('success', 'Scholarship published and now visible to students.');
+    } catch {
+      addToast('error', 'Failed to publish scholarship.');
+    }
     setConfirmPublish(null);
   }
 
-  function closeScholarship(id: string) {
-    setScholarships(prev => prev.map(s => s.id === id ? { ...s, status: 'Closed' } : s));
-    addToast('warning', 'Applications closed. Existing applications are unaffected.');
+  async function closeScholarship(id: number) {
+    try {
+      const updated = await scholarshipApi.updateStatus(id, 'closed');
+      setScholarships(prev => prev.map(s => s.id === id ? updated : s));
+      addToast('warning', 'Applications closed. Existing applications are unaffected.');
+    } catch {
+      addToast('error', 'Failed to close scholarship.');
+    }
     setConfirmClose(null);
   }
 
-  function archiveScholarship(id: string) {
-    setScholarships(prev => prev.map(s => s.id === id ? { ...s, status: 'Archived' } : s));
-    addToast('info', 'Scholarship archived. All data and history are preserved.');
+  async function archiveScholarship(id: number) {
+    try {
+      const updated = await scholarshipApi.updateStatus(id, 'archived');
+      setScholarships(prev => prev.map(s => s.id === id ? updated : s));
+      addToast('info', 'Scholarship archived.');
+    } catch {
+      addToast('error', 'Failed to archive scholarship.');
+    }
     setConfirmArchive(null);
     setArchiveConfirmText('');
   }
 
-  function deleteScholarship(id: string) {
-    setScholarships(prev => prev.filter(s => s.id !== id));
-    addToast('error', 'Scholarship permanently deleted.');
+  async function deleteScholarship(id: number) {
+    try {
+      await scholarshipApi.delete(id);
+      setScholarships(prev => prev.filter(s => s.id !== id));
+      addToast('error', 'Scholarship permanently deleted.');
+    } catch {
+      addToast('error', 'Failed to delete scholarship.');
+    }
     setConfirmDelete(null);
   }
 
@@ -226,38 +271,38 @@ export default function Page() {
   function toggleCollege(code: string) {
     setForm(prev => ({
       ...prev,
-      colleges: prev.colleges.includes(code)
-        ? prev.colleges.filter(c => c !== code)
-        : [...prev.colleges, code],
+      eligible_colleges: prev.eligible_colleges.includes(code)
+        ? prev.eligible_colleges.filter(c => c !== code)
+        : [...prev.eligible_colleges, code],
     }));
   }
 
   function addProgram() {
     const val = form.programInput.trim();
-    if (!val || form.programs.includes(val)) return;
-    setForm(prev => ({ ...prev, programs: [...prev.programs, val], programInput: '' }));
+    if (!val || form.eligible_programs.includes(val)) return;
+    setForm(prev => ({ ...prev, eligible_programs: [...prev.eligible_programs, val], programInput: '' }));
   }
 
   function removeProgram(p: string) {
-    setForm(prev => ({ ...prev, programs: prev.programs.filter(x => x !== p) }));
+    setForm(prev => ({ ...prev, eligible_programs: prev.eligible_programs.filter(x => x !== p) }));
   }
 
   function addRequirement(label: string) {
     const trimmed = label.trim();
     if (!trimmed) return;
-    if (form.requirements.some(r => r.label.toLowerCase() === trimmed.toLowerCase())) return;
-    const req: Requirement = { id: `req_${Date.now()}`, label: trimmed, required: true };
+    if (form.requirements.some(r => r.name.toLowerCase() === trimmed.toLowerCase())) return;
+    const req: FormReq = { tempId: `req_${Date.now()}`, name: trimmed, is_required: true };
     setForm(prev => ({ ...prev, requirements: [...prev.requirements, req], reqInput: '' }));
   }
 
-  function removeRequirement(id: string) {
-    setForm(prev => ({ ...prev, requirements: prev.requirements.filter(r => r.id !== id) }));
+  function removeRequirement(tempId: string) {
+    setForm(prev => ({ ...prev, requirements: prev.requirements.filter(r => r.tempId !== tempId) }));
   }
 
-  function toggleReqRequired(id: string) {
+  function toggleReqRequired(tempId: string) {
     setForm(prev => ({
       ...prev,
-      requirements: prev.requirements.map(r => r.id === id ? { ...r, required: !r.required } : r),
+      requirements: prev.requirements.map(r => r.tempId === tempId ? { ...r, is_required: !r.is_required } : r),
     }));
   }
 
@@ -275,7 +320,7 @@ export default function Page() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => setForm(prev => ({ ...prev, coverImage: ev.target?.result as string }));
+    reader.onload = ev => setForm(prev => ({ ...prev, cover_image_url: ev.target?.result as string }));
     reader.readAsDataURL(file);
   }
 
@@ -286,6 +331,18 @@ export default function Page() {
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6,
   };
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 40, height: 40, border: `3px solid #f3f4f6`, borderTop: `3px solid ${TEAL}`, borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
+          <p style={{ color: '#6b7280', fontSize: 14 }}>Loading scholarships...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
@@ -313,11 +370,11 @@ export default function Page() {
 
       {/* Filter tabs + search */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-        {(['All', 'Active', 'Draft', 'Closed', 'Archived'] as const).map(label => {
+        {(['All', 'active', 'draft', 'closed', 'archived'] as const).map(label => {
           const active = filterStatus === label;
           return (
-            <button key={label} onClick={() => setFilterStatus(label)} style={{ padding: '8px 18px', borderRadius: 8, border: active ? `1.5px solid ${TEAL}` : '1px solid #e5e7eb', background: active ? TEAL_LIGHT : '#fff', color: active ? TEAL : '#374151', fontSize: 13, fontWeight: active ? 700 : 500, cursor: 'pointer' }}>
-              {label} <span style={{ marginLeft: 4, fontSize: 12, fontWeight: 700, opacity: 0.7 }}>({counts[label]})</span>
+            <button key={label} onClick={() => setFilterStatus(label as 'All' | ScholarshipStatus)} style={{ padding: '8px 18px', borderRadius: 8, border: active ? `1.5px solid ${TEAL}` : '1px solid #e5e7eb', background: active ? TEAL_LIGHT : '#fff', color: active ? TEAL : '#374151', fontSize: 13, fontWeight: active ? 700 : 500, cursor: 'pointer' }}>
+              {capitalize(label)} <span style={{ marginLeft: 4, fontSize: 12, fontWeight: 700, opacity: 0.7 }}>({counts[label as keyof typeof counts] ?? 0})</span>
             </button>
           );
         })}
@@ -339,25 +396,28 @@ export default function Page() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 18 }}>
           {filtered.map(s => {
-            const st = statusStyle[s.status];
-            const ur = urgencyStyle[s.urgency];
-            const slotsFilled = s.slots > 0 ? (s.applicants / s.slots) * 100 : 0;
-            const isArchived  = s.status === 'Archived';
+            const st = statusStyle[s.status] ?? statusStyle.draft;
+            const daysLeft = getDaysLeft(s.deadline);
+            const urgency  = getUrgency(daysLeft);
+            const ur = urgencyStyle[urgency];
+            const slotsFilled = (s.slots ?? 0) > 0 ? (s.applicants_count / (s.slots ?? 1)) * 100 : 0;
+            const isArchived  = s.status === 'archived';
+            const amount = s.amount_raw ? `₱${s.amount_raw.toLocaleString()}` : '—';
+
             return (
               <div key={s.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', opacity: isArchived ? 0.72 : 1 }}>
-                {s.coverImage ? (
+                {s.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.coverImage} alt={s.title} style={{ width: '100%', height: 120, objectFit: 'cover' }} />
+                  <img src={s.cover_image_url} alt={s.name} style={{ width: '100%', height: 120, objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ height: 4, background: s.status === 'Active' ? `linear-gradient(90deg, ${TEAL}, ${TEAL_DARK})` : s.status === 'Draft' ? '#94a3b8' : s.status === 'Closed' ? '#f97316' : '#d1d5db' }} />
+                  <div style={{ height: 4, background: s.status === 'active' ? `linear-gradient(90deg, ${TEAL}, ${TEAL_DARK})` : s.status === 'draft' ? '#94a3b8' : s.status === 'closed' ? '#f97316' : '#d1d5db' }} />
                 )}
 
                 <div style={{ padding: '18px 20px', flex: 1 }}>
-                  {/* Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 20, background: st.bg, color: st.color, fontSize: 12, fontWeight: 600 }}>
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: st.dot }} />
-                      {s.status}
+                      {capitalize(s.status)}
                     </span>
                     <div style={{ position: 'relative' }}>
                       <button onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)} style={{ padding: '4px 7px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 7, cursor: 'pointer', color: '#6b7280', display: 'flex', alignItems: 'center' }}>
@@ -366,13 +426,13 @@ export default function Page() {
                       {openMenuId === s.id && (
                         <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 180, overflow: 'hidden' }}>
                           {[
-                            { label: 'Edit',               color: '#374151', show: !isArchived,                    action: () => openEdit(s) },
-                            { label: 'Duplicate',          color: '#374151', show: true,                            action: () => duplicateScholarship(s) },
-                            { label: 'Publish',            color: TEAL,      show: s.status === 'Draft',             action: () => { setConfirmPublish(s); setOpenMenuId(null); } },
-                            { label: 'Reopen Applications',color: '#2563eb', show: s.status === 'Closed',            action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
-                            { label: 'Close Applications', color: '#ea580c', show: s.status === 'Active',            action: () => { setConfirmClose(s); setOpenMenuId(null); } },
-                            { label: 'Archive',            color: '#dc2626', show: !isArchived,                     action: () => { setConfirmArchive(s); setArchiveConfirmText(''); setOpenMenuId(null); } },
-                            { label: 'Delete',             color: '#dc2626', show: true,                             action: () => { setConfirmDelete(s); setOpenMenuId(null); } },
+                            { label: 'Edit',                color: '#374151', show: !isArchived,                      action: () => openEdit(s) },
+                            { label: 'Duplicate',           color: '#374151', show: true,                              action: () => duplicateScholarship(s) },
+                            { label: 'Publish',             color: TEAL,      show: s.status === 'draft',              action: () => { setConfirmPublish(s); setOpenMenuId(null); } },
+                            { label: 'Reopen Applications', color: '#2563eb', show: s.status === 'closed',             action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
+                            { label: 'Close Applications',  color: '#ea580c', show: s.status === 'active',             action: () => { setConfirmClose(s); setOpenMenuId(null); } },
+                            { label: 'Archive',             color: '#dc2626', show: !isArchived,                       action: () => { setConfirmArchive(s); setArchiveConfirmText(''); setOpenMenuId(null); } },
+                            { label: 'Delete',              color: '#dc2626', show: true,                               action: () => { setConfirmDelete(s); setOpenMenuId(null); } },
                           ].filter(item => item.show).map(item => (
                             <button key={item.label} onClick={item.action} style={{ width: '100%', padding: '10px 16px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, fontWeight: 500, color: item.color, cursor: 'pointer', display: 'block' }}
                               onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
@@ -384,24 +444,33 @@ export default function Page() {
                     </div>
                   </div>
 
-                  <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>{s.title}</h3>
-                  <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8, fontWeight: 500 }}>{s.type}</div>
+                  <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>{s.name}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>{s.scholarship_type ?? '—'}</span>
+                    {s.category && (
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                        background: s.category === 'public' ? '#eff6ff' : '#fdf4ff',
+                        color: s.category === 'public' ? '#1d4ed8' : '#7e22ce',
+                      }}>
+                        {s.category === 'public' ? 'Public' : 'Private'}
+                      </span>
+                    )}
+                  </div>
                   <p style={{ margin: '0 0 14px', fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>{s.description}</p>
 
                   <div style={{ fontSize: 22, fontWeight: 800, color: TEAL, marginBottom: 14 }}>
-                    {s.amount} <span style={{ fontSize: 13, fontWeight: 500, color: '#9ca3af' }}>{s.period}</span>
+                    {amount} <span style={{ fontSize: 13, fontWeight: 500, color: '#9ca3af' }}>{s.period ?? ''}</span>
                   </div>
 
-                  {/* Details */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         <span style={{ fontSize: 12, color: '#6b7280' }}>Deadline</span>
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: s.daysLeft <= 3 ? ur.color : '#374151' }}>
-                        {s.deadline}
-                        {s.daysLeft < 999 && <span style={{ marginLeft: 6, padding: '1px 7px', borderRadius: 20, background: ur.bg, color: ur.color, fontSize: 11 }}>{s.daysLeft}d left</span>}
+                      <span style={{ fontSize: 12, fontWeight: 600, color: daysLeft <= 3 ? ur.color : '#374151' }}>
+                        {formatDeadline(s.deadline)}
+                        {daysLeft < 999 && <span style={{ marginLeft: 6, padding: '1px 7px', borderRadius: 20, background: ur.bg, color: ur.color, fontSize: 11 }}>{daysLeft}d left</span>}
                       </span>
                     </div>
 
@@ -411,7 +480,7 @@ export default function Page() {
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                           <span style={{ fontSize: 12, color: '#6b7280' }}>Applicants / Slots</span>
                         </div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: slotsFilled >= 90 ? '#dc2626' : '#374151' }}>{s.applicants} / {s.slots}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: slotsFilled >= 90 ? '#dc2626' : '#374151' }}>{s.applicants_count} / {s.slots ?? '∞'}</span>
                       </div>
                       <div style={{ height: 5, background: '#f3f4f6', borderRadius: 99 }}>
                         <div style={{ height: '100%', width: `${Math.min(slotsFilled, 100)}%`, background: slotsFilled >= 90 ? '#dc2626' : slotsFilled >= 70 ? '#d97706' : TEAL, borderRadius: 99, transition: 'width 0.3s' }} />
@@ -419,17 +488,17 @@ export default function Page() {
                       {slotsFilled >= 90 && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 3, fontWeight: 600 }}>Slots nearly full</div>}
                     </div>
 
-                    {s.eligibility && (
+                    {s.eligibility_text && (
                       <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                        <span style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.4 }}>{s.eligibility}</span>
+                        <span style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.4 }}>{s.eligibility_text}</span>
                       </div>
                     )}
-                    {(s.colleges ?? []).length > 0 && (
+                    {(s.eligible_colleges ?? []).length > 0 && (
                       <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0, marginTop: 3 }}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                          {(s.colleges ?? []).map(c => (
+                          {(s.eligible_colleges ?? []).map(c => (
                             <span key={c} style={{ fontSize: 11, fontWeight: 600, color: TEAL_DARK, background: TEAL_LIGHT, padding: '2px 8px', borderRadius: 20, border: `1px solid #F5D060` }}>{c}</span>
                           ))}
                         </div>
@@ -438,12 +507,11 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Footer */}
                 <div style={{ padding: '14px 20px', borderTop: '1px solid #f3f4f6', display: 'flex', gap: 10 }}>
                   <Link
-                    href={`/osfa/applicants?scholarship=${encodeURIComponent(s.title)}`}
+                    href={`/osfa/applicants?scholarship=${s.id}`}
                     style={{ flex: 1, padding: 8, border: `1.5px solid ${TEAL}`, color: TEAL, borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 600, textAlign: 'center', background: TEAL_LIGHT }}>
-                    View Applicants ({s.applicants})
+                    View Applicants ({s.applicants_count})
                   </Link>
                   {!isArchived && (
                     <button onClick={() => openEdit(s)} style={{ padding: '8px 18px', border: '1px solid #e5e7eb', color: '#374151', borderRadius: 8, background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
@@ -457,7 +525,7 @@ export default function Page() {
         </div>
       )}
 
-      {/* ─── Create / Edit Modal ───────────────────────────────────── */}
+      {/* ─── Create / Edit Modal ─────────────────────────────────────── */}
       {showForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, overflowY: 'auto' }} onClick={() => setShowForm(false)}>
           <div style={{ background: '#fff', borderRadius: 18, maxWidth: 660, width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.2)', overflow: 'hidden', margin: 'auto' }} onClick={e => e.stopPropagation()}>
@@ -474,7 +542,7 @@ export default function Page() {
             <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18, maxHeight: '70vh', overflowY: 'auto' }}>
               <div>
                 <label style={labelStyle}>Scholarship Title <span style={{ color: '#dc2626' }}>*</span></label>
-                <input type="text" value={form.title} onChange={e => setField('title', e.target.value)} placeholder="e.g., Academic Excellence Grant" style={inputStyle} />
+                <input type="text" value={form.name} onChange={e => setField('name', e.target.value)} placeholder="e.g., Academic Excellence Grant" style={inputStyle} />
               </div>
 
               <div>
@@ -484,8 +552,8 @@ export default function Page() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
-                  <label style={labelStyle}>Grant Amount (₱) <span style={{ color: '#dc2626' }}>*</span></label>
-                  <input type="number" value={form.amount} onChange={e => setField('amount', e.target.value)} placeholder="e.g., 50000" style={inputStyle} min={0} />
+                  <label style={labelStyle}>Grant Amount (₱)</label>
+                  <input type="number" value={form.amount_raw} onChange={e => setField('amount_raw', e.target.value)} placeholder="e.g., 50000" style={inputStyle} min={0} />
                 </div>
                 <div>
                   <label style={labelStyle}>Grant Period</label>
@@ -512,23 +580,22 @@ export default function Page() {
 
               <div>
                 <label style={labelStyle}>Scholarship Type</label>
-                <select value={form.type} onChange={e => setField('type', e.target.value)} style={inputStyle}>
+                <select value={form.scholarship_type} onChange={e => setField('scholarship_type', e.target.value)} style={inputStyle}>
                   {SCHOLARSHIP_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 
               <div>
-                <label style={labelStyle}>Eligibility Requirements</label>
-                <input type="text" value={form.eligibility} onChange={e => setField('eligibility', e.target.value)} placeholder="e.g., GWA of 1.75 or better, full-time enrollment" style={inputStyle} />
+                <label style={labelStyle}>Eligibility Description</label>
+                <input type="text" value={form.eligibility_text} onChange={e => setField('eligibility_text', e.target.value)} placeholder="e.g., GWA of 1.75 or better, full-time enrollment" style={inputStyle} />
               </div>
 
-              {/* Colleges / Departments */}
               <div>
                 <label style={labelStyle}>Eligible Colleges / Departments</label>
                 <p style={{ margin: '0 0 10px', fontSize: 12, color: '#94a3b8' }}>Leave all unchecked to allow all colleges.</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                   {PUP_COLLEGES.map(col => {
-                    const checked = form.colleges.includes(col.code);
+                    const checked = form.eligible_colleges.includes(col.code);
                     return (
                       <label key={col.code} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, border: `1px solid ${checked ? '#86efac' : '#e5e7eb'}`, background: checked ? '#f0fdf4' : '#f9fafb', cursor: 'pointer', fontSize: 12, color: checked ? '#065f46' : '#374151', fontWeight: checked ? 600 : 400 }}>
                         <input type="checkbox" checked={checked} onChange={() => toggleCollege(col.code)} style={{ accentColor: TEAL, width: 13, height: 13, flexShrink: 0 }} />
@@ -539,27 +606,18 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* Specific Programs */}
               <div>
                 <label style={labelStyle}>Specific Programs <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
-                <p style={{ margin: '0 0 8px', fontSize: 12, color: '#94a3b8' }}>Add specific degree programs if this scholarship is not open to all programs in the selected colleges.</p>
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <input
-                    type="text"
-                    value={form.programInput}
-                    onChange={e => setField('programInput', e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addProgram())}
-                    placeholder="e.g., BS Computer Science — press Enter to add"
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
+                  <input type="text" value={form.programInput} onChange={e => setField('programInput', e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addProgram())} placeholder="e.g., BS Computer Science — press Enter to add" style={{ ...inputStyle, flex: 1 }} />
                   <button type="button" onClick={addProgram} style={{ padding: '9px 14px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Add</button>
                 </div>
-                {form.programs.length > 0 && (
+                {form.eligible_programs.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {form.programs.map(p => (
+                    {form.eligible_programs.map(p => (
                       <span key={p} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: TEAL_LIGHT, border: `1px solid #F5D060`, fontSize: 12, color: TEAL_DARK, fontWeight: 600 }}>
                         {p}
-                        <button onClick={() => removeProgram(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEAL_DARK, padding: 0, display: 'flex', alignItems: 'center', lineHeight: 1 }}>
+                        <button onClick={() => removeProgram(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEAL_DARK, padding: 0, display: 'flex', alignItems: 'center' }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                       </span>
@@ -568,68 +626,38 @@ export default function Page() {
                 )}
               </div>
 
-              {/* ── Required Documents / Checklist ─────────────────── */}
               <div>
-                <label style={labelStyle}>
-                  Required Documents Checklist
-                  <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginLeft: 6 }}>(students upload these when applying)</span>
-                </label>
-
-                {/* Quick-add chips */}
+                <label style={labelStyle}>Required Documents Checklist <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginLeft: 6 }}>(students upload these when applying)</span></label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                  {COMMON_REQS.filter(r => !form.requirements.some(req => req.label === r)).map(r => (
-                    <button key={r} type="button" onClick={() => addRequirement(r)}
-                      style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px dashed #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer', fontWeight: 500 }}>
+                  {COMMON_REQS.filter(r => !form.requirements.some(req => req.name === r)).map(r => (
+                    <button key={r} type="button" onClick={() => addRequirement(r)} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px dashed #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer', fontWeight: 500 }}>
                       + {r}
                     </button>
                   ))}
                 </div>
-
-                {/* Manual add */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                  <input
-                    type="text"
-                    value={form.reqInput}
-                    onChange={e => setForm(prev => ({ ...prev, reqInput: e.target.value }))}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addRequirement(form.reqInput))}
-                    placeholder="Type a custom requirement and press Enter..."
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
-                  <button type="button" onClick={() => addRequirement(form.reqInput)}
-                    style={{ padding: '9px 14px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-                    Add
-                  </button>
+                  <input type="text" value={form.reqInput} onChange={e => setForm(prev => ({ ...prev, reqInput: e.target.value }))} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addRequirement(form.reqInput))} placeholder="Type a custom requirement and press Enter..." style={{ ...inputStyle, flex: 1 }} />
+                  <button type="button" onClick={() => addRequirement(form.reqInput)} style={{ padding: '9px 14px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Add</button>
                 </div>
-
-                {/* Requirements list */}
                 {form.requirements.length === 0 ? (
-                  <div style={{ padding: '14px 16px', background: '#f9fafb', borderRadius: 8, border: '1px dashed #e5e7eb', fontSize: 13, color: '#9ca3af', textAlign: 'center' }}>
-                    No requirements added yet. Use the chips above or type a custom one.
-                  </div>
+                  <div style={{ padding: '14px 16px', background: '#f9fafb', borderRadius: 8, border: '1px dashed #e5e7eb', fontSize: 13, color: '#9ca3af', textAlign: 'center' }}>No requirements added yet.</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {form.requirements.map((req, i) => (
-                      <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
-                        <span style={{ fontSize: 13, color: '#374151', flex: 1, lineHeight: 1.4 }}>{i + 1}. {req.label}</span>
-                        <button type="button" onClick={() => toggleReqRequired(req.id)}
-                          style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                            background: req.required ? '#fee2e2' : '#f3f4f6',
-                            color: req.required ? '#dc2626' : '#9ca3af',
-                          }}>
-                          {req.required ? 'REQUIRED' : 'OPTIONAL'}
+                      <div key={req.tempId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                        <span style={{ fontSize: 13, color: '#374151', flex: 1, lineHeight: 1.4 }}>{i + 1}. {req.name}</span>
+                        <button type="button" onClick={() => toggleReqRequired(req.tempId)} style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer', background: req.is_required ? '#fee2e2' : '#f3f4f6', color: req.is_required ? '#dc2626' : '#9ca3af' }}>
+                          {req.is_required ? 'REQUIRED' : 'OPTIONAL'}
                         </button>
                         <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-                          <button type="button" onClick={() => moveReq(i, -1)} disabled={i === 0}
-                            style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #e5e7eb', background: '#fff', cursor: i === 0 ? 'not-allowed' : 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <button type="button" onClick={() => moveReq(i, -1)} disabled={i === 0} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #e5e7eb', background: '#fff', cursor: i === 0 ? 'not-allowed' : 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="18 15 12 9 6 15"/></svg>
                           </button>
-                          <button type="button" onClick={() => moveReq(i, 1)} disabled={i === form.requirements.length - 1}
-                            style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #e5e7eb', background: '#fff', cursor: i === form.requirements.length - 1 ? 'not-allowed' : 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <button type="button" onClick={() => moveReq(i, 1)} disabled={i === form.requirements.length - 1} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid #e5e7eb', background: '#fff', cursor: i === form.requirements.length - 1 ? 'not-allowed' : 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"/></svg>
                           </button>
                         </div>
-                        <button type="button" onClick={() => removeRequirement(req.id)}
-                          style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 5, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <button type="button" onClick={() => removeRequirement(req.tempId)} style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 5, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                       </div>
@@ -638,21 +666,19 @@ export default function Page() {
                 )}
               </div>
 
-              {/* Cover Image */}
               <div>
                 <label style={labelStyle}>Scholarship Poster / Cover Image <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
-                <p style={{ margin: '0 0 8px', fontSize: 12, color: '#94a3b8' }}>Upload the official poster from the awarding organization (e.g., CHED, DOST announcement).</p>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', border: '1.5px dashed #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 13, color: '#6b7280', background: '#f9fafb', flexShrink: 0 }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    {form.coverImage ? 'Change Image' : 'Upload Image'}
+                    {form.cover_image_url ? 'Change Image' : 'Upload Image'}
                     <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                   </label>
-                  {form.coverImage && (
+                  {form.cover_image_url && (
                     <div style={{ position: 'relative' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={form.coverImage} alt="Cover preview" style={{ height: 64, borderRadius: 8, border: '1px solid #e5e7eb', objectFit: 'cover' }} />
-                      <button onClick={() => setField('coverImage', '')} style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: '#dc2626', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img src={form.cover_image_url} alt="Cover preview" style={{ height: 64, borderRadius: 8, border: '1px solid #e5e7eb', objectFit: 'cover' }} />
+                      <button onClick={() => setField('cover_image_url', '')} style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: '#dc2626', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                       </button>
                     </div>
@@ -663,15 +689,15 @@ export default function Page() {
 
             <div style={{ padding: '18px 28px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 10, background: '#fafafa' }}>
               <button onClick={() => setShowForm(false)} style={{ padding: '10px 22px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
-              <button onClick={handleSaveForm} style={{ padding: '10px 28px', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff', boxShadow: `0 2px 8px ${TEAL}40` }}>
-                {editingId ? 'Save Changes' : 'Create Scholarship'}
+              <button onClick={handleSaveForm} disabled={formLoading} style={{ padding: '10px 28px', background: formLoading ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: formLoading ? 'not-allowed' : 'pointer', color: '#fff' }}>
+                {formLoading ? 'Saving...' : editingId ? 'Save Changes' : 'Create Scholarship'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Publish confirmation ──────────────────────────────────── */}
+      {/* Publish confirmation */}
       {confirmPublish && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setConfirmPublish(null)}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
@@ -680,7 +706,7 @@ export default function Page() {
             </div>
             <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Publish Scholarship</h2>
             <p style={{ margin: '0 0 22px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
-              <strong>{confirmPublish.title}</strong> will be published and immediately visible to students. Applications will open right away.
+              <strong>{confirmPublish.name}</strong> will be published and immediately visible to students.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setConfirmPublish(null)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
@@ -690,7 +716,7 @@ export default function Page() {
         </div>
       )}
 
-      {/* ─── Close Applications confirmation ──────────────────────── */}
+      {/* Close Applications confirmation */}
       {confirmClose && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setConfirmClose(null)}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
@@ -698,12 +724,9 @@ export default function Page() {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
             </div>
             <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Close Applications</h2>
-            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
-              Applications for <strong>{confirmClose.title}</strong> will be closed immediately. No new applications will be accepted.
+            <p style={{ margin: '0 0 22px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
+              Applications for <strong>{confirmClose.name}</strong> will be closed. No new applications will be accepted.
             </p>
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '10px 14px', marginBottom: 22, fontSize: 13, color: '#475569' }}>
-              <strong>{confirmClose.applicants}</strong> existing application{confirmClose.applicants !== 1 ? 's' : ''} will not be affected and can still be evaluated.
-            </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setConfirmClose(null)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
               <button onClick={() => closeScholarship(confirmClose.id)} style={{ flex: 1, padding: 10, background: '#ea580c', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff' }}>Close Applications</button>
@@ -712,49 +735,23 @@ export default function Page() {
         </div>
       )}
 
-      {/* ─── Archive confirmation — destructive, requires name confirmation ── */}
+      {/* Archive confirmation */}
       {confirmArchive && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => { setConfirmArchive(null); setArchiveConfirmText(''); }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 460, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
-              </div>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>Archive Scholarship</h2>
-                <p style={{ margin: '2px 0 0', fontSize: 13, color: '#9ca3af' }}>This action removes it from the active list</p>
-              </div>
-            </div>
-
-            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
-              <strong>{confirmArchive.title}</strong> will be archived. All data, application history, and evaluations are preserved but the scholarship will no longer be visible to students.
+            <h2 style={{ margin: '0 0 12px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Archive Scholarship</h2>
+            <p style={{ margin: '0 0 16px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
+              <strong>{confirmArchive.name}</strong> will be archived and no longer visible to students.
             </p>
-
-            {confirmArchive.applicants > 0 && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#991b1b' }}>
-                <strong>Warning:</strong> This scholarship currently has <strong>{confirmArchive.applicants}</strong> applicant{confirmArchive.applicants !== 1 ? 's' : ''}. Archiving will not delete their applications but the scholarship will no longer be manageable.
-              </div>
-            )}
-
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                Type the scholarship name to confirm: <span style={{ color: '#dc2626', fontStyle: 'italic' }}>{confirmArchive.title}</span>
+                Type the scholarship name to confirm: <span style={{ color: '#dc2626', fontStyle: 'italic' }}>{confirmArchive.name}</span>
               </label>
-              <input
-                type="text"
-                value={archiveConfirmText}
-                onChange={e => setArchiveConfirmText(e.target.value)}
-                placeholder="Type the scholarship name exactly..."
-                style={{ width: '100%', padding: '9px 12px', border: `1px solid ${archiveConfirmText === confirmArchive.title ? '#6ee7b7' : '#e5e7eb'}`, borderRadius: 8, fontSize: 13, color: '#374151', background: '#f9fafb', outline: 'none', boxSizing: 'border-box' }}
-              />
+              <input type="text" value={archiveConfirmText} onChange={e => setArchiveConfirmText(e.target.value)} placeholder="Type the scholarship name exactly..." style={{ width: '100%', padding: '9px 12px', border: `1px solid ${archiveConfirmText === confirmArchive.name ? '#6ee7b7' : '#e5e7eb'}`, borderRadius: 8, fontSize: 13, color: '#374151', background: '#f9fafb', outline: 'none', boxSizing: 'border-box' }} />
             </div>
-
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => { setConfirmArchive(null); setArchiveConfirmText(''); }} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
-              <button
-                disabled={archiveConfirmText !== confirmArchive.title}
-                onClick={() => archiveScholarship(confirmArchive.id)}
-                style={{ flex: 1, padding: 10, background: archiveConfirmText === confirmArchive.title ? '#dc2626' : '#fca5a5', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: archiveConfirmText === confirmArchive.title ? 'pointer' : 'not-allowed', color: '#fff' }}>
+              <button disabled={archiveConfirmText !== confirmArchive.name} onClick={() => archiveScholarship(confirmArchive.id)} style={{ flex: 1, padding: 10, background: archiveConfirmText === confirmArchive.name ? '#dc2626' : '#fca5a5', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: archiveConfirmText === confirmArchive.name ? 'pointer' : 'not-allowed', color: '#fff' }}>
                 Archive Scholarship
               </button>
             </div>
@@ -762,23 +759,15 @@ export default function Page() {
         </div>
       )}
 
-      {/* ─── Delete confirmation ──────────────────────────────────── */}
+      {/* Delete confirmation */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setConfirmDelete(null)}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </div>
             <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Delete Scholarship</h2>
-            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
-              <strong>{confirmDelete.title}</strong> will be permanently deleted. This cannot be undone.
+            <p style={{ margin: '0 0 22px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
+              <strong>{confirmDelete.name}</strong> will be permanently deleted. This cannot be undone.
             </p>
-            {confirmDelete.applicants > 0 && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#991b1b' }}>
-                <strong>Warning:</strong> This scholarship has <strong>{confirmDelete.applicants}</strong> existing applicant{confirmDelete.applicants !== 1 ? 's' : ''}. Their applications will also be removed.
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
               <button onClick={() => deleteScholarship(confirmDelete.id)} style={{ flex: 1, padding: 10, background: '#dc2626', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff' }}>Delete Permanently</button>
             </div>

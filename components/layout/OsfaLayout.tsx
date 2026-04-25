@@ -2,14 +2,24 @@ import OsfaNav from '@/components/shared/OsfaNav';
 import SignOutButton from '@/components/shared/SignOutButton';
 import Image from 'next/image';
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 
 const TEAL = '#800000';
+
+const DEPT_LABEL: Record<string, { label: string; sublabel: string; bg: string; color: string }> = {
+  public:  { label: 'Public Scholarships', sublabel: 'Gov\'t / State-funded', bg: '#eff6ff', color: '#1d4ed8' },
+  private: { label: 'Private Scholarships', sublabel: 'Corporate / Foundation', bg: '#fdf4ff', color: '#7e22ce' },
+};
 
 interface OsfaLayoutProps {
   children: React.ReactNode;
 }
 
-export default function OsfaLayout({ children }: OsfaLayoutProps) {
+export default async function OsfaLayout({ children }: OsfaLayoutProps) {
+  const cookieStore = await cookies();
+  const dept     = cookieStore.get('department')?.value ?? '';
+  const deptInfo = DEPT_LABEL[dept] ?? null;
+
   return (
     <>
       <header style={{
@@ -65,8 +75,8 @@ export default function OsfaLayout({ children }: OsfaLayoutProps) {
               display: 'flex', alignItems: 'center', gap: 9,
               padding: '6px 12px 6px 6px',
               borderRadius: 10,
-              border: '1px solid #e2e8f0',
-              background: '#f8fafc',
+              border: `1px solid ${deptInfo ? deptInfo.bg : '#e2e8f0'}`,
+              background: deptInfo ? deptInfo.bg : '#f8fafc',
             }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
@@ -77,7 +87,9 @@ export default function OsfaLayout({ children }: OsfaLayoutProps) {
               }}>OS</div>
               <div>
                 <div style={{ fontSize: 12.5, fontWeight: 600, color: '#0f172a', lineHeight: 1 }}>OSFA Staff</div>
-                <div style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1, marginTop: 2.5 }}>Administrator</div>
+                <div style={{ fontSize: 10, color: deptInfo ? deptInfo.color : '#94a3b8', lineHeight: 1, marginTop: 2.5, fontWeight: deptInfo ? 700 : 400 }}>
+                  {deptInfo ? deptInfo.label : 'Administrator'}
+                </div>
               </div>
             </div>
 

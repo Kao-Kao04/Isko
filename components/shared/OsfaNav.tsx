@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { useOsfaContext } from '@/lib/osfa-context';
+import { useState, useEffect } from 'react';
+import { applicationApi } from '@/lib/api-client';
 
 const MAROON       = '#800000';
 const MAROON_LIGHT = '#fff5f5';
@@ -86,9 +86,13 @@ const osfaNavLinks = [
 export default function OsfaNav() {
   const pathname = usePathname();
   const [hovered, setHovered] = useState<string | null>(null);
-  const { applicants } = useOsfaContext();
+  const [pendingCount, setPendingCount] = useState(0);
 
-  const pendingCount = applicants.filter(a => a.status === 'Pending').length;
+  useEffect(() => {
+    applicationApi.list(1, 100)
+      .then(res => setPendingCount(res.items.filter(a => a.status === 'pending').length))
+      .catch(() => {});
+  }, []);
 
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 1 }} role="navigation" aria-label="OSFA navigation">

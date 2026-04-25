@@ -15,7 +15,8 @@ export interface StudentProfile {
 export interface User {
   id: number;
   email: string;
-  role: 'student' | 'osfa_staff';
+  role: 'student' | 'osfa_staff' | 'super_admin';
+  department: 'public' | 'private' | null;
   is_active: boolean;
   account_status: 'pending' | 'approved' | 'rejected';
   created_at: string;
@@ -40,6 +41,7 @@ export async function login(email: string, password: string): Promise<User> {
 
   const user = await getMe();
   document.cookie = `role=${user.role}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+  document.cookie = `department=${user.department ?? ''}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 
   return user;
 }
@@ -51,13 +53,15 @@ export async function logout(): Promise<void> {
   }).catch(() => {});
   clearAccessToken();
   document.cookie = 'role=; path=/; max-age=0';
+  document.cookie = 'department=; path=/; max-age=0';
 }
 
 export async function getMe(): Promise<User> {
   return apiFetch<User>('/api/auth/me');
 }
 
-export async function initiateRegister(email: string, password: string): Promise<void> {
+// Returns a registration token if in dev mode (skip email), or null if email was sent
+export async function initiateRegister(email: string, password: string): Promise<string | null> {
   const res = await fetch('http://localhost:8000/api/auth/initiate-register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -68,6 +72,9 @@ export async function initiateRegister(email: string, password: string): Promise
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || 'Registration failed');
   }
+
+  const data = await res.json();
+  return data.token ?? null;
 }
 
 export interface RegisterData {

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { applicationApi, scholarshipApi } from '@/lib/api-client';
 
 const TEAL = '#800000';
 const TEAL_DARK = '#5C0000';
@@ -33,11 +34,11 @@ const reports: Report[] = [
   { id: '5', name: 'Annual Applicant Demographics',          type: 'Summary',      generated: 'Jan 5, 2025',  status: 'Failed',     size: '—' },
 ];
 
-const overviewStats = [
-  { label: 'Total Applicants', value: '128', change: '+12%', up: true, color: '#2563eb', bg: '#eff6ff' },
-  { label: 'Active Scholarships', value: '3', change: '+1 this quarter', up: true, color: TEAL, bg: TEAL_LIGHT },
-  { label: 'Approved Applications', value: '67', change: '52.3% approval rate', up: true, color: '#059669', bg: '#fff5f5' },
-  { label: 'Total Disbursed', value: '₱3.75M', change: '+15% YTD', up: true, color: '#7c3aed', bg: '#f5f3ff' },
+const overviewStatsDefault = [
+  { label: 'Total Applicants',     value: '—', change: 'Loading...', up: true,  color: '#2563eb', bg: '#eff6ff' },
+  { label: 'Active Scholarships',  value: '—', change: 'Loading...', up: true,  color: TEAL,      bg: TEAL_LIGHT },
+  { label: 'Approved Applications',value: '—', change: 'Loading...', up: true,  color: '#059669', bg: '#fff5f5' },
+  { label: 'Total Disbursed',      value: '—', change: 'Loading...', up: true,  color: '#7c3aed', bg: '#f5f3ff' },
 ];
 
 const approvalTrend = [
@@ -61,6 +62,30 @@ function MiniBar({ value, max }: { value: number; max: number }) {
 export default function Page() {
   const [activeTab, setActiveTab] = useState<ReportTab>('Overview');
   const [dateRange, setDateRange] = useState('last_30');
+  const [overviewStats, setOverviewStats] = useState(overviewStatsDefault);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const [appsRes, scholRes] = await Promise.all([
+        applicationApi.list(1, 200),
+        scholarshipApi.list(1, 100),
+      ]);
+      const apps     = appsRes.items;
+      const schols   = scholRes.items;
+      const total    = apps.length;
+      const approved = apps.filter(a => a.status === 'approved').length;
+      const active   = schols.filter(s => s.status === 'active').length;
+      const rate     = total > 0 ? Math.round((approved / total) * 100) : 0;
+      setOverviewStats([
+        { label: 'Total Applicants',     value: String(total),    change: `${apps.filter(a => a.status === 'pending').length} pending`, up: true,  color: '#2563eb', bg: '#eff6ff' },
+        { label: 'Active Scholarships',  value: String(active),   change: `${schols.length} total programs`,                           up: true,  color: TEAL,      bg: TEAL_LIGHT },
+        { label: 'Approved Applications',value: String(approved), change: `${rate}% approval rate`,                                    up: true,  color: '#059669', bg: '#fff5f5' },
+        { label: 'Total Disbursed',      value: '—',              change: 'Financial data coming soon',                                up: true,  color: '#7c3aed', bg: '#f5f3ff' },
+      ]);
+    } catch { /* silent fail */ }
+  }, []);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [reportType, setReportType] = useState('');
   const [reportFormat, setReportFormat] = useState('pdf');

@@ -1,15 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useOsfaContext } from '@/lib/osfa-context';
+import { applicationApi, scholarshipApi, type ApplicationResponse, type ScholarshipResponse } from '@/lib/api-client';
 
 const TEAL = '#800000';
 const TEAL_DARK = '#5C0000';
 const TEAL_LIGHT = '#fff5f5';
-
 const CARD_SHADOW = '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)';
 const CARD_SHADOW_HOVER = '0 8px 28px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)';
+
+function getDaysLeft(deadline: string | null): number {
+  if (!deadline) return 999;
+  return Math.max(0, Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000));
+}
+
+function formatDeadline(deadline: string | null): string {
+  if (!deadline) return 'No deadline';
+  return new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 const urgencyStyle: Record<string, { bg: string; border: string; color: string; chip: string }> = {
   critical: { bg: '#fff5f5', border: '#fca5a5', color: '#dc2626', chip: '#fef2f2' },
@@ -23,23 +32,43 @@ const announcements = [
 ];
 
 export default function Page() {
-  // Live stats — always reflect the current global state
-  const { applicants, scholarships } = useOsfaContext();
+  const [applications, setApplications] = useState<ApplicationResponse[]>([]);
+  const [scholarships, setScholarships] = useState<ScholarshipResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredCard, setHoveredCard]         = useState<string | null>(null);
+  const [hoveredActivity, setHoveredActivity] = useState<string | null>(null);
+  const [hoveredDeadline, setHoveredDeadline] = useState<number | null>(null);
 
-  const totalApplicants  = applicants.length;
-  const pendingCount     = applicants.filter(a => a.status === 'Pending' || a.status === 'Under Review').length;
-  const approvedCount    = applicants.filter(a => a.status === 'Approved').length;
-  const rejectedCount    = applicants.filter(a => a.status === 'Rejected').length;
-  const incompleteCount  = applicants.filter(a => a.status === 'Incomplete').length;
-  const underReviewCount = applicants.filter(a => a.status === 'Under Review').length;
-  const firstPending     = applicants.find(a => a.evalStatus === 'Pending Review');
-  const activeScholarships = scholarships.filter(s => s.status === 'Active');
+  const fetchData = useCallback(async () => {
+    try {
+      const [appsRes, scholRes] = await Promise.all([
+        applicationApi.list(1, 100),
+        scholarshipApi.list(1, 100),
+      ]);
+      setApplications(appsRes.items);
+      setScholarships(scholRes.items);
+    } catch {
+      // silent fail — dashboard shows zeros
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const totalApplicants  = applications.length;
+  const pendingCount     = applications.filter(a => a.status === 'pending').length;
+  const approvedCount    = applications.filter(a => a.status === 'approved').length;
+  const rejectedCount    = applications.filter(a => a.status === 'rejected').length;
+  const incompleteCount  = applications.filter(a => a.status === 'incomplete').length;
+  const inReviewCount    = applications.filter(a => a.eval_status === 'in_review').length;
+  const activeScholarships = scholarships.filter(s => s.status === 'active');
 
   const stats = [
     {
       label: 'Total Applicants',
       value: String(totalApplicants),
-      change: `${applicants.filter(a => a.applied.startsWith('Jan 2')).length} new this week`,
+      change: `${pendingCount} pending review`,
       trend: 'up' as const,
       href: '/osfa/applicants',
       icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>),
@@ -47,9 +76,9 @@ export default function Page() {
     {
       label: 'Pending Review',
       value: String(pendingCount),
-      change: `${applicants.filter(a => a.evalStatus === 'Pending Review').length} in queue`,
+      change: `${inReviewCount} in review`,
       trend: 'warn' as const,
-      href: '/osfa/applicants?status=Pending',
+      href: '/osfa/applicants?status=pending',
       icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>),
     },
     {
@@ -57,7 +86,7 @@ export default function Page() {
       value: String(approvedCount),
       change: `${totalApplicants > 0 ? Math.round((approvedCount / totalApplicants) * 100) : 0}% approval rate`,
       trend: 'up' as const,
-      href: '/osfa/applicants?status=Approved',
+      href: '/osfa/applicants?status=approved',
       icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>),
     },
     {
@@ -65,7 +94,7 @@ export default function Page() {
       value: String(rejectedCount),
       change: `${incompleteCount} incomplete`,
       trend: 'down' as const,
-      href: '/osfa/applicants?status=Rejected',
+      href: '/osfa/applicants?status=rejected',
       icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>),
     },
   ];
@@ -73,31 +102,31 @@ export default function Page() {
   const trendColor = (t: 'up' | 'warn' | 'down') =>
     t === 'up' ? '#059669' : t === 'warn' ? '#d97706' : '#dc2626';
 
-  const recentActivity = [
-    { id: '1', title: 'New Application Received',   description: 'Juan dela Cruz applied for Academic Excellence Grant',          time: '2 min ago',  href: '/osfa/applicants/1', dot: '#3b82f6' },
-    { id: '2', title: 'Application Approved',        description: 'Ana Santos approved for STEM Innovation Award',                time: '1 hr ago',   href: '/osfa/applicants/3', dot: '#10b981' },
-    { id: '3', title: 'Application Rejected',        description: 'Jose Mendoza — GWA does not meet minimum requirement',         time: '3 hr ago',   href: '/osfa/applicants/6', dot: '#ef4444' },
-    { id: '4', title: 'Scholarship Published',       description: 'Community Service Scholarship is now open for applications',   time: '1 day ago',  href: '/osfa/scholarships', dot: TEAL },
-    { id: '5', title: 'Evaluation Completed',        description: 'Carlos Reyes evaluation finalized — Academic Excellence Grant', time: '2 days ago', href: '/osfa/applicants/4', dot: '#8b5cf6' },
-  ];
-
   const applicationSummary = [
-    { label: 'Pending',      count: applicants.filter(a => a.status === 'Pending').length, color: '#f59e0b' },
-    { label: 'Under Review', count: underReviewCount,                                       color: '#3b82f6' },
-    { label: 'Approved',     count: approvedCount,                                          color: '#10b981' },
-    { label: 'Rejected',     count: rejectedCount,                                          color: '#ef4444' },
-    { label: 'Incomplete',   count: incompleteCount,                                        color: '#f97316' },
+    { label: 'Pending',    count: pendingCount,    color: '#f59e0b', status: 'pending'    },
+    { label: 'In Review',  count: inReviewCount,   color: '#3b82f6', status: 'in_review'  },
+    { label: 'Approved',   count: approvedCount,   color: '#10b981', status: 'approved'   },
+    { label: 'Rejected',   count: rejectedCount,   color: '#ef4444', status: 'rejected'   },
+    { label: 'Incomplete', count: incompleteCount, color: '#f97316', status: 'incomplete' },
   ];
   const summaryTotal = applicationSummary.reduce((s, r) => s + r.count, 0);
 
-  const [hoveredCard, setHoveredCard]         = useState<string | null>(null);
-  const [hoveredActivity, setHoveredActivity] = useState<string | null>(null);
-  const [hoveredDeadline, setHoveredDeadline] = useState<string | null>(null);
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 40, height: 40, border: `3px solid #f3f4f6`, borderTop: `3px solid ${TEAL}`, borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
+          <p style={{ color: '#6b7280', fontSize: 14 }}>Loading dashboard...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 28px' }}>
 
-      {/* ── Page header ── */}
+      {/* Page header */}
       <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>Dashboard</h1>
@@ -106,10 +135,10 @@ export default function Page() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/osfa/applicants?tab=Pending+Review" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: '#fff', border: '1px solid #e2e8f0', color: '#374151', borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 600, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <Link href="/osfa/applicants?status=pending" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: '#fff', border: '1px solid #e2e8f0', color: '#374151', borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 600, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Review Next Pending
-            {firstPending && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', padding: '1px 8px', borderRadius: 20, fontWeight: 700 }}>{applicants.filter(a => a.evalStatus === 'Pending Review').length}</span>}
+            Review Pending
+            {pendingCount > 0 && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', padding: '1px 8px', borderRadius: 20, fontWeight: 700 }}>{pendingCount}</span>}
           </Link>
           <Link href="/osfa/scholarships" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 600, boxShadow: `0 2px 10px ${TEAL}50` }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -118,7 +147,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* ── Stats row — live from context ── */}
+      {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
         {stats.map(s => {
           const isHov = hoveredCard === s.label;
@@ -136,39 +165,49 @@ export default function Page() {
         })}
       </div>
 
-      {/* ── Main two-column layout ── */}
+      {/* Main two-column layout */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
 
         {/* LEFT column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Recent Activity — timeline */}
+          {/* Recent Applications */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: CARD_SHADOW }}>
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 3, height: 16, borderRadius: 99, background: TEAL, flexShrink: 0 }} />
-                  <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Recent Activity</h2>
+                  <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Recent Applications</h2>
                 </div>
-                <p style={{ margin: '4px 0 0 11px', fontSize: 12, color: '#94a3b8' }}>Latest actions across all scholarship programs</p>
+                <p style={{ margin: '4px 0 0 11px', fontSize: 12, color: '#94a3b8' }}>Latest applications across all scholarship programs</p>
               </div>
               <Link href="/osfa/applicants" style={{ fontSize: 12, fontWeight: 700, color: TEAL, textDecoration: 'none', padding: '5px 12px', background: TEAL_LIGHT, borderRadius: 7, border: '1px solid #F5D060' }}>View All</Link>
             </div>
             <div style={{ position: 'relative', padding: '6px 0' }}>
-              <div style={{ position: 'absolute', left: 29, top: 20, bottom: 20, width: 1.5, background: '#e2e8f0', zIndex: 0 }} />
-              {recentActivity.map(a => {
-                const isHov = hoveredActivity === a.id;
+              {applications.length === 0 ? (
+                <div style={{ padding: '32px 24px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No applications yet.</div>
+              ) : (
+                <div style={{ position: 'absolute', left: 29, top: 20, bottom: 20, width: 1.5, background: '#e2e8f0', zIndex: 0 }} />
+              )}
+              {applications.slice(0, 5).map((a, idx) => {
+                const isHov = hoveredActivity === String(a.id);
+                const name = a.student ? `${a.student.first_name ?? ''} ${a.student.last_name ?? ''}`.trim() : `Student #${a.student_id}`;
+                const dotColors: Record<string, string> = { pending: '#f59e0b', approved: '#10b981', rejected: '#ef4444', incomplete: '#f97316', withdrawn: '#94a3b8' };
                 return (
-                  <div key={a.id} onMouseEnter={() => setHoveredActivity(a.id)} onMouseLeave={() => setHoveredActivity(null)}
+                  <div key={a.id} onMouseEnter={() => setHoveredActivity(String(a.id))} onMouseLeave={() => setHoveredActivity(null)}
                     style={{ display: 'flex', alignItems: 'flex-start', padding: '13px 24px', background: isHov ? '#f8fafc' : 'transparent', transition: 'background 0.15s ease' }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: a.dot, border: '2.5px solid #fff', boxShadow: `0 0 0 2.5px ${a.dot}38`, flexShrink: 0, marginTop: 4, marginRight: 16, zIndex: 1 }} />
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: dotColors[a.status] ?? '#94a3b8', border: '2.5px solid #fff', boxShadow: `0 0 0 2.5px ${dotColors[a.status] ?? '#94a3b8'}38`, flexShrink: 0, marginTop: 4, marginRight: 16, zIndex: 1 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{a.title}</div>
-                        <span style={{ fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap', flexShrink: 0 }}>{a.time}</span>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{name}</div>
+                        <span style={{ fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          {new Date(a.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748b', marginTop: 2, lineHeight: 1.45 }}>{a.description}</div>
-                      <Link href={a.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, color: isHov ? TEAL : '#94a3b8', textDecoration: 'none', marginTop: 6, transition: 'color 0.15s ease' }}>
+                      <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                        Applied for {a.scholarship?.name ?? `Scholarship #${a.scholarship_id}`} — <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{a.status}</span>
+                      </div>
+                      <Link href={`/osfa/applicants/${a.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, color: isHov ? TEAL : '#94a3b8', textDecoration: 'none', marginTop: 6 }}>
                         View details
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                       </Link>
@@ -179,7 +218,7 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Application Summary — live from context */}
+          {/* Application Summary */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: CARD_SHADOW }}>
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -192,7 +231,7 @@ export default function Page() {
               {applicationSummary.map(s => {
                 const pct = summaryTotal > 0 ? Math.round((s.count / summaryTotal) * 100) : 0;
                 return (
-                  <Link key={s.label} href={`/osfa/applicants?status=${s.label.replace(' ', '+')}`}
+                  <Link key={s.label} href={`/osfa/applicants?status=${s.status}`}
                     style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #f8fafc' }}>
                     <span style={{ fontSize: 13, color: '#374151', minWidth: 110, fontWeight: 500 }}>{s.label}</span>
                     <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
@@ -219,18 +258,22 @@ export default function Page() {
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Upcoming Deadlines</h3>
             </div>
             <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {activeScholarships.map(s => {
-                const u = urgencyStyle[s.urgency];
+              {activeScholarships.length === 0 ? (
+                <div style={{ padding: '16px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No active scholarships.</div>
+              ) : activeScholarships.map(s => {
+                const daysLeft = getDaysLeft(s.deadline);
+                const urgency = daysLeft <= 3 ? 'critical' : daysLeft <= 10 ? 'warning' : 'normal';
+                const u = urgencyStyle[urgency];
                 const isHov = hoveredDeadline === s.id;
                 return (
-                  <Link key={s.id} href={`/osfa/applicants?scholarship=${encodeURIComponent(s.title)}`}
+                  <Link key={s.id} href={`/osfa/applicants?scholarship=${s.id}`}
                     onMouseEnter={() => setHoveredDeadline(s.id)} onMouseLeave={() => setHoveredDeadline(null)}
                     style={{ textDecoration: 'none', padding: '12px 14px', borderRadius: 10, background: u.bg, border: `1px solid ${u.border}`, display: 'block', transform: isHov ? 'translateX(3px)' : 'none', transition: 'transform 0.15s ease' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', marginBottom: 6 }}>{s.title}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', marginBottom: 6 }}>{s.name}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 11, color: '#64748b' }}>{s.deadline}</span>
+                      <span style={{ fontSize: 11, color: '#64748b' }}>{formatDeadline(s.deadline)}</span>
                       <span style={{ fontSize: 11, fontWeight: 700, color: u.color, padding: '2px 9px', borderRadius: 20, background: u.chip }}>
-                        {s.daysLeft <= 0 ? 'Expired' : s.daysLeft >= 999 ? 'No deadline' : `${s.daysLeft}d left`}
+                        {daysLeft <= 0 ? 'Expired' : daysLeft >= 999 ? 'No deadline' : `${daysLeft}d left`}
                       </span>
                     </div>
                   </Link>

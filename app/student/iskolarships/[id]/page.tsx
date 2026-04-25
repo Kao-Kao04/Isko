@@ -1,17 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useOsfaContext } from '@/lib/osfa-context';
+import { scholarshipApi, type ScholarshipResponse } from '@/lib/api-client';
+import { mapScholarship } from '@/lib/adapters';
 import { COLORS, TYPE_BADGE } from '@/lib/theme';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 
 export default function ScholarshipDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
-  const { scholarships } = useOsfaContext();
-  const [copied, setCopied] = useState(false);
+  const [raw, setRaw]       = useState<ScholarshipResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied]   = useState(false);
+
+  useEffect(() => {
+    scholarshipApi.get(Number(id))
+      .then(setRaw)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [id]);
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -20,13 +29,16 @@ export default function ScholarshipDetailPage() {
     });
   }
 
-  const s = scholarships.find(sc => sc.id === id);
-  const colleges = s?.colleges ?? [];
-  const badge = s ? (TYPE_BADGE[s.type] ?? TYPE_BADGE['Merit-Based']) : TYPE_BADGE['Merit-Based'];
-  const initials = s ? s.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '??';
-  const slotsLeft = s ? s.slots - s.applicants : 0;
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 860, margin: '80px auto', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, border: `3px solid #f3f4f6`, borderTop: `3px solid ${COLORS.maroon}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
-  if (!s) {
+  if (!raw) {
     return (
       <div style={{ maxWidth: 720, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
@@ -38,6 +50,12 @@ export default function ScholarshipDetailPage() {
       </div>
     );
   }
+
+  const s = mapScholarship(raw);
+  const colleges  = s.colleges ?? [];
+  const badge     = TYPE_BADGE[s.type] ?? TYPE_BADGE['Merit-Based'];
+  const initials  = s.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const slotsLeft = s.slots - s.applicants;
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 24px' }}>
@@ -104,7 +122,7 @@ export default function ScholarshipDetailPage() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={COLORS.maroon} strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}>
                 <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
               </svg>
-              <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.7 }}>{s.eligibility}</p>
+              <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.7 }}>{s.eligibility || 'See scholarship details for eligibility requirements.'}</p>
             </div>
 
             {colleges.length > 0 && (
@@ -140,7 +158,6 @@ export default function ScholarshipDetailPage() {
                   </div>
                 </div>
               ))}
-              {/* Motivation letter always required */}
               {(s.requirements?.length ?? 0) > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#f9fafb', borderRadius: 8, border: '1px solid #f3f4f6' }}>
                   <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -162,7 +179,6 @@ export default function ScholarshipDetailPage() {
               <div style={{ fontSize: 13, color: '#6b7280' }}>{s.period}</div>
             </div>
 
-            {/* Urgency */}
             <div style={{ marginBottom: 20, padding: '10px 14px', borderRadius: 10,
               background: s.urgency === 'critical' ? '#fef2f2' : s.urgency === 'warning' ? '#fffbeb' : '#f0fdf4',
               border: `1px solid ${s.urgency === 'critical' ? '#fecaca' : s.urgency === 'warning' ? '#fde68a' : '#bbf7d0'}`,

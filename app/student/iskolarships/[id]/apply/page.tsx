@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useOsfaContext } from '@/lib/osfa-context';
+import { useParams, useRouter } from 'next/navigation';
+import { scholarshipApi, applicationApi, type ScholarshipResponse } from '@/lib/api-client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
-import { MOCK_STUDENT, isEligible } from '@/lib/data/mock-user';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-import type { Applicant } from '@/lib/osfa-data';
 
-const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const DRAFT_KEY = (id: string) => `iskomo_draft_${id}`;
 
 const FALLBACK_REQS = [
@@ -20,23 +19,14 @@ const FALLBACK_REQS = [
 ];
 
 export default function ApplyPage() {
-  const { id }      = useParams<{ id: string }>();
-  const router      = useRouter();
-  const searchParams = useSearchParams();
-  const isResubmit  = searchParams.get('resubmit') === 'true';
-  const { scholarships, applicants, setApplicants, setScholarships, addNotification } = useOsfaContext();
+  const { id }    = useParams<{ id: string }>();
+  const router    = useRouter();
+  const { user, loading: userLoading } = useCurrentUser();
 
-  const scholarship    = scholarships.find(s => s.id === id);
-  const existingApp    = applicants.find(a => a.email === MOCK_STUDENT.email && a.scholarshipId === id);
-  const alreadyApplied = !!existingApp && !(isResubmit && existingApp.status === 'Incomplete');
-
-  const docsConfig = (scholarship?.requirements?.length ? scholarship.requirements : FALLBACK_REQS).map(r => ({
-    id:       r.id,
-    label:    r.label,
-    required: r.required,
-    hint:     r.hint ?? 'PDF, JPG, or PNG (Max 5MB)',
-    accept:   '.pdf,.jpg,.jpeg,.png,.doc,.docx',
-  }));
+  const [scholarship,    setScholarship]    = useState<ScholarshipResponse | null>(null);
+  const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [dataLoading,    setDataLoading]    = useState(true);
+  const [submitError,    setSubmitError]    = useState('');
 
   const [files,      setFiles]      = useState<Record<string, string>>({});
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
@@ -44,10 +34,20 @@ export default function ApplyPage() {
   const [essay,      setEssay]      = useState('');
   const [agreed,     setAgreed]     = useState({ declaration: false, terms: false });
   const [submitted,  setSubmitted]  = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [showModal,  setShowModal]  = useState(false);
   const [hasDraft,   setHasDraft]   = useState(false);
 
-  // Load draft on mount
+  useEffect(() => {
+    Promise.all([
+      scholarshipApi.get(Number(id)),
+      applicationApi.list(1, 100),
+    ]).then(([sch, apps]) => {
+      setScholarship(sch);
+      setAlreadyApplied(apps.items.some(a => a.scholarship_id === Number(id)));
+    }).catch(() => {}).finally(() => setDataLoading(false));
+  }, [id]);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY(id));
@@ -60,12 +60,9 @@ export default function ApplyPage() {
     } catch { /* ignore */ }
   }, [id]);
 
-  // Auto-save draft on changes
   useEffect(() => {
     if (submitted) return;
-    try {
-      localStorage.setItem(DRAFT_KEY(id), JSON.stringify({ essay, files }));
-    } catch { /* ignore */ }
+    try { localStorage.setItem(DRAFT_KEY(id), JSON.stringify({ essay, files })); } catch { /* ignore */ }
   }, [essay, files, id, submitted]);
 
   function clearDraft() {
@@ -75,7 +72,6 @@ export default function ApplyPage() {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, key: string) {
     const f = e.target.files?.[0];
     if (!f) return;
-
     if (f.size > MAX_FILE_BYTES) {
       setFileErrors(prev => ({ ...prev, [key]: `File too large (${(f.size / 1024 / 1024).toFixed(1)}MB). Max is 5MB.` }));
       e.target.value = '';
@@ -88,10 +84,7 @@ export default function ApplyPage() {
       e.target.value = '';
       return;
     }
-
     setFileErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
-
-    // Simulate upload progress
     const fileName = f.name;
     setUploading(prev => ({ ...prev, [key]: 0 }));
     let pct = 0;
@@ -107,57 +100,39 @@ export default function ApplyPage() {
     }, 100);
   }
 
-  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setShowModal(true);
-  }
-
-  function confirmSubmit() {
-    if (!scholarship) return;
-    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    if (isResubmit && existingApp) {
-      setApplicants(prev => prev.map(a => a.id === existingApp.id ? {
-        ...a,
-        status: 'Pending' as const,
-        rejectedDocs: [],
-        docs: docsConfig.map(d => ({ label: d.label, submitted: !!files[d.id] })),
-        audit: [...a.audit, { date: today, action: 'Documents resubmitted via Student Portal', by: 'Student' }],
-      } : a));
-      addNotification({ type: 'resubmit', message: `Your updated documents for ${scholarship.title} have been received. Your application is back under review.`, scholarshipId: scholarship.id });
-    } else {
-      const newApplicant: Applicant = {
-        id: String(Date.now()),
-        ...MOCK_STUDENT,
-        scholarship: scholarship.title,
-        scholarshipId: scholarship.id,
-        status: 'Pending',
-        evalStatus: 'Pending Review',
-        applied: today,
-        gwa: '1.75',
-        income: '₱14,500 / mo',
-        applicantType: 'continuing',
-        docs: docsConfig.map(d => ({ label: d.label, submitted: !!files[d.id] })),
-        audit: [{ date: today, action: 'Application submitted via Student Portal', by: 'Student' }],
-      };
-      setApplicants(prev => [...prev, newApplicant]);
-      // Increment scholarship applicant count
-      setScholarships(prev => prev.map(s =>
-        s.id === scholarship.id ? { ...s, applicants: s.applicants + 1 } : s
-      ));
-      addNotification({ type: 'info', message: `Your application for ${scholarship.title} has been received by OSFA. You will be notified of updates.`, scholarshipId: scholarship.id });
+  async function confirmSubmit() {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      await applicationApi.submit(Number(id));
+      clearDraft();
+      setShowModal(false);
+      setSubmitted(true);
+    } catch (err: unknown) {
+      setShowModal(false);
+      const msg = err instanceof Error ? err.message : 'Failed to submit application.';
+      setSubmitError(msg);
+    } finally {
+      setSubmitting(false);
     }
-    clearDraft();
-    setShowModal(false);
-    setSubmitted(true);
   }
+
+  const loading = userLoading || dataLoading;
 
   const labelStyle: React.CSSProperties   = { display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 };
   const inputStyle: React.CSSProperties   = { width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box' };
   const sectionStyle: React.CSSProperties = { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '24px 28px', marginBottom: 20 };
   const sectionTitle: React.CSSProperties = { fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid #f3f4f6' };
 
-  // ── Already applied ──────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 860, margin: '80px auto', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, border: `3px solid #f3f4f6`, borderTop: `3px solid ${COLORS.maroon}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   if (alreadyApplied) {
     return (
       <div style={{ maxWidth: 600, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
@@ -169,7 +144,7 @@ export default function ApplyPage() {
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Already Applied</div>
           <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 28, lineHeight: 1.6 }}>
-            You already have an existing application for <strong>{scholarship?.title}</strong>. You can track its status in My Applications.
+            You already have an existing application for <strong>{scholarship?.name}</strong>. You can track its status in My Applications.
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <button onClick={() => router.push('/student/applications')} style={{ background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
@@ -195,10 +170,16 @@ export default function ApplyPage() {
     );
   }
 
-  // ── Not eligible ─────────────────────────────────────────────────────────
-  if (!isEligible(scholarship.colleges, scholarship.programs, MOCK_STUDENT)) {
-    const restrictedColleges = scholarship.colleges ?? [];
-    const restrictedPrograms = scholarship.programs ?? [];
+  // Eligibility check
+  const userCollege  = user?.student_profile?.college  ?? '';
+  const userProgram  = user?.student_profile?.program  ?? '';
+  const eligColleges = scholarship.eligible_colleges ?? [];
+  const eligPrograms = scholarship.eligible_programs ?? [];
+  const collegeOk    = eligColleges.length === 0 || eligColleges.includes(userCollege);
+  const programOk    = eligPrograms.length === 0 || eligPrograms.includes(userProgram);
+  const isEligible   = collegeOk && programOk;
+
+  if (!isEligible) {
     return (
       <div style={{ maxWidth: 600, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '48px 40px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
@@ -209,32 +190,32 @@ export default function ApplyPage() {
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Not Eligible</div>
           <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 16, lineHeight: 1.6 }}>
-            <strong>{scholarship.title}</strong> is restricted to specific colleges or programs and you do not meet the requirements.
+            <strong>{scholarship.name}</strong> is restricted to specific colleges or programs and you do not meet the requirements.
           </div>
-          {(restrictedColleges.length > 0 || restrictedPrograms.length > 0) && (
+          {(eligColleges.length > 0 || eligPrograms.length > 0) && (
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '14px 18px', marginBottom: 24, textAlign: 'left' }}>
-              {restrictedColleges.length > 0 && (
-                <div style={{ marginBottom: restrictedPrograms.length > 0 ? 10 : 0 }}>
+              {eligColleges.length > 0 && (
+                <div style={{ marginBottom: eligPrograms.length > 0 ? 10 : 0 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Open to Colleges</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {restrictedColleges.map(c => (
-                      <span key={c} style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: c === MOCK_STUDENT.college ? '#fef2f2' : '#f3f4f6', color: c === MOCK_STUDENT.college ? '#dc2626' : '#374151', border: `1px solid ${c === MOCK_STUDENT.college ? '#fca5a5' : '#e5e7eb'}` }}>{c}</span>
+                    {eligColleges.map(c => (
+                      <span key={c} style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}>{c}</span>
                     ))}
                   </div>
                 </div>
               )}
-              {restrictedPrograms.length > 0 && (
+              {eligPrograms.length > 0 && (
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Open to Programs</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {restrictedPrograms.map(p => (
+                    {eligPrograms.map(p => (
                       <span key={p} style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}>{p}</span>
                     ))}
                   </div>
                 </div>
               )}
               <div style={{ marginTop: 12, fontSize: 12, color: '#6b7280' }}>
-                Your college: <strong>{MOCK_STUDENT.college}</strong> · Program: <strong>{MOCK_STUDENT.program}</strong>
+                Your college: <strong>{userCollege || '—'}</strong> · Program: <strong>{userProgram || '—'}</strong>
               </div>
             </div>
           )}
@@ -258,13 +239,9 @@ export default function ApplyPage() {
           <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginBottom: 10 }}>
-            {isResubmit ? 'Documents Updated!' : 'Application Submitted!'}
-          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Application Submitted!</div>
           <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 28, lineHeight: 1.6 }}>
-            {isResubmit
-              ? <>Your documents for <strong>{scholarship.title}</strong> have been updated. Your application is back under review.</>
-              : <>Your application for <strong>{scholarship.title}</strong> has been received by OSFA. You can track its progress in My Applications.</>}
+            Your application for <strong>{scholarship.name}</strong> has been received by OSFA. You can track its progress in My Applications.
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <button onClick={() => router.push('/student/applications')} style={{ background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Track My Applications</button>
@@ -275,16 +252,38 @@ export default function ApplyPage() {
     );
   }
 
-  const requiredDocs  = docsConfig.filter(d => d.required);
-  const uploadedCount = requiredDocs.filter(d => files[d.id]).length;
+  const docsConfig = scholarship.requirements.length
+    ? scholarship.requirements.map(r => ({
+        id:       String(r.id),
+        label:    r.name,
+        required: r.is_required,
+        hint:     r.description ?? 'PDF, JPG, or PNG (Max 5MB)',
+        accept:   '.pdf,.jpg,.jpeg,.png,.doc,.docx',
+      }))
+    : FALLBACK_REQS.map(r => ({
+        id:       r.id,
+        label:    r.label,
+        required: r.required,
+        hint:     r.hint ?? 'PDF, JPG, or PNG (Max 5MB)',
+        accept:   '.pdf,.jpg,.jpeg,.png,.doc,.docx',
+      }));
+
+  const requiredDocs        = docsConfig.filter(d => d.required);
+  const uploadedCount       = requiredDocs.filter(d => files[d.id]).length;
   const allRequiredUploaded = uploadedCount === requiredDocs.length && essay.trim().length > 0;
+
+  const profile = user?.student_profile;
+  const fullName = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : '';
+
+  const slotsLeft = (scholarship.slots ?? 0) - scholarship.applicants_count;
+  const deadline = scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set';
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 24px' }}>
 
       <Breadcrumb items={[
         { label: 'Iskolarships', href: '/student/iskolarships' },
-        { label: scholarship.title, href: `/student/iskolarships/${id}` },
+        { label: scholarship.name, href: `/student/iskolarships/${id}` },
         { label: 'Apply' },
       ]} />
 
@@ -301,6 +300,12 @@ export default function ApplyPage() {
           </div>
         )}
       </div>
+
+      {submitError && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: '#dc2626' }}>
+          {submitError}
+        </div>
+      )}
 
       {/* Progress bar */}
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 24px', marginBottom: 20 }}>
@@ -319,20 +324,18 @@ export default function ApplyPage() {
         </div>
       </div>
 
-      <form onSubmit={handleFormSubmit}>
+      <form onSubmit={e => { e.preventDefault(); setShowModal(true); }}>
 
         {/* Scholarship info */}
         <div style={sectionStyle}>
           <div style={sectionTitle}>Scholarship Information</div>
           <div style={{ background: '#fff5f5', border: `1px solid ${COLORS.maroon}25`, borderRadius: 10, padding: '16px 20px' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.maroonD }}>{scholarship.title}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.maroonD }}>{scholarship.name}</div>
             <div style={{ fontSize: 13, color: '#374151', marginTop: 6, lineHeight: 1.6 }}>{scholarship.description}</div>
             <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.maroon }}>{scholarship.amount} {scholarship.period}</span>
-              <span style={{ fontSize: 13, color: '#6b7280' }}>Deadline: {scholarship.deadline}</span>
-              <span style={{ fontSize: 13, color: scholarship.slots - scholarship.applicants < 5 ? '#dc2626' : '#6b7280' }}>
-                {scholarship.slots - scholarship.applicants} slots left
-              </span>
+              {scholarship.amount_raw && <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.maroon }}>₱{scholarship.amount_raw.toLocaleString()} {scholarship.period}</span>}
+              <span style={{ fontSize: 13, color: '#6b7280' }}>Deadline: {deadline}</span>
+              <span style={{ fontSize: 13, color: slotsLeft < 5 ? '#dc2626' : '#6b7280' }}>{slotsLeft} slots left</span>
             </div>
           </div>
         </div>
@@ -342,22 +345,18 @@ export default function ApplyPage() {
           <div style={sectionTitle}>Student Information</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
             {[
-              { label: 'Full Name',        value: MOCK_STUDENT.name },
-              { label: 'Email Address',    value: MOCK_STUDENT.email },
-              { label: 'Contact Number',   value: MOCK_STUDENT.contact },
-              { label: 'Student ID',       value: MOCK_STUDENT.studentId },
-              { label: 'School',           value: MOCK_STUDENT.school },
-              { label: 'Course / Program', value: MOCK_STUDENT.program },
+              { label: 'Full Name',        value: fullName },
+              { label: 'Email Address',    value: user?.email ?? '' },
+              { label: 'Student Number',   value: profile?.student_number ?? '—' },
+              { label: 'College',          value: profile?.college ?? '—' },
+              { label: 'Course / Program', value: profile?.program ?? '—' },
+              { label: 'Year Level',       value: profile?.year_level ? `${profile.year_level}th Year` : '—' },
             ].map(f => (
               <div key={f.label}>
                 <label style={labelStyle}>{f.label}</label>
                 <input type="text" value={f.value} readOnly style={{ ...inputStyle, background: '#f9fafb', color: '#6b7280' }} />
               </div>
             ))}
-            <div>
-              <label style={labelStyle}>Year Level</label>
-              <input type="text" value={MOCK_STUDENT.yearLevel} readOnly style={{ ...inputStyle, background: '#f9fafb', color: '#6b7280' }} />
-            </div>
           </div>
         </div>
 
@@ -367,8 +366,8 @@ export default function ApplyPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
             {docsConfig.map(doc => {
               const isUploading = uploading[doc.id] !== undefined;
-              const pct = uploading[doc.id] ?? 0;
-              const hasFile = !!files[doc.id];
+              const pct     = uploading[doc.id] ?? 0;
+              const hasFile  = !!files[doc.id];
               const hasError = !!fileErrors[doc.id];
               return (
                 <div key={doc.id}>
@@ -399,18 +398,14 @@ export default function ApplyPage() {
                           <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
                         <span style={{ fontSize: 13, fontWeight: 500, color: hasError ? '#dc2626' : hasFile ? COLORS.maroonD : '#374151', textAlign: 'center' }}>
-                          {hasFile ? (
-                            <><span style={{ color: '#15803d', marginRight: 4 }}>✓</span>{files[doc.id]}</>
-                          ) : 'Click to upload'}
+                          {hasFile ? <><span style={{ color: '#15803d', marginRight: 4 }}>✓</span>{files[doc.id]}</> : 'Click to upload'}
                         </span>
                         <span style={{ fontSize: 11, color: '#9ca3af' }}>{doc.hint}</span>
                       </>
                     )}
                     <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required && !hasFile} style={{ display: 'none' }} onChange={e => handleFileChange(e, doc.id)} disabled={isUploading} />
                   </label>
-                  {hasError && (
-                    <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{fileErrors[doc.id]}</p>
-                  )}
+                  {hasError && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{fileErrors[doc.id]}</p>}
                 </div>
               );
             })}
@@ -422,13 +417,9 @@ export default function ApplyPage() {
                   {essay.length} characters {essay.length < 200 && essay.length > 0 ? '— too short' : ''}
                 </span>
               </div>
-              <textarea
-                id="essay" name="essay" rows={6} required
-                value={essay}
-                onChange={e => setEssay(e.target.value)}
+              <textarea id="essay" name="essay" rows={6} required value={essay} onChange={e => setEssay(e.target.value)}
                 placeholder="Explain why you deserve this scholarship and how it will help your academic journey..."
-                style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
-              />
+                style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }} />
             </div>
           </div>
         </div>
@@ -449,13 +440,14 @@ export default function ApplyPage() {
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
           <button type="button" onClick={() => router.back()} style={{ padding: '11px 24px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" style={{ padding: '11px 28px', borderRadius: 8, border: 'none', background: `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
-            Submit Application
+          <button type="submit" disabled={submitting} style={{ padding: '11px 28px', borderRadius: 8, border: 'none', background: submitting ? '#9ca3af' : `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`, fontSize: 14, fontWeight: 700, color: '#fff', cursor: submitting ? 'not-allowed' : 'pointer' }}>
+            {submitting ? 'Submitting…' : 'Submit Application'}
           </button>
         </div>
       </form>
 
-      {/* Confirm modal with doc checklist */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
       <ConfirmModal
         open={showModal}
         title="Review & Submit"

@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useOsfaContext } from '@/lib/osfa-context';
-import { MOCK_STUDENT } from '@/lib/data/mock-user';
+import { useState, useEffect } from 'react';
+import { applicationApi } from '@/lib/api-client';
 
 const MAROON = '#800000';
 
@@ -51,10 +51,13 @@ const studentNavLinks = [
 
 export default function StudentNav() {
   const pathname = usePathname();
-  const { applicants } = useOsfaContext();
-  const pendingCount = applicants.filter(
-    a => a.email === MOCK_STUDENT.email && ['Pending', 'Incomplete'].includes(a.status)
-  ).length;
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    applicationApi.list(1, 100)
+      .then(res => setPendingCount(res.items.filter(a => ['pending', 'incomplete'].includes(a.status)).length))
+      .catch(() => {});
+  }, []);
 
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }} role="navigation" aria-label="Student navigation">

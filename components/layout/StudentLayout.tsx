@@ -74,7 +74,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
       </header>
 
       {/* Page Content */}
-      <div style={{ minHeight: 'calc(100vh - 63px)', background: '#f8fafc' }}>
+      <div style={{ minHeight: 'calc(100vh - 63px)', background: '#f0f4f8' }}>
         {children}
       </div>
     </>

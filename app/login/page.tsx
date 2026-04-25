@@ -41,7 +41,9 @@ export default function Page() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      router.push(user.role === 'osfa_staff' ? '/osfa/dashboard' : '/student/dashboard');
+      if (user.role === 'super_admin')   router.push('/admin/staff');
+      else if (user.role === 'osfa_staff') router.push('/osfa/dashboard');
+      else router.push('/student/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -54,8 +56,14 @@ export default function Page() {
     setSignupError('');
     setSignupLoading(true);
     try {
-      await initiateRegister(signupEmail, signupPassword);
-      setEmailSent(true);
+      const token = await initiateRegister(signupEmail, signupPassword);
+      if (token) {
+        // Dev mode — skip email, go straight to profile completion
+        router.push(`/register?token=${token}`);
+      } else {
+        // Production — show "check your email" screen
+        setEmailSent(true);
+      }
     } catch (err) {
       setSignupError(err instanceof Error ? err.message : 'Registration failed');
     } finally {

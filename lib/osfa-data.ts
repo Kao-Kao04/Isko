@@ -82,6 +82,7 @@ export interface Scholarship {
   status: ScholarshipStatus;
   type: string;
   eligibility: string;
+  category?: 'public' | 'private';
   colleges?: string[];
   programs?: string[];
   coverImage?: string;

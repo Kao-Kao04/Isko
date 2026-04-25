@@ -13,8 +13,14 @@ interface Props {
   applyDisabled?: boolean;
 }
 
+const CATEGORY_BADGE: Record<string, { bg: string; color: string; label: string }> = {
+  public:  { bg: '#eff6ff', color: '#1d4ed8', label: 'Public' },
+  private: { bg: '#fdf4ff', color: '#7e22ce', label: 'Private' },
+};
+
 export default function ScholarshipCard({ scholarship: s, variant = 'grid', bookmarked = false, onBookmark, eligible = true, applyDisabled = false }: Props) {
   const badge   = TYPE_BADGE[s.type] ?? TYPE_BADGE['Merit-Based'];
+  const catBadge = s.category ? CATEGORY_BADGE[s.category] : null;
   const initials = s.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const colleges = s.colleges ?? [];
   const slotsLeft = s.slots - s.applicants;
@@ -42,6 +48,11 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
             <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, background: badge.bg, color: badge.color, fontSize: 11, fontWeight: 600 }}>
               {s.type}
             </span>
+            {catBadge && (
+              <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, background: catBadge.bg, color: catBadge.color, fontSize: 11, fontWeight: 700 }}>
+                {catBadge.label}
+              </span>
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
             <span style={{ fontSize: 11, color: s.urgency === 'critical' ? '#dc2626' : s.urgency === 'warning' ? '#d97706' : '#15803d', fontWeight: 600 }}>
@@ -94,9 +105,16 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
           </div>
           <div style={{ minWidth: 0 }}>
             <h3 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>{s.title}</h3>
-            <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: badge.bg, color: badge.color }}>
-              {s.type}
-            </span>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: badge.bg, color: badge.color }}>
+                {s.type}
+              </span>
+              {catBadge && (
+                <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: catBadge.bg, color: catBadge.color }}>
+                  {catBadge.label}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
