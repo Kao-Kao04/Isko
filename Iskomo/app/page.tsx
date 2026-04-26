@@ -204,18 +204,7 @@ export default function Home() {
         [data-dark] p   { color: inherit !important; }
       `}</style>
 
-      {/* Page transition overlay */}
-      <div className="page-transition-overlay" id="pageTransitionOverlay" aria-hidden="true">
-        <div className="transition-content">
-          <div className="transition-logo">
-            <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo Logo" />
-          </div>
-          <div className="transition-text">IskoMo</div>
-          <div className="transition-loader"><div className="loader-spinner" /></div>
-        </div>
-      </div>
-
-      <div style={{ background: '#fff', fontFamily: "'Inter', sans-serif" }}>
+<div style={{ background: '#fff', fontFamily: "'Inter', sans-serif" }}>
         <LandingNavbar />
 
         {/* ══════════════════════════════════════════════════
