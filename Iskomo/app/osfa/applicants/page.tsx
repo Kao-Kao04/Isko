@@ -167,7 +167,7 @@ function ApplicantsContent() {
     });
     setActionLoading(true);
     try {
-      const remarks = `${rejectReason.replace(/_/g, ' ')}${rejectNote ? ` — ${rejectNote}` : ''}`;
+      const remarks = `${rejectReason}${rejectNote ? ` — ${rejectNote}` : ''}`;
       await Promise.all(eligible.map(id => applicationApi.updateStatus(id, 'rejected', remarks)));
       setApplications(prev => prev.map(a => eligible.includes(a.id) ? { ...a, status: 'rejected' as ApplicationStatus } : a));
       addToast('error', `${eligible.length} applicant${eligible.length > 1 ? 's' : ''} rejected.`);
@@ -420,12 +420,12 @@ function ApplicantsContent() {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Reason <span style={{ color: '#dc2626' }}>*</span></label>
               <select value={rejectReason} onChange={e => setRejectReason(e.target.value)} style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#374151', background: '#f9fafb', outline: 'none' }}>
                 <option value="">Select a reason...</option>
-                <option value="missing_docs">Missing required documents</option>
-                <option value="criteria">Does not meet eligibility criteria</option>
-                <option value="gwa">GWA does not meet the minimum requirement</option>
-                <option value="duplicate">Duplicate application</option>
-                <option value="incomplete">Incomplete application form</option>
-                <option value="other">Other</option>
+                <option value="Missing Required Documents">Missing Required Documents</option>
+                <option value="Does Not Meet Eligibility Criteria">Does Not Meet Eligibility Criteria</option>
+                <option value="GWA Does Not Meet The Minimum Requirement">GWA Does Not Meet The Minimum Requirement</option>
+                <option value="Duplicate Application">Duplicate Application</option>
+                <option value="Incomplete Application Form">Incomplete Application Form</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div style={{ marginBottom: 20 }}>

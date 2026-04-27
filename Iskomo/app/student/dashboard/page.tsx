@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { COLORS } from '@/lib/theme';
 import ScholarshipCard from '@/components/scholarship/ScholarshipCard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { applicationApi, scholarshipApi, scholarApi, type ApplicationResponse, type ScholarResponse } from '@/lib/api-client';
+import { applicationApi, scholarshipApi, scholarApi, notificationApi, type ApplicationResponse, type ScholarResponse, type NotificationResponse } from '@/lib/api-client';
 import { mapScholarship } from '@/lib/adapters';
 import type { Scholarship } from '@/lib/osfa-data';
 
@@ -20,18 +20,25 @@ const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   incomplete: { bg: '#fef9c3', color: '#713f12' },
 };
 
-const announcements = [
-  { title: 'OSFA Scholarship Announcement', body: 'The Office of Scholarship and Financial Assistance is now accepting applications for available scholarship programs.', tag: 'Featured', tagBg: TEAL_LIGHT, tagColor: TEAL, border: TEAL, time: 'Today', icon: '📢' },
-  { title: 'Deadline Reminder', body: 'Check your application deadlines and make sure all required documents are submitted on time.', tag: 'Update', tagBg: '#fffbeb', tagColor: '#92400e', border: '#F0C040', time: '2 days ago', icon: '📅' },
-];
+function timeAgo(d: string): string {
+  const diff  = Date.now() - new Date(d).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins < 60)  return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days === 1) return 'Yesterday';
+  return `${days} days ago`;
+}
 
 export default function Page() {
   const { user, loading: userLoading } = useCurrentUser();
-  const [applications, setApplications] = useState<ApplicationResponse[]>([]);
-  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
-  const [myScholars,   setMyScholars]   = useState<ScholarResponse[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [fetchError,   setFetchError]   = useState('');
+  const [applications,   setApplications]   = useState<ApplicationResponse[]>([]);
+  const [scholarships,   setScholarships]   = useState<Scholarship[]>([]);
+  const [myScholars,     setMyScholars]     = useState<ScholarResponse[]>([]);
+  const [notifications,  setNotifications]  = useState<NotificationResponse[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [fetchError,     setFetchError]     = useState('');
 
   const isPending  = user?.account_status === 'pending';
   const isRejected = user?.account_status === 'rejected';
@@ -39,16 +46,22 @@ export default function Page() {
   const fetchData = useCallback(async () => {
     setFetchError('');
     try {
-      const [appsRes, scholRes, myScholarsRes] = await Promise.all([
+      const [appsResult, scholResult, myScholarsResult, notifsResult] = await Promise.allSettled([
         applicationApi.list(1, 50),
         scholarshipApi.list(1, 10),
         scholarApi.getMyScholars(),
+        notificationApi.list(1, 20),
       ]);
-      setApplications(appsRes.items);
-      setScholarships(scholRes.items.map(mapScholarship));
-      setMyScholars(myScholarsRes);
-    } catch (err) {
-      setFetchError(err instanceof Error ? err.message : 'Failed to load dashboard data.');
+      if (appsResult.status === 'fulfilled')       setApplications(appsResult.value.items);
+      if (scholResult.status === 'fulfilled')       setScholarships(scholResult.value.items.map(mapScholarship));
+      if (myScholarsResult.status === 'fulfilled')  setMyScholars(myScholarsResult.value);
+      if (notifsResult.status === 'fulfilled')      setNotifications(notifsResult.value.items);
+
+      const failed = [appsResult, scholResult].filter(r => r.status === 'rejected');
+      if (failed.length > 0) {
+        const err = (failed[0] as PromiseRejectedResult).reason;
+        setFetchError(err instanceof Error ? err.message : 'Some data failed to load.');
+      }
     } finally {
       setLoading(false);
     }
@@ -243,26 +256,48 @@ export default function Page() {
             </div>
           )}
 
-          {/* Announcements */}
+          {/* Notifications / Announcements */}
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               </div>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Announcements</h3>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Notifications</h3>
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, background: TEAL, color: '#fff', padding: '2px 8px', borderRadius: 99 }}>
+                  {notifications.filter(n => !n.read).length} new
+                </span>
+              )}
             </div>
-            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {announcements.map((a, i) => (
-                <div key={i} style={{ padding: '14px 14px 14px 16px', background: '#fafafa', borderRadius: 10, borderLeft: `3px solid ${a.border}`, position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 18, opacity: 0.15 }}>{a.icon}</div>
-                  <h4 style={{ margin: '0 0 5px', fontSize: 13, fontWeight: 700, color: '#111827' }}>{a.title}</h4>
-                  <p style={{ margin: '0 0 10px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>{a.body}</p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: a.tagBg, color: a.tagColor }}>{a.tag}</span>
-                    <span style={{ fontSize: 11, color: '#9ca3af' }}>{a.time}</span>
+            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {notifications.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: '12px 0' }}>No notifications yet.</p>
+              ) : notifications.slice(0, 5).map(n => {
+                const typeColor: Record<string, string> = {
+                  approved: TEAL, rejected: '#dc2626', incomplete: '#ea580c',
+                  deadline: '#d97706', status: '#2563eb', info: TEAL,
+                };
+                const typeIcon: Record<string, string> = {
+                  approved: '✅', rejected: '❌', incomplete: '⚠️',
+                  deadline: '⏰', status: '📋', info: '📢', resubmit: '📤',
+                };
+                const color = typeColor[n.type] ?? TEAL;
+                return (
+                  <div key={n.id} style={{ padding: '12px 14px 12px 16px', background: n.read ? '#fafafa' : '#fff5f5', borderRadius: 10, borderLeft: `3px solid ${n.read ? '#e5e7eb' : color}` }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                          <span style={{ fontSize: 14 }}>{typeIcon[n.type] ?? '🔔'}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{n.title}</span>
+                          {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: TEAL, flexShrink: 0 }} />}
+                        </div>
+                        <p style={{ margin: '0 0 6px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>{n.message || n.body}</p>
+                        <span style={{ fontSize: 11, color: '#9ca3af' }}>{timeAgo(n.created_at)}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

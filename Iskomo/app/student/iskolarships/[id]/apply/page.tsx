@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { scholarshipApi, applicationApi, type ScholarshipResponse } from '@/lib/api-client';
+import { scholarshipApi, applicationApi, documentApi, type ScholarshipResponse } from '@/lib/api-client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 import Breadcrumb from '@/components/ui/Breadcrumb';
@@ -28,9 +28,9 @@ export default function ApplyPage() {
   const [dataLoading,    setDataLoading]    = useState(true);
   const [submitError,    setSubmitError]    = useState('');
 
-  const [files,      setFiles]      = useState<Record<string, string>>({});
-  const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
-  const [uploading,  setUploading]  = useState<Record<string, number>>({});
+  const [files,       setFiles]       = useState<Record<string, string>>({});
+  const [fileObjects, setFileObjects] = useState<Record<string, File>>({});
+  const [fileErrors,  setFileErrors]  = useState<Record<string, string>>({});
   const [essay,      setEssay]      = useState('');
   const [agreed,     setAgreed]     = useState({ declaration: false, terms: false });
   const [submitted,  setSubmitted]  = useState(false);
@@ -54,7 +54,6 @@ export default function ApplyPage() {
       if (raw) {
         const draft = JSON.parse(raw);
         if (draft.essay) setEssay(draft.essay);
-        if (draft.files) setFiles(draft.files);
         setHasDraft(true);
       }
     } catch { /* ignore */ }
@@ -85,26 +84,20 @@ export default function ApplyPage() {
       return;
     }
     setFileErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
-    const fileName = f.name;
-    setUploading(prev => ({ ...prev, [key]: 0 }));
-    let pct = 0;
-    const tick = setInterval(() => {
-      pct += Math.random() * 28 + 12;
-      if (pct >= 100) {
-        clearInterval(tick);
-        setUploading(prev => { const n = { ...prev }; delete n[key]; return n; });
-        setFiles(prev => ({ ...prev, [key]: fileName }));
-      } else {
-        setUploading(prev => ({ ...prev, [key]: Math.round(pct) }));
-      }
-    }, 100);
+    setFiles(prev => ({ ...prev, [key]: f.name }));
+    setFileObjects(prev => ({ ...prev, [key]: f }));
   }
 
   async function confirmSubmit() {
     setSubmitting(true);
     setSubmitError('');
     try {
-      await applicationApi.submit(Number(id));
+      const application = await applicationApi.submit(Number(id));
+      // Upload each file that was attached
+      const uploadPromises = docsConfig
+        .filter(doc => fileObjects[doc.id])
+        .map(doc => documentApi.upload(application.id, doc.label, fileObjects[doc.id]));
+      await Promise.allSettled(uploadPromises);
       clearDraft();
       setShowModal(false);
       setSubmitted(true);
@@ -381,8 +374,6 @@ export default function ApplyPage() {
           <div style={sectionTitle}>Required Documents</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
             {docsConfig.map(doc => {
-              const isUploading = uploading[doc.id] !== undefined;
-              const pct     = uploading[doc.id] ?? 0;
               const hasFile  = !!files[doc.id];
               const hasError = !!fileErrors[doc.id];
               return (
@@ -392,34 +383,20 @@ export default function ApplyPage() {
                   </label>
                   <label htmlFor={doc.id} style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    border: `2px dashed ${hasError ? '#dc2626' : hasFile ? COLORS.maroon : isUploading ? COLORS.maroon : '#d1d5db'}`,
-                    borderRadius: 10, padding: '20px 16px', cursor: isUploading ? 'default' : 'pointer',
-                    background: hasError ? '#fef2f2' : hasFile ? '#fff5f5' : isUploading ? '#fff5f5' : '#fafafa',
-                    transition: 'all 0.15s', position: 'relative', overflow: 'hidden',
+                    border: `2px dashed ${hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#d1d5db'}`,
+                    borderRadius: 10, padding: '20px 16px', cursor: 'pointer',
+                    background: hasError ? '#fef2f2' : hasFile ? '#fff5f5' : '#fafafa',
+                    transition: 'all 0.15s',
                   }}>
-                    {isUploading ? (
-                      <>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={COLORS.maroon} strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
-                          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                        </svg>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.maroon }}>Uploading… {pct}%</span>
-                        <div style={{ width: '100%', height: 4, background: '#fecaca', borderRadius: 99, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${COLORS.maroon}, #C9A027)`, borderRadius: 99, transition: 'width 0.1s linear' }} />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#9ca3af'} strokeWidth="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: hasError ? '#dc2626' : hasFile ? COLORS.maroonD : '#374151', textAlign: 'center' }}>
-                          {hasFile ? <><span style={{ color: '#15803d', marginRight: 4 }}>✓</span>{files[doc.id]}</> : 'Click to upload'}
-                        </span>
-                        <span style={{ fontSize: 11, color: '#9ca3af' }}>{doc.hint}</span>
-                      </>
-                    )}
-                    <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required && !hasFile} style={{ display: 'none' }} onChange={e => handleFileChange(e, doc.id)} disabled={isUploading} />
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#9ca3af'} strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: hasError ? '#dc2626' : hasFile ? COLORS.maroonD : '#374151', textAlign: 'center' }}>
+                      {hasFile ? <><span style={{ color: '#15803d', marginRight: 4 }}>✓</span>{files[doc.id]}</> : 'Click to upload'}
+                    </span>
+                    <span style={{ fontSize: 11, color: '#9ca3af' }}>{doc.hint}</span>
+                    <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required && !hasFile} style={{ display: 'none' }} onChange={e => handleFileChange(e, doc.id)} />
                   </label>
                   {hasError && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{fileErrors[doc.id]}</p>}
                 </div>

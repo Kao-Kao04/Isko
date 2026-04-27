@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { applicationApi, scholarshipApi, type ApplicationResponse, type AuditEntryResponse, type ScholarshipResponse } from '@/lib/api-client';
+import { applicationApi, scholarshipApi, documentApi, type ApplicationResponse, type AuditEntryResponse, type ScholarshipResponse, type DocumentResponse } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 
 const TEAL       = '#800000';
@@ -42,6 +42,27 @@ function formatTime(d: string) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+const ACTION_LABEL: Record<string, { label: string; color: string }> = {
+  submitted:       { label: 'Application Submitted',           color: '#2563eb' },
+  resubmitted:     { label: 'Application Resubmitted',         color: '#2563eb' },
+  withdrawn:       { label: 'Application Withdrawn',           color: '#6b7280' },
+  approved:        { label: 'Application Approved',            color: '#059669' },
+  rejected:        { label: 'Application Rejected',            color: '#dc2626' },
+  incomplete:      { label: 'Marked as Incomplete',            color: '#ea580c' },
+  appeal_approved: { label: 'Appeal Approved — Under Review',  color: '#059669' },
+  appeal_denied:   { label: 'Appeal Rejected',                 color: '#dc2626' },
+};
+
+function formatAction(action: string): { label: string; color: string } {
+  if (ACTION_LABEL[action]) return ACTION_LABEL[action];
+  const clean = action
+    .replace(/status_changed_to_ApplicationStatus\./i, 'Status Changed to ')
+    .replace(/appeal_approved/i, 'Appeal Approved')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+  return { label: clean, color: '#374151' };
+}
+
 export default function ApplicantProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { toasts, addToast, removeToast } = useToast();
@@ -59,8 +80,10 @@ export default function ApplicantProfilePage() {
   const [rejectNote,           setRejectNote]           = useState('');
   const [incompleteNote,       setIncompleteNote]       = useState('');
   const [rubric, setRubric] = useState({ financialNeed: 3, essay: 3, interview: 3, community: 3 });
-  const [appealNote, setAppealNote]   = useState('');
+  const [appealNote,   setAppealNote]   = useState('');
   const [appealSaving, setAppealSaving] = useState(false);
+  const [documents,    setDocuments]    = useState<DocumentResponse[]>([]);
+  const [docsLoading,  setDocsLoading]  = useState(false);
 
   async function handleReviewAppeal(approved: boolean) {
     if (!app) return;
@@ -76,6 +99,17 @@ export default function ApplicantProfilePage() {
       addToast('error', err instanceof Error ? err.message : 'Failed to process appeal.');
     } finally {
       setAppealSaving(false);
+    }
+  }
+
+  async function loadDocuments() {
+    if (documents.length > 0) return;
+    setDocsLoading(true);
+    try {
+      const docs = await documentApi.list(Number(id));
+      setDocuments(docs);
+    } catch { /* silent */ } finally {
+      setDocsLoading(false);
     }
   }
 
@@ -114,7 +148,7 @@ export default function ApplicantProfilePage() {
 
   async function handleReject() {
     if (!rejectReason) return;
-    const note = `${rejectReason.replace(/_/g, ' ')}${rejectNote ? ': ' + rejectNote : ''}`;
+    const note = `${rejectReason}${rejectNote ? ': ' + rejectNote : ''}`;
     try {
       const updated = await applicationApi.updateStatus(Number(id), 'rejected', note);
       setApp(updated);
@@ -198,7 +232,6 @@ export default function ApplicantProfilePage() {
             <div style={{ fontSize: 13, color: '#6b7280' }}>{student?.email ?? '—'}</div>
           </div>
           <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignSelf: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => window.print()} style={{ padding: '9px 14px', background: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Print</button>
             {!isTerminal && (
               <>
                 <button onClick={() => setShowIncompleteDialog(true)} style={{ padding: '9px 14px', background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
@@ -243,7 +276,7 @@ export default function ApplicantProfilePage() {
           ['evaluation', 'Evaluation'],
           ['history',    `Activity (${audit.length})`],
         ] as const).map(([key, label]) => (
-          <button key={key} onClick={() => setActiveTab(key)} style={{ padding: '10px 20px', background: 'none', border: 'none', borderBottom: activeTab === key ? `2px solid ${TEAL}` : '2px solid transparent', marginBottom: -2, fontSize: 14, fontWeight: activeTab === key ? 700 : 500, color: activeTab === key ? TEAL : '#6b7280', cursor: 'pointer' }}>
+          <button key={key} onClick={() => { setActiveTab(key); if (key === 'documents') loadDocuments(); }} style={{ padding: '10px 20px', background: 'none', border: 'none', borderBottom: activeTab === key ? `2px solid ${TEAL}` : '2px solid transparent', marginBottom: -2, fontSize: 14, fontWeight: activeTab === key ? 700 : 500, color: activeTab === key ? TEAL : '#6b7280', cursor: 'pointer' }}>
             {label}
           </button>
         ))}
@@ -336,35 +369,85 @@ export default function ApplicantProfilePage() {
 
       {/* Documents tab */}
       {activeTab === 'documents' && (
-        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '28px' }}>
-          <h3 style={sectionTitle}>Scholarship Requirements</h3>
-          {requirements.length === 0 ? (
-            <p style={{ color: '#9ca3af', fontSize: 13 }}>No document requirements configured for this scholarship.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {requirements.map(req => {
-                const isFlagged = rejectedDocIds.includes(req.id);
-                return (
-                  <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 10, background: isFlagged ? '#fef2f2' : '#f9fafb', border: `1px solid ${isFlagged ? '#fca5a5' : '#f3f4f6'}` }}>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{req.name}</div>
-                      {req.description && <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{req.description}</div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Uploaded files */}
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={sectionTitle}>Submitted Documents</h3>
+              <button onClick={() => { setDocuments([]); loadDocuments(); }} style={{ fontSize: 12, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Refresh</button>
+            </div>
+            {docsLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', color: '#9ca3af', fontSize: 13 }}>
+                <div style={{ width: 18, height: 18, border: `2px solid #f3f4f6`, borderTop: `2px solid ${TEAL}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                Loading documents…
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+            ) : documents.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
+                No documents submitted yet by the student.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {documents.map(doc => (
+                  <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 10, background: doc.flagged ? '#fef2f2' : '#f9fafb', border: `1px solid ${doc.flagged ? '#fca5a5' : '#f3f4f6'}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{doc.requirement_name}</div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{doc.file_name} · {new Date(doc.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: req.is_required ? '#dc2626' : '#9ca3af' }}>{req.is_required ? 'REQUIRED' : 'OPTIONAL'}</span>
-                      {isFlagged && <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626', padding: '3px 10px', borderRadius: 20, background: '#fef2f2', border: '1px solid #fca5a5' }}>FLAGGED</span>}
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                      {doc.flagged && (
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626', padding: '3px 10px', borderRadius: 20, background: '#fef2f2', border: '1px solid #fca5a5' }}>FLAGGED</span>
+                      )}
+                      {doc.file_url && (
+                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          Download
+                        </a>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-          {flaggedRequirements.length > 0 && (
-            <div style={{ marginTop: 20, padding: '14px 18px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 10 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>{flaggedRequirements.length} document{flaggedRequirements.length > 1 ? 's' : ''} flagged</div>
-              <div style={{ fontSize: 12, color: '#b45309' }}>Student has been notified to resubmit the flagged documents.</div>
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Requirements checklist */}
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px' }}>
+            <h3 style={sectionTitle}>Scholarship Requirements</h3>
+            {requirements.length === 0 ? (
+              <p style={{ color: '#9ca3af', fontSize: 13 }}>No document requirements configured for this scholarship.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {requirements.map(req => {
+                  const isFlagged = rejectedDocIds.includes(req.id);
+                  const submitted = documents.some(d => d.requirement_name === req.name);
+                  return (
+                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 10, background: isFlagged ? '#fef2f2' : submitted ? '#f0fdf4' : '#f9fafb', border: `1px solid ${isFlagged ? '#fca5a5' : submitted ? '#86efac' : '#f3f4f6'}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 16 }}>{submitted ? '✅' : isFlagged ? '❌' : '⏳'}</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{req.name}</div>
+                          {req.description && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>{req.description}</div>}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: req.is_required ? '#dc2626' : '#9ca3af' }}>{req.is_required ? 'REQUIRED' : 'OPTIONAL'}</span>
+                        {submitted && <span style={{ fontSize: 10, fontWeight: 700, color: '#059669', padding: '2px 8px', borderRadius: 20, background: '#dcfce7' }}>SUBMITTED</span>}
+                        {isFlagged && <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626', padding: '2px 8px', borderRadius: 20, background: '#fef2f2', border: '1px solid #fca5a5' }}>FLAGGED</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -431,7 +514,7 @@ export default function ApplicantProfilePage() {
                     {i < arr.length - 1 && <div style={{ width: 2, flex: 1, background: '#e5e7eb', marginTop: 6 }} />}
                   </div>
                   <div style={{ paddingBottom: 4 }}>
-                    <div style={{ fontSize: 14, color: '#111827', fontWeight: 600 }}>{entry.action}</div>
+                    <div style={{ fontSize: 14, color: formatAction(entry.action).color, fontWeight: 600 }}>{formatAction(entry.action).label}</div>
                     {entry.note && <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>{entry.note}</div>}
                     <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 3 }}>{formatTime(entry.created_at)}</div>
                   </div>
@@ -474,12 +557,12 @@ export default function ApplicantProfilePage() {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Reason <span style={{ color: '#dc2626' }}>*</span></label>
               <select value={rejectReason} onChange={e => setRejectReason(e.target.value)} style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, background: '#f9fafb', outline: 'none' }}>
                 <option value="">Select a reason...</option>
-                <option value="missing_docs">Missing required documents</option>
-                <option value="eligibility_criteria">Does not meet eligibility criteria</option>
-                <option value="gwa_requirement">GWA does not meet minimum requirement</option>
-                <option value="duplicate_application">Duplicate application</option>
-                <option value="incomplete_form">Incomplete application form</option>
-                <option value="other">Other</option>
+                <option value="Missing Required Documents">Missing Required Documents</option>
+                <option value="Does Not Meet Eligibility Criteria">Does Not Meet Eligibility Criteria</option>
+                <option value="GWA Does Not Meet The Minimum Requirement">GWA Does Not Meet The Minimum Requirement</option>
+                <option value="Duplicate Application">Duplicate Application</option>
+                <option value="Incomplete Application Form">Incomplete Application Form</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div style={{ marginBottom: 22 }}>

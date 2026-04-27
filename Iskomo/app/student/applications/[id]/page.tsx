@@ -28,6 +28,28 @@ function formatTime(d: string) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+const ACTION_LABEL: Record<string, { label: string; color: string }> = {
+  submitted:       { label: 'Application Submitted',           color: '#2563eb' },
+  resubmitted:     { label: 'Application Resubmitted',         color: '#2563eb' },
+  withdrawn:       { label: 'Application Withdrawn',           color: '#6b7280' },
+  approved:        { label: 'Application Approved',            color: '#059669' },
+  rejected:        { label: 'Application Rejected',            color: '#dc2626' },
+  incomplete:      { label: 'Marked as Incomplete',            color: '#ea580c' },
+  appeal_approved: { label: 'Appeal Approved — Under Review',  color: '#059669' },
+  appeal_denied:   { label: 'Appeal Rejected',                 color: '#dc2626' },
+};
+
+function formatAction(action: string): { label: string; color: string } {
+  if (ACTION_LABEL[action]) return ACTION_LABEL[action];
+  // Handle raw enum strings like "status_changed_to_ApplicationStatus.incomplete"
+  const clean = action
+    .replace(/status_changed_to_ApplicationStatus\./i, 'Status Changed to ')
+    .replace(/appeal_approved/i, 'Appeal Approved')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+  return { label: clean, color: '#374151' };
+}
+
 export default function ApplicationDetailPage() {
   const { id }    = useParams<{ id: string }>();
   const router    = useRouter();
@@ -196,7 +218,7 @@ export default function ApplicationDetailPage() {
                 {[...audit].reverse().map((entry, i) => (
                   <div key={entry.id} style={{ position: 'relative', marginBottom: i < audit.length - 1 ? 20 : 0 }}>
                     <div style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: i === 0 ? COLORS.maroon : '#d1d5db', border: `2px solid ${i === 0 ? COLORS.maroon : '#e5e7eb'}` }} />
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', lineHeight: 1.4 }}>{entry.action}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: formatAction(entry.action).color, lineHeight: 1.4 }}>{formatAction(entry.action).label}</div>
                     {entry.note && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{entry.note}</div>}
                     <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{formatTime(entry.created_at)}</div>
                   </div>
@@ -268,7 +290,7 @@ export default function ApplicationDetailPage() {
               { label: 'Program',    value: app.student?.program ?? '—' },
               { label: 'Year Level', value: app.student?.year_level ? `${app.student.year_level}th Year` : '—' },
               { label: 'College',    value: app.student?.college ?? '—' },
-              { label: 'Evaluation', value: app.eval_status.replace(/_/g, ' ') },
+              { label: 'Evaluation', value: ({ not_started: 'Not Started', in_review: 'In Review', completed: 'Completed' } as Record<string,string>)[app.eval_status] ?? app.eval_status },
               { label: 'Submitted',  value: formatTime(app.submitted_at) },
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
