@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
+import { COLORS } from '@/lib/theme';
 
-const MAROON = '#800000';
+const MAROON = COLORS.maroon;
 
 const TYPE_ICON: Record<string, string> = {
   status:     '📋',

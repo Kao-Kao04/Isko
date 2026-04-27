@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
-const TEAL_LIGHT = '#fff5f5';
+const TEAL = COLORS.maroon;
+const TEAL_LIGHT = COLORS.maroonL;
 
 type NotifFilter = 'All' | 'Unread' | 'Applications' | 'System';
 type NotifGroup  = 'Today' | 'Yesterday' | 'Earlier';

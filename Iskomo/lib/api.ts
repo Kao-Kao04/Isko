@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -26,8 +26,9 @@ async function refreshAccessToken(): Promise<string | null> {
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getAccessToken();
+  const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string>),
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -47,6 +48,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     throw new Error(error.message || 'Request failed');
   }
 
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 

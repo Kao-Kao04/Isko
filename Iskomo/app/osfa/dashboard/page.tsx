@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { applicationApi, scholarshipApi, type ApplicationResponse, type ScholarshipResponse } from '@/lib/api-client';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
-const TEAL_DARK = '#5C0000';
-const TEAL_LIGHT = '#fff5f5';
+const TEAL = COLORS.maroon;
+const TEAL_DARK = COLORS.maroonD;
+const TEAL_LIGHT = COLORS.maroonL;
 const CARD_SHADOW = '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)';
 const CARD_SHADOW_HOVER = '0 8px 28px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)';
 

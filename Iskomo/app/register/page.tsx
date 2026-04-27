@@ -6,9 +6,10 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PUP_COLLEGE_PROGRAMS } from '@/lib/data/mock-user';
 import { register } from '@/lib/auth';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
-const TEAL_DARK = '#5C0000';
+const TEAL = COLORS.maroon;
+const TEAL_DARK = COLORS.maroonD;
 
 const inp: React.CSSProperties = {
   width: '100%',

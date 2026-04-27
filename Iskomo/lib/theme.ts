@@ -1,6 +1,7 @@
 export const COLORS = {
   maroon:  '#800000',
   maroonD: '#5C0000',
+  maroonL: '#fff5f5',
   gold:    '#C9A027',
   goldL:   '#F5D060',
 } as const;

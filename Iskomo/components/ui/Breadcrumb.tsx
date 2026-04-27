@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { COLORS } from '@/lib/theme';
 
 interface BreadcrumbItem {
   label: string;
@@ -25,7 +26,7 @@ export default function Breadcrumb({ items }: Props) {
             )}
             {item.href && !isLast ? (
               <Link href={item.href} style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none', fontWeight: 500 }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#800000')}
+                onMouseEnter={e => (e.currentTarget.style.color = COLORS.maroon)}
                 onMouseLeave={e => (e.currentTarget.style.color = '#6b7280')}
               >
                 {item.label}

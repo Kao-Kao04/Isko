@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   description: "IskoMo - Scholarships & Opportunities for PUP Students",
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

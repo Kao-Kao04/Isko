@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
+const TEAL = COLORS.maroon;
 
 export default function Page() {
   const searchParams = useSearchParams();

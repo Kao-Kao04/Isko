@@ -1,11 +1,13 @@
 'use client';
 
+import { COLORS } from '@/lib/theme';
+
 interface Props {
   size?: number;
   color?: string;
 }
 
-export default function Spinner({ size = 24, color = '#800000' }: Props) {
+export default function Spinner({ size = 24, color = COLORS.maroon }: Props) {
   return (
     <svg
       width={size}

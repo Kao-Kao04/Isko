@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { apiFetch } from '@/lib/api';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
-const TEAL_DARK = '#5C0000';
-const TEAL_LIGHT = '#fff5f5';
+const TEAL = COLORS.maroon;
+const TEAL_DARK = COLORS.maroonD;
+const TEAL_LIGHT = COLORS.maroonL;
 
 type ProfileTab = 'Personal' | 'Security';
 

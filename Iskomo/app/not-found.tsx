@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { COLORS } from '@/lib/theme';
 
 export default function NotFound() {
   return (
@@ -19,7 +20,7 @@ export default function NotFound() {
           </svg>
         </div>
 
-        <div style={{ fontSize: 72, fontWeight: 900, color: '#800000', lineHeight: 1, marginBottom: 8, letterSpacing: '-0.04em' }}>
+        <div style={{ fontSize: 72, fontWeight: 900, color: COLORS.maroon, lineHeight: 1, marginBottom: 8, letterSpacing: '-0.04em' }}>
           404
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: '0 0 10px' }}>

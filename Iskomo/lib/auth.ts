@@ -1,5 +1,7 @@
 import { apiFetch, setAccessToken, clearAccessToken } from './api';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+
 export interface StudentProfile {
   id: number;
   student_number: string;
@@ -24,7 +26,7 @@ export interface User {
 }
 
 export async function login(email: string, password: string): Promise<User> {
-  const res = await fetch('http://localhost:8000/api/auth/login', {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -40,14 +42,16 @@ export async function login(email: string, password: string): Promise<User> {
   setAccessToken(access_token);
 
   const user = await getMe();
-  document.cookie = `role=${user.role}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-  document.cookie = `department=${user.department ?? ''}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+  const secure = location.protocol === 'https:' ? '; Secure' : '';
+  const maxAge = 60 * 60 * 24 * 7;
+  document.cookie = `role=${user.role}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
+  document.cookie = `department=${user.department ?? ''}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
 
   return user;
 }
 
 export async function logout(): Promise<void> {
-  await fetch('http://localhost:8000/api/auth/logout', {
+  await fetch(`${API_BASE}/api/auth/logout`, {
     method: 'POST',
     credentials: 'include',
   }).catch(() => {});
@@ -60,9 +64,8 @@ export async function getMe(): Promise<User> {
   return apiFetch<User>('/api/auth/me');
 }
 
-// Returns a registration token if in dev mode (skip email), or null if email was sent
 export async function initiateRegister(email: string, password: string): Promise<string | null> {
-  const res = await fetch('http://localhost:8000/api/auth/initiate-register', {
+  const res = await fetch(`${API_BASE}/api/auth/initiate-register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -89,7 +92,7 @@ export interface RegisterData {
 }
 
 export async function register(data: RegisterData): Promise<User> {
-  const res = await fetch('http://localhost:8000/api/auth/register', {
+  const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

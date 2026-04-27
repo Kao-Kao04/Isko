@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { reportsApi, type ReportsOverview, type ScholarshipBreakdown, type ApplicationTrend } from '@/lib/api-client';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
+const TEAL = COLORS.maroon;
 
 const STATUS_COLOR: Record<string, string> = {
   pending:    '#d97706',

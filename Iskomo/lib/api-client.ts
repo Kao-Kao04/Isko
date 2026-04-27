@@ -205,10 +205,11 @@ export const scholarshipApi = {
 // ─── Application API ──────────────────────────────────────────────────────────
 
 export const applicationApi = {
-  list: (page = 1, pageSize = 20) =>
-    apiFetch<PaginatedResponse<ApplicationResponse>>(
-      `/api/applications?page=${page}&page_size=${pageSize}`
-    ),
+  list: (page = 1, pageSize = 20, status?: string) => {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (status) params.set('status', status);
+    return apiFetch<PaginatedResponse<ApplicationResponse>>(`/api/applications?${params}`);
+  },
 
   get: (id: number) =>
     apiFetch<ApplicationResponse>(`/api/applications/${id}`),
@@ -220,7 +221,15 @@ export const applicationApi = {
     }),
 
   withdraw: (id: number) =>
-    apiFetch<void>(`/api/applications/${id}`, { method: 'DELETE' }),
+    apiFetch<void>(`/api/applications/${id}/withdraw`, { method: 'PATCH' }),
+
+  resubmit: (id: number) =>
+    apiFetch<ApplicationResponse>(`/api/applications/${id}/resubmit`, { method: 'PATCH' }),
+
+  count: (status?: string) => {
+    const params = status ? `?status=${status}` : '';
+    return apiFetch<{ count: number }>(`/api/applications/count${params}`);
+  },
 
   updateStatus: (id: number, status: ApplicationStatus, remarks?: string) =>
     apiFetch<ApplicationResponse>(`/api/applications/${id}/status`, {

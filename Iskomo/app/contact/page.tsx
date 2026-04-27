@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import { COLORS } from '@/lib/theme';
 
-const MAROON = '#800000';
-const GOLD   = '#C9A027';
+const MAROON = COLORS.maroon;
+const GOLD   = COLORS.gold;
 
 export default function ContactPage() {
   return (

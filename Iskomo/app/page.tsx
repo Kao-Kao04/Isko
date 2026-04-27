@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import LandingNavbar from '@/components/shared/LandingNavbar';
+import { COLORS } from '@/lib/theme';
 
 /* ── Brand colours ── */
-const MAROON   = '#800000';
-const MAROON_D = '#5C0000';
-const GOLD     = '#C9A027';
-const GOLD_L   = '#F5D060';
-const TEAL     = '#800000';
+const MAROON   = COLORS.maroon;
+const MAROON_D = COLORS.maroonD;
+const GOLD     = COLORS.gold;
+const GOLD_L   = COLORS.goldL;
+const TEAL     = COLORS.maroon;
 
 /* ─────────────────────────────────────────────────────────────
    Scroll-reveal wrapper — fades + slides in when visible

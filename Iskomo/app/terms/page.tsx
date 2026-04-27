@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { COLORS } from '@/lib/theme';
 
-const MAROON = '#800000';
-const MAROON_D = '#5C0000';
-const GOLD = '#C9A027';
+const MAROON = COLORS.maroon;
+const MAROON_D = COLORS.maroonD;
+const GOLD = COLORS.gold;
 
 const SECTIONS = [
   { id: 'acceptance',           label: '1. Acceptance of Terms' },

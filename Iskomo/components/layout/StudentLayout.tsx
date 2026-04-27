@@ -3,8 +3,9 @@ import SignOutButton from '@/components/shared/SignOutButton';
 import NotificationBell from '@/components/shared/NotificationBell';
 import Image from 'next/image';
 import Link from 'next/link';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
+const TEAL = COLORS.maroon;
 
 interface StudentLayoutProps {
   children: React.ReactNode;

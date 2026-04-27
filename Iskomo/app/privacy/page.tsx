@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { COLORS } from '@/lib/theme';
 
-const MAROON = '#800000';
-const GOLD   = '#C9A027';
+const MAROON = COLORS.maroon;
+const GOLD   = COLORS.gold;
 
 const PRINT_CSS = `
 @media print {

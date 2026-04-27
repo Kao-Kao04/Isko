@@ -3,8 +3,9 @@ import SignOutButton from '@/components/shared/SignOutButton';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
+const TEAL = COLORS.maroon;
 
 const DEPT_LABEL: Record<string, { label: string; sublabel: string; bg: string; color: string }> = {
   public:  { label: 'Public Scholarships', sublabel: 'Gov\'t / State-funded', bg: '#eff6ff', color: '#1d4ed8' },

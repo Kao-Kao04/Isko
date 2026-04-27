@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { scholarApi, type ScholarResponse, type ScholarStatus } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
-const TEAL_DARK = '#5C0000';
+const TEAL = COLORS.maroon;
+const TEAL_DARK = COLORS.maroonD;
 
 const STATUS_CFG: Record<ScholarStatus, { bg: string; color: string; dot: string; label: string }> = {
   active:       { bg: '#f0fdf4', color: '#059669', dot: '#10b981', label: 'Scholar' },

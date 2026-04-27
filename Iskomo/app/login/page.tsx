@@ -4,9 +4,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { login, initiateRegister } from '@/lib/auth';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
-const TEAL_DARK = '#5C0000';
+const TEAL = COLORS.maroon;
+const TEAL_DARK = COLORS.maroonD;
 
 const inp: React.CSSProperties = {
   width: '100%',

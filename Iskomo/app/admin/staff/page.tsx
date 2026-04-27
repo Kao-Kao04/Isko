@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi, applicationApi, scholarshipApi, type StaffResponse, type ApplicationResponse, type ScholarshipResponse } from '@/lib/api-client';
+import { COLORS } from '@/lib/theme';
 
-const MAROON = '#800000';
+const MAROON = COLORS.maroon;
 
 const DEPT_CONFIG = {
   public:  { label: 'Public',  bg: '#eff6ff', color: '#1d4ed8', desc: "Gov't / State-funded" },

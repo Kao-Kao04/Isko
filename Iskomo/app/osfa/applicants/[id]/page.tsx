@@ -5,10 +5,11 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { applicationApi, scholarshipApi, documentApi, type ApplicationResponse, type AuditEntryResponse, type ScholarshipResponse, type DocumentResponse } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
+import { COLORS } from '@/lib/theme';
 
-const TEAL       = '#800000';
-const TEAL_DARK  = '#5C0000';
-const TEAL_LIGHT = '#fff5f5';
+const TEAL       = COLORS.maroon;
+const TEAL_DARK  = COLORS.maroonD;
+const TEAL_LIGHT = COLORS.maroonL;
 
 type AppStatus = 'pending' | 'approved' | 'rejected' | 'incomplete' | 'withdrawn';
 
@@ -209,13 +210,13 @@ export default function ApplicantProfilePage() {
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
 
       {/* Breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 12 }}>
+      <nav aria-label="breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 12 }}>
         <Link href="/osfa/dashboard" style={{ color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
-        <span style={{ color: '#d1d5db' }}>/</span>
+        <span aria-hidden="true" style={{ color: '#d1d5db' }}>/</span>
         <Link href="/osfa/applicants" style={{ color: '#9ca3af', textDecoration: 'none' }}>Applicants</Link>
-        <span style={{ color: '#d1d5db' }}>/</span>
-        <span style={{ color: '#374151', fontWeight: 500 }}>{name}</span>
-      </div>
+        <span aria-hidden="true" style={{ color: '#d1d5db' }}>/</span>
+        <span aria-current="page" style={{ color: '#374151', fontWeight: 500 }}>{name}</span>
+      </nav>
 
       {/* Profile header */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: 22, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>

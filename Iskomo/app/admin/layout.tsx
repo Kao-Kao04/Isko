@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import SignOutButton from '@/components/shared/SignOutButton';
+import { COLORS } from '@/lib/theme';
 
 export const metadata: Metadata = { title: 'Admin | IskoMo' };
 
-const MAROON = '#800000';
+const MAROON = COLORS.maroon;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -5,10 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { applicationApi, type ApplicationResponse, type ApplicationStatus } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
-const TEAL_DARK = '#5C0000';
-const TEAL_LIGHT = '#fff5f5';
+const TEAL = COLORS.maroon;
+const TEAL_DARK = COLORS.maroonD;
+const TEAL_LIGHT = COLORS.maroonL;
 const CARD_SHADOW = '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)';
 
 const statusStyle: Record<string, { bg: string; color: string; dot: string }> = {

@@ -3,8 +3,9 @@
 import { useRef, useState, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { apiFetch } from '@/lib/api';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
+const TEAL = COLORS.maroon;
 
 const input: React.CSSProperties = {
   width: '100%', border: '1px solid #d1d5db', borderRadius: 8,

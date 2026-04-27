@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { scholarshipApi, type ScholarshipResponse, type ScholarshipStatus } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
+import { COLORS } from '@/lib/theme';
 
-const TEAL = '#800000';
-const TEAL_DARK = '#5C0000';
-const TEAL_LIGHT = '#fff5f5';
+const TEAL = COLORS.maroon;
+const TEAL_DARK = COLORS.maroonD;
+const TEAL_LIGHT = COLORS.maroonL;
 
 const statusStyle: Record<string, { bg: string; color: string; dot: string }> = {
   active:   { bg: '#f0fdf4', color: '#059669', dot: '#10b981' },
