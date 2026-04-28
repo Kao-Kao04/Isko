@@ -88,6 +88,13 @@ export interface AppealResponse {
   created_at: string;
 }
 
+export interface EvalScore {
+  financial_need: number;
+  essay: number;
+  interview: number;
+  community: number;
+}
+
 export interface ApplicationResponse {
   id: number;
   student_id: number;
@@ -95,6 +102,7 @@ export interface ApplicationResponse {
   status: ApplicationStatus;
   eval_status: EvalStatus;
   rejected_docs: number[] | null;
+  eval_score: EvalScore | null;
   remarks: string | null;
   submitted_at: string;
   updated_at: string;
@@ -149,10 +157,19 @@ export interface SemesterRecord {
 
 // ─── Student Account Types ────────────────────────────────────────────────────
 
-export interface PendingStudentResponse {
+export interface RegistrationDocResponse {
+  id: number;
+  doc_type: 'school_id' | 'cor';
+  filename: string;
+  url: string;
+  uploaded_at: string;
+}
+
+export interface StudentUserResponse {
   id: number;
   email: string;
-  account_status: string;
+  account_status: 'unregistered' | 'pending_verification' | 'verified' | 'rejected';
+  rejection_remarks: string | null;
   created_at: string;
   student_profile: {
     first_name: string;
@@ -163,6 +180,9 @@ export interface PendingStudentResponse {
     year_level: number;
   } | null;
 }
+
+/** @deprecated use StudentUserResponse */
+export type PendingStudentResponse = StudentUserResponse;
 
 // ─── Scholarship API ──────────────────────────────────────────────────────────
 
@@ -241,6 +261,12 @@ export const applicationApi = {
     apiFetch<ApplicationResponse>(`/api/applications/${id}/eval-status`, {
       method: 'PATCH',
       body: JSON.stringify({ eval_status: evalStatus }),
+    }),
+
+  updateEvalScore: (id: number, score: { financial_need: number; essay: number; interview: number; community: number }) =>
+    apiFetch<ApplicationResponse>(`/api/applications/${id}/eval-score`, {
+      method: 'PATCH',
+      body: JSON.stringify(score),
     }),
 
   fileAppeal: (id: number, reason: string) =>
@@ -368,19 +394,42 @@ export const notificationApi = {
 // ─── User API ─────────────────────────────────────────────────────────────────
 
 export const userApi = {
+  list: (page = 1, pageSize = 100, accountStatus?: string) => {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (accountStatus) params.set('account_status', accountStatus);
+    return apiFetch<PaginatedResponse<StudentUserResponse>>(`/api/users?${params}`);
+  },
+
+  /** @deprecated use list() */
   listPending: (page = 1, pageSize = 20) =>
-    apiFetch<PaginatedResponse<PendingStudentResponse>>(
-      `/api/users?account_status=pending&page=${page}&page_size=${pageSize}`
+    apiFetch<PaginatedResponse<StudentUserResponse>>(
+      `/api/users?account_status=pending_verification&page=${page}&page_size=${pageSize}`
     ),
+
+  getRegistrationDocuments: (userId: number) =>
+    apiFetch<RegistrationDocResponse[]>(`/api/users/${userId}/registration-documents`),
 
   approveStudent: (id: number) =>
     apiFetch<void>(`/api/users/${id}/approve`, { method: 'PATCH' }),
 
-  rejectStudent: (id: number, reason?: string) =>
+  rejectStudent: (id: number, remarks: string) =>
     apiFetch<void>(`/api/users/${id}/reject`, {
       method: 'PATCH',
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ remarks }),
     }),
+};
+
+// ─── Registration API ─────────────────────────────────────────────────────────
+
+export const registrationApi = {
+  submit: (fd: FormData) =>
+    apiFetch<{ message: string }>('/api/registration/submit', {
+      method: 'POST',
+      body: fd,
+    }),
+
+  myDocuments: () =>
+    apiFetch<RegistrationDocResponse[]>('/api/registration/my-documents'),
 };
 
 // ─── Admin Types ─────────────────────────────────────────────────────────────

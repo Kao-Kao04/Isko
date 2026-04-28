@@ -80,7 +80,9 @@ export default function ApplicantProfilePage() {
   const [rejectReason,         setRejectReason]         = useState('');
   const [rejectNote,           setRejectNote]           = useState('');
   const [incompleteNote,       setIncompleteNote]       = useState('');
-  const [rubric, setRubric] = useState({ financialNeed: 3, essay: 3, interview: 3, community: 3 });
+  const [rubric,       setRubric]       = useState({ financialNeed: 3, essay: 3, interview: 3, community: 3 });
+  const [rubricSaving, setRubricSaving] = useState(false);
+  const [rubricSaved,  setRubricSaved]  = useState(false);
   const [appealNote,   setAppealNote]   = useState('');
   const [appealSaving, setAppealSaving] = useState(false);
   const [documents,    setDocuments]    = useState<DocumentResponse[]>([]);
@@ -126,6 +128,16 @@ export default function ApplicantProfilePage() {
     applicationApi.get(numId)
       .then(async (a) => {
         setApp(a);
+        // Restore saved rubric scores if they exist
+        if (a.eval_score) {
+          setRubric({
+            financialNeed: a.eval_score.financial_need ?? 3,
+            essay:         a.eval_score.essay          ?? 3,
+            interview:     a.eval_score.interview       ?? 3,
+            community:     a.eval_score.community       ?? 3,
+          });
+          setRubricSaved(true);
+        }
         const [aud, sch] = await Promise.all([
           applicationApi.getAudit(numId),
           scholarshipApi.get(a.scholarship_id),
@@ -495,6 +507,34 @@ export default function ApplicantProfilePage() {
                 {pct >= 70 ? '✓ Recommend for Approval' : pct >= 50 ? '⚠ Needs Further Review' : '✗ Does Not Meet Threshold'}
               </div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Threshold: 70% ({Math.round(maxScore * 0.7)}/{maxScore} pts) for approval recommendation.</div>
+            </div>
+
+            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                disabled={rubricSaving}
+                onClick={async () => {
+                  setRubricSaving(true);
+                  try {
+                    await applicationApi.updateEvalScore(Number(id), {
+                      financial_need: rubric.financialNeed,
+                      essay:          rubric.essay,
+                      interview:      rubric.interview,
+                      community:      rubric.community,
+                    });
+                    setRubricSaved(true);
+                    addToast('success', 'Evaluation scores saved.');
+                  } catch {
+                    addToast('error', 'Failed to save evaluation scores.');
+                  } finally {
+                    setRubricSaving(false);
+                  }
+                }}
+                style={{ flex: 1, padding: '11px 0', background: rubricSaving ? '#9ca3af' : TEAL, border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, color: '#fff', cursor: rubricSaving ? 'not-allowed' : 'pointer' }}>
+                {rubricSaving ? 'Saving…' : 'Save Evaluation'}
+              </button>
+              {rubricSaved && !rubricSaving && (
+                <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>✓ Saved</span>
+              )}
             </div>
           </div>
         );

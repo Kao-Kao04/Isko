@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { login, initiateRegister } from '@/lib/auth';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { login, signup } from '@/lib/auth';
 import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
@@ -21,8 +21,14 @@ const inp: React.CSSProperties = {
   outline: 'none',
 };
 
-export default function Page() {
-  const router = useRouter();
+function LoginPageInner() {
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const [emailVerifiedBanner, setEmailVerifiedBanner] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('verified') === 'true') setEmailVerifiedBanner(true);
+  }, [searchParams]);
   const [isSignup, setIsSignup] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
@@ -34,7 +40,8 @@ export default function Page() {
   const [signupError, setSignupError] = useState('');
   const [loading, setLoading] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [emailSent,    setEmailSent]    = useState(false);
+  const [signupDev,    setSignupDev]    = useState(false); // dev mode: auto-verified
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,9 +49,14 @@ export default function Page() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      if (user.role === 'super_admin')   router.push('/admin/staff');
-      else if (user.role === 'osfa_staff') router.push('/osfa/dashboard');
-      else router.push('/student/dashboard');
+      if (user.role === 'super_admin')    { router.push('/admin/staff');    return; }
+      if (user.role === 'osfa_staff')     { router.push('/osfa/dashboard'); return; }
+      // Students: route based on verification / registration status
+      if (user.account_status === 'unregistered' || user.account_status === 'rejected') {
+        router.push('/student/registration');
+      } else {
+        router.push('/student/dashboard');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -57,13 +69,11 @@ export default function Page() {
     setSignupError('');
     setSignupLoading(true);
     try {
-      const token = await initiateRegister(signupEmail, signupPassword);
-      if (token) {
-        // Dev mode — skip email, go straight to profile completion
-        router.push(`/register?token=${token}`);
+      const result = await signup(signupEmail, signupPassword);
+      if (result.dev) {
+        setSignupDev(true);   // dev: show "account created, log in now"
       } else {
-        // Production — show "check your email" screen
-        setEmailSent(true);
+        setEmailSent(true);   // prod: show "check your email"
       }
     } catch (err) {
       setSignupError(err instanceof Error ? err.message : 'Registration failed');
@@ -76,11 +86,18 @@ export default function Page() {
     <div style={{
       minHeight: '100vh',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #fff5f5 0%, #fffbf0 50%, #fef2f2 100%)',
       padding: 24,
     }}>
+      {emailVerifiedBanner && (
+        <div style={{ width: '100%', maxWidth: 820, marginBottom: 14, padding: '12px 20px', background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>Email verified! You can now log in.</span>
+        </div>
+      )}
       {/* Card */}
       <div style={{
         display: 'flex',
@@ -219,7 +236,23 @@ export default function Page() {
 
             {/* ── Sign Up panel (slides in from right) ── */}
             <div style={{ width: '50%', padding: '44px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              {emailSent ? (
+              {signupDev ? (
+                /* DEV mode: auto-verified, just log in */
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: '#111827' }}>Account created!</h2>
+                  <p style={{ margin: '0 0 24px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+                    Your account for <strong>{signupEmail}</strong> is ready. Log in to complete your registration.
+                  </p>
+                  <button type="button" onClick={() => { setSignupDev(false); setIsSignup(false); setEmail(signupEmail); }}
+                    style={{ width: '100%', padding: '12px', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                    Log In Now →
+                  </button>
+                </div>
+              ) : emailSent ? (
+                /* PROD mode: email sent */
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2">
@@ -228,7 +261,7 @@ export default function Page() {
                   </div>
                   <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: '#111827' }}>Check your email</h2>
                   <p style={{ margin: '0 0 24px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
-                    We sent a verification link to <strong>{signupEmail}</strong>. Click it to continue your registration.
+                    We sent a verification link to <strong>{signupEmail}</strong>. Click it, then come back to log in.
                   </p>
                   <button type="button" onClick={() => { setEmailSent(false); setIsSignup(false); }}
                     style={{ width: '100%', padding: '11px', background: '#fff', border: `1.5px solid #e5e7eb`, color: '#374151', borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
@@ -301,5 +334,13 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
   );
 }

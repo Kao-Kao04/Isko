@@ -14,15 +14,40 @@ export interface StudentProfile {
   gwa: string | null;
 }
 
+export type AccountStatus =
+  | 'unregistered'        // email verified, no docs submitted yet
+  | 'pending_verification' // docs submitted, awaiting OSFA review
+  | 'verified'            // OSFA approved — full access
+  | 'rejected'            // OSFA rejected — must re-upload
+  | 'approved';           // legacy value for OSFA staff accounts
+
 export interface User {
   id: number;
   email: string;
   role: 'student' | 'osfa_staff' | 'super_admin';
   department: 'public' | 'private' | null;
   is_active: boolean;
-  account_status: 'pending' | 'approved' | 'rejected';
+  is_verified: boolean;
+  account_status: AccountStatus;
+  rejection_remarks: string | null;
   created_at: string;
   student_profile: StudentProfile | null;
+}
+
+export async function signup(email: string, password: string): Promise<{ dev: boolean }> {
+  const res = await fetch(`${API_BASE}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Registration failed');
+  }
+  const data = await res.json();
+  // Backend returns { message: "Dev mode..." } or { message: "Verification email sent..." }
+  const isDev = data.message?.includes('Dev mode') ?? false;
+  return { dev: isDev };
 }
 
 export async function login(email: string, password: string): Promise<User> {
@@ -62,46 +87,4 @@ export async function logout(): Promise<void> {
 
 export async function getMe(): Promise<User> {
   return apiFetch<User>('/api/auth/me');
-}
-
-export async function initiateRegister(email: string, password: string): Promise<string | null> {
-  const res = await fetch(`${API_BASE}/api/auth/initiate-register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Registration failed');
-  }
-
-  const data = await res.json();
-  return data.token ?? null;
-}
-
-export interface RegisterData {
-  token: string;
-  student_number: string;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  college: string;
-  program: string;
-  year_level: number;
-}
-
-export async function register(data: RegisterData): Promise<User> {
-  const res = await fetch(`${API_BASE}/api/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Registration failed');
-  }
-
-  return res.json();
 }

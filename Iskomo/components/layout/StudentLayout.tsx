@@ -1,6 +1,7 @@
 import StudentNav from '@/components/shared/StudentNav';
 import SignOutButton from '@/components/shared/SignOutButton';
 import NotificationBell from '@/components/shared/NotificationBell';
+import AccountStatusGuard from '@/components/shared/AccountStatusGuard';
 import Image from 'next/image';
 import Link from 'next/link';
 import { COLORS } from '@/lib/theme';
@@ -76,9 +77,11 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
       </header>
 
       {/* Page Content */}
-      <div style={{ minHeight: 'calc(100vh - 63px)', background: '#f0f4f8' }}>
-        {children}
-      </div>
+      <AccountStatusGuard>
+        <div style={{ minHeight: 'calc(100vh - 63px)', background: '#f0f4f8' }}>
+          {children}
+        </div>
+      </AccountStatusGuard>
     </>
   );
 }

@@ -58,10 +58,13 @@ export default function ApplicationDetailPage() {
   const [audit, setAudit] = useState<AuditEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [appealText,      setAppealText]      = useState('');
+  const [appealText,       setAppealText]       = useState('');
   const [appealSubmitting, setAppealSubmitting] = useState(false);
-  const [appealSubmitted, setAppealSubmitted] = useState(false);
-  const [appealError,     setAppealError]     = useState('');
+  const [appealSubmitted,  setAppealSubmitted]  = useState(false);
+  const [appealError,      setAppealError]      = useState('');
+
+  const [resubmitting, setResubmitting] = useState(false);
+  const [resubmitError, setResubmitError] = useState('');
 
   useEffect(() => {
     const numId = Number(id);
@@ -91,6 +94,22 @@ export default function ApplicationDetailPage() {
       setAppealError(err instanceof Error ? err.message : 'Failed to submit appeal.');
     } finally {
       setAppealSubmitting(false);
+    }
+  }
+
+  async function handleResubmit() {
+    if (!app) return;
+    setResubmitting(true);
+    setResubmitError('');
+    try {
+      const updated = await applicationApi.resubmit(Number(id));
+      setApp(updated);
+      const aud = await applicationApi.getAudit(Number(id)).catch(() => audit);
+      setAudit(aud);
+    } catch (err: unknown) {
+      setResubmitError(err instanceof Error ? err.message : 'Failed to resubmit. Please try again.');
+    } finally {
+      setResubmitting(false);
     }
   }
 
@@ -226,6 +245,44 @@ export default function ApplicationDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Resubmit section — shown when OSFA marks application as Incomplete */}
+          {app.status === 'incomplete' && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1.5px solid #fed7aa', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Action Required</div>
+                  <div style={{ fontSize: 12, color: '#6b7280' }}>Your application needs additional documents</div>
+                </div>
+              </div>
+
+              {app.remarks && (
+                <div style={{ padding: '12px 14px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 9, marginBottom: 14, fontSize: 13, color: '#9a3412', lineHeight: 1.6 }}>
+                  <strong>OSFA Note:</strong> {app.remarks}
+                </div>
+              )}
+
+              <p style={{ margin: '0 0 14px', fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
+                Upload the missing documents to your application, then click <strong>Resubmit Application</strong> to send it back for review.
+              </p>
+
+              {resubmitError && (
+                <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626', marginBottom: 12 }}>
+                  {resubmitError}
+                </div>
+              )}
+
+              <button
+                onClick={handleResubmit}
+                disabled={resubmitting}
+                style={{ width: '100%', padding: '11px 0', background: resubmitting ? '#9ca3af' : '#ea580c', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#fff', cursor: resubmitting ? 'not-allowed' : 'pointer' }}>
+                {resubmitting ? 'Resubmitting…' : '↩ Resubmit Application'}
+              </button>
+            </div>
+          )}
 
           {/* Appeal section */}
           {app.status === 'rejected' && (
