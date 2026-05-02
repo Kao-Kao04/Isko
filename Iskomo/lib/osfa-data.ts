@@ -84,6 +84,8 @@ export interface Scholarship {
   category?: 'public' | 'private';
   colleges?: string[];
   programs?: string[];
+  yearLevels?: number[];
+  minGwa?: string;
   coverImage?: string;
   requirements?: Requirement[];
 }

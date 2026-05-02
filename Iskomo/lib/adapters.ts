@@ -34,6 +34,8 @@ export function mapScholarship(s: ScholarshipResponse): Scholarship {
     eligibility: s.eligibility_text ?? '',
     colleges:    s.eligible_colleges ?? [],
     programs:    s.eligible_programs ?? [],
+    yearLevels:  s.eligible_year_levels ?? [],
+    minGwa:      s.min_gwa ?? undefined,
     coverImage:  s.cover_image_url ?? undefined,
     category:    (s.category ?? 'public') as 'public' | 'private',
     requirements: s.requirements.map(r => ({
