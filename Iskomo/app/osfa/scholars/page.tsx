@@ -162,7 +162,7 @@ export default function Page() {
             </div>
           </div>
         ) : filtered.map(scholar => {
-          const cfg = STATUS_CFG[scholar.status];
+          const cfg = STATUS_CFG[scholar.status as ScholarStatus];
           const latestRecord = scholar.semester_records.at(-1);
           return (
             <div key={scholar.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
