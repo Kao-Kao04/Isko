@@ -1,0 +1,11 @@
+{
+  "name": "iskomo-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev":   "cd Iskomo && npm run dev",
+    "build": "cd Iskomo && npm run build",
+    "start": "cd Iskomo && npm run start",
+    "lint":  "cd Iskomo && npm run lint"
+  }
+}
