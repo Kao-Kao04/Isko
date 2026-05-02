@@ -10,6 +10,7 @@ interface Props {
   bookmarked?: boolean;
   onBookmark?: (id: string) => void;
   eligible?: boolean;
+  ineligibleReason?: string;
   applyDisabled?: boolean;
 }
 
@@ -18,7 +19,7 @@ const CATEGORY_BADGE: Record<string, { bg: string; color: string; label: string 
   private: { bg: '#fdf4ff', color: '#7e22ce', label: 'Private' },
 };
 
-export default function ScholarshipCard({ scholarship: s, variant = 'grid', bookmarked = false, onBookmark, eligible = true, applyDisabled = false }: Props) {
+export default function ScholarshipCard({ scholarship: s, variant = 'grid', bookmarked = false, onBookmark, eligible = true, ineligibleReason, applyDisabled = false }: Props) {
   const badge   = TYPE_BADGE[s.type] ?? TYPE_BADGE['Merit-Based'];
   const catBadge = s.category ? CATEGORY_BADGE[s.category] : null;
   const initials = s.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -73,8 +74,11 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
           </button>
         )}
         {!eligible ? (
-          <span style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, background: '#f3f4f6', color: '#9ca3af', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
+          <span title={ineligibleReason} style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, background: '#f3f4f6', border: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', textAlign: 'center' }}>
             Not Eligible
+            {ineligibleReason && (
+              <span style={{ display: 'block', fontSize: 10, fontWeight: 500, color: '#b0b5bf', marginTop: 2 }}>{ineligibleReason}</span>
+            )}
           </span>
         ) : applyDisabled ? (
           <span title="Your account is pending OSFA approval" style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 10, background: '#fef3c7', color: '#d97706', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', cursor: 'not-allowed' }}>
@@ -176,8 +180,11 @@ export default function ScholarshipCard({ scholarship: s, variant = 'grid', book
           View Details
         </Link>
         {!eligible ? (
-          <span style={{ flex: 1, padding: '9px 0', borderRadius: 8, background: '#f3f4f6', color: '#9ca3af', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            Not Eligible
+          <span title={ineligibleReason} style={{ flex: 1, padding: '9px 0', borderRadius: 8, background: '#f3f4f6', border: '1px solid #e5e7eb', color: '#9ca3af', fontWeight: 700, fontSize: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.3 }}>
+            <span>Not Eligible</span>
+            {ineligibleReason && (
+              <span style={{ fontSize: 10, fontWeight: 500, color: '#b0b5bf', marginTop: 2 }}>{ineligibleReason}</span>
+            )}
           </span>
         ) : applyDisabled ? (
           <span title="Your account is pending OSFA approval" style={{ flex: 1, padding: '9px 0', borderRadius: 8, background: '#fef3c7', color: '#d97706', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'not-allowed' }}>
