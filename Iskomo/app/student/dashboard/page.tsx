@@ -40,7 +40,7 @@ export default function Page() {
   const [loading,        setLoading]        = useState(true);
   const [fetchError,     setFetchError]     = useState('');
 
-  const isPending  = user?.account_status === 'pending';
+  const isPending  = user?.account_status === 'pending_verification';
   const isRejected = user?.account_status === 'rejected';
 
   const fetchData = useCallback(async () => {
@@ -107,9 +107,14 @@ export default function Page() {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           </div>
-          <div>
-            <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: '#991b1b' }}>Account Registration Rejected</p>
-            <p style={{ margin: 0, fontSize: 13, color: '#b91c1c', lineHeight: 1.5 }}>Your registration was not approved. Please contact the OSFA office for more information.</p>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: '#991b1b' }}>Registration Rejected</p>
+            <p style={{ margin: '0 0 10px', fontSize: 13, color: '#b91c1c', lineHeight: 1.5 }}>
+              {user?.rejection_remarks ?? 'Your documents were rejected by OSFA. Please re-upload corrected documents.'}
+            </p>
+            <a href="/student/registration" style={{ display: 'inline-block', padding: '7px 16px', background: '#dc2626', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+              Re-upload Documents →
+            </a>
           </div>
         </div>
       )}

@@ -40,9 +40,10 @@ export default async function OsfaLayout({ children }: OsfaLayoutProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 28px',
-          height: 64,
-          gap: 16,
+          padding: '0 16px',
+          minHeight: 64,
+          gap: 12,
+          flexWrap: 'wrap',
         }}>
           {/* Logo */}
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>

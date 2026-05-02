@@ -26,7 +26,7 @@ function isEligible(s: Scholarship, userCollege: string | null, userProgram: str
 
 export default function IskolarshipsPage() {
   const { user } = useCurrentUser();
-  const isPending = user?.account_status === 'pending';
+  const isPending = user?.account_status === 'pending_verification';
   const userCollege = user?.student_profile?.college ?? null;
   const userProgram = user?.student_profile?.program ?? null;
 

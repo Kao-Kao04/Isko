@@ -25,6 +25,30 @@ function LoginPageInner() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const [emailVerifiedBanner, setEmailVerifiedBanner] = useState(false);
+  const [showForgot,    setShowForgot]    = useState(false);
+  const [forgotEmail,   setForgotEmail]   = useState('');
+  const [forgotSending, setForgotSending] = useState(false);
+  const [forgotSent,    setForgotSent]    = useState(false);
+  const [forgotError,   setForgotError]   = useState('');
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotSending(true);
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+      await fetch(`${base}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      setForgotSent(true);
+    } catch {
+      setForgotError('Something went wrong. Please try again.');
+    } finally {
+      setForgotSending(false);
+    }
+  };
 
   useEffect(() => {
     if (searchParams.get('verified') === 'true') setEmailVerifiedBanner(true);
@@ -111,7 +135,7 @@ function LoginPageInner() {
       }}>
 
         {/* ── Left branding panel ── */}
-        <div style={{
+        <div className="login-card-left" style={{
           width: 300,
           flexShrink: 0,
           background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 60%, #C9A027 100%)`,
@@ -210,7 +234,10 @@ function LoginPageInner() {
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151', fontWeight: 500 }}>
                     <input type="checkbox" defaultChecked={false} style={{ accentColor: TEAL }} /> Remember me
                   </label>
-                  <a href="#" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Forgot password?</a>
+                  <button type="button" onClick={() => { setShowForgot(true); setForgotSent(false); setForgotEmail(''); setForgotError(''); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEAL, fontWeight: 600, padding: 0, fontSize: 13 }}>
+                    Forgot password?
+                  </button>
                 </div>
 
                 <button type="submit" disabled={loading} style={{
@@ -332,6 +359,64 @@ function LoginPageInner() {
 
           </div>
         </div>
+      </div>
+
+      <ForgotPasswordModal
+        show={showForgot} onClose={() => setShowForgot(false)}
+        email={forgotEmail} setEmail={setForgotEmail}
+        onSubmit={handleForgotPassword} sending={forgotSending}
+        sent={forgotSent} error={forgotError} teal={TEAL}
+      />
+    </div>
+  );
+}
+
+function ForgotPasswordModal({ show, onClose, email, setEmail, onSubmit, sending, sent, error, teal }: {
+  show: boolean; onClose: () => void; email: string; setEmail: (v: string) => void;
+  onSubmit: (e: React.FormEvent) => void; sending: boolean; sent: boolean; error: string; teal: string;
+}) {
+  if (!show) return null;
+  return (
+    <div role="dialog" aria-modal="true"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      onClick={onClose}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: '32px 36px', maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+        onClick={e => e.stopPropagation()}>
+        {sent ? (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>Reset link sent</h3>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+              If <strong>{email}</strong> is registered, you&apos;ll receive a password reset link. Check your inbox.
+            </p>
+            <button onClick={onClose} style={{ width: '100%', padding: '11px', background: teal, color: '#fff', border: 'none', borderRadius: 9, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+              Back to Login
+            </button>
+          </div>
+        ) : (
+          <>
+            <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>Forgot password?</h3>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>Enter your email and we&apos;ll send a reset link.</p>
+            <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com" required
+                style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '10px 14px', fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
+              {error && <p style={{ margin: 0, fontSize: 13, color: '#dc2626' }}>{error}</p>}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" onClick={onClose}
+                  style={{ flex: 1, padding: '10px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={sending}
+                  style={{ flex: 1, padding: '10px', background: sending ? '#9ca3af' : teal, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', color: '#fff' }}>
+                  {sending ? 'Sending…' : 'Send Link'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

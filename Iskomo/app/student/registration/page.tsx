@@ -216,7 +216,7 @@ export default function RegistrationPage() {
           {/* Personal Info */}
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Personal Information</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
+            <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
               <div>
                 <label style={lbl}>First Name <span style={{ color: '#dc2626' }}>*</span></label>
                 <input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. Juan" required />
@@ -235,7 +235,7 @@ export default function RegistrationPage() {
           {/* Academic Info */}
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Academic Information</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
+            <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={lbl}>Student Number <span style={{ color: '#dc2626' }}>*</span></label>
                 <input style={inp} value={studentNumber} onChange={e => setStudentNumber(e.target.value)} placeholder="e.g. 2021-00001-MN-0" required />

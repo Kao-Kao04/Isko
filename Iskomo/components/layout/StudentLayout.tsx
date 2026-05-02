@@ -33,9 +33,10 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 24px',
-          height: 60,
-          gap: 16,
+          padding: '0 16px',
+          minHeight: 60,
+          gap: 12,
+          flexWrap: 'wrap',
         }}>
 
           {/* Left: Logo + Wordmark */}

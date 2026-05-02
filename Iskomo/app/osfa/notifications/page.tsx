@@ -161,6 +161,7 @@ export default function Page() {
   }
 
   return (
+    <>
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
 
       {/* Page header */}
@@ -323,5 +324,6 @@ export default function Page() {
         </div>
       </div>
     )}
+    </>
   );
 }
