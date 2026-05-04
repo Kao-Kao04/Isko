@@ -131,30 +131,6 @@ export interface NotificationResponse {
   created_at: string;
 }
 
-// ─── Scholar Types ────────────────────────────────────────────────────────────
-
-export interface ScholarResponse {
-  id: number;
-  student_id: number;
-  application_id: number;
-  status: string;
-  gwa: string | null;
-  semester_records: SemesterRecord[];
-  student: ApplicationStudentInfo | null;
-  scholarship: ApplicationScholarshipInfo | null;
-}
-
-export interface SemesterRecord {
-  id: number;
-  semester: string;
-  academic_year: string;
-  gwa: string;
-  status: string;
-  enrollment_verified: boolean;
-  notes: string | null;
-  verified_at: string | null;
-}
-
 // ─── Student Account Types ────────────────────────────────────────────────────
 
 export interface RegistrationDocResponse {

@@ -293,10 +293,9 @@ export default function Page() {
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                           <span style={{ fontSize: 14 }}>{typeIcon[n.type] ?? '🔔'}</span>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{n.title}</span>
                           {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: TEAL, flexShrink: 0 }} />}
                         </div>
-                        <p style={{ margin: '0 0 6px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>{n.message || n.body}</p>
+                        <p style={{ margin: '0 0 6px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>{n.message}</p>
                         <span style={{ fontSize: 11, color: '#9ca3af' }}>{timeAgo(n.created_at)}</span>
                       </div>
                     </div>

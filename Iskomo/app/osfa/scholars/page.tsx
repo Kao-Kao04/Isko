@@ -199,7 +199,7 @@ export default function Page() {
                     + Sem Record
                   </button>
                   <button
-                    onClick={() => { setStatusModal(scholar); setNewStatus(scholar.status); }}
+                    onClick={() => { setStatusModal(scholar); setNewStatus(scholar.status as ScholarStatus); }}
                     style={{ padding: '7px 14px', border: `1px solid ${TEAL}33`, borderRadius: 8, background: '#fff5f5', color: TEAL, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     Update Status
                   </button>
