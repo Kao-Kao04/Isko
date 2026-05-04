@@ -58,11 +58,11 @@ export default function Page() {
   useEffect(() => { fetchScholars(); }, [fetchScholars]);
 
   const counts = TAB_KEYS.reduce((acc, k) => {
-    acc[k] = scholars.filter(s => s.status === k).length;
+    acc[k] = scholars.filter(s => (s.status as ScholarStatus) === k).length;
     return acc;
   }, {} as Record<ScholarStatus, number>);
 
-  const filtered = scholars.filter(s => s.status === activeTab);
+  const filtered = scholars.filter(s => (s.status as ScholarStatus) === activeTab);
 
   async function handleStatusUpdate() {
     if (!statusModal) return;
