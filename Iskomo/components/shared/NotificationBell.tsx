@@ -35,7 +35,7 @@ function getNotifRoute(n: NotificationResponse): string {
     case 'resubmit':
     case 'status':   return '/student/applications';
     case 'deadline': return '/student/iskolarships';
-    default:         return '/student/notifications';
+    default:         return '/student/dashboard';
   }
 }
 

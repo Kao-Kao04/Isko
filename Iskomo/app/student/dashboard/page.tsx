@@ -289,7 +289,7 @@ export default function Page() {
                 };
                 const c = cfg[n.type] ?? cfg.info;
                 return (
-                  <Link key={n.id} href="/student/notifications" style={{ textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px', borderBottom: idx < Math.min(notifications.length, 5) - 1 ? '1px solid #f3f4f6' : 'none', background: n.read ? '#fff' : '#fafffe', transition: 'background 0.12s' }}
+                  <Link key={n.id} href="/student/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px', borderBottom: idx < Math.min(notifications.length, 5) - 1 ? '1px solid #f3f4f6' : 'none', background: n.read ? '#fff' : '#fafffe', transition: 'background 0.12s' }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = n.read ? '#fff' : '#fafffe'}>
                     <div style={{ width: 30, height: 30, borderRadius: 8, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
