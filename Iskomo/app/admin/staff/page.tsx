@@ -37,6 +37,7 @@ export default function StaffPage() {
 
   // Create form
   const [showForm,  setShowForm]  = useState(false);
+  const [formName,  setFormName]  = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPass,  setFormPass]  = useState('');
   const [formDept,  setFormDept]  = useState<'public' | 'private'>('public');
@@ -85,7 +86,7 @@ export default function StaffPage() {
       const created = await adminApi.createStaff({ email: formEmail.trim(), password: formPass, department: formDept });
       setStaff(prev => [created, ...prev]);
       setShowForm(false);
-      setFormEmail(''); setFormPass(''); setFormDept('public');
+      setFormName(''); setFormEmail(''); setFormPass(''); setFormDept('public');
       showToast('success', `Staff account created for ${created.email}`);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to create account.');
@@ -248,7 +249,7 @@ export default function StaffPage() {
                     </div>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{s.email}</div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>OSFA Staff</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>OSFA Staff · ID #{s.id}</div>
                     </div>
                   </div>
                   <div>
@@ -386,6 +387,10 @@ export default function StaffPage() {
             <p style={{ margin: '0 0 24px', fontSize: 13, color: '#64748b' }}>Create a new OSFA staff account and assign their department.</p>
             {formError && <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626' }}>{formError}</div>}
             <form onSubmit={handleCreate}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Full Name <span style={{ color: '#dc2626' }}>*</span></label>
+                <input type="text" value={formName} onChange={e => setFormName(e.target.value)} placeholder="e.g. Juan Dela Cruz" style={inp} required />
+              </div>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Email Address <span style={{ color: '#dc2626' }}>*</span></label>
                 <input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="osfa.staff@pup.edu.ph" style={inp} required />

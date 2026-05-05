@@ -136,19 +136,10 @@ export default function Page() {
           </div>
           <div style={{ display: 'flex', gap: 8, paddingTop: 36 }}>
             {activeTab === 'Personal' && (
-              editMode ? (
-                <>
-                  <button onClick={() => { setEditMode(false); setSaveError(''); }} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
-                  <button onClick={handleSave} disabled={saving} style={{ padding: '8px 18px', background: saving ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
-                    {saving ? 'Saving…' : 'Save Changes'}
-                  </button>
-                </>
-              ) : (
-                <button onClick={() => setEditMode(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 18px', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  Edit Profile
-                </button>
-              )
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Managed by Admin
+              </span>
             )}
           </div>
         </div>

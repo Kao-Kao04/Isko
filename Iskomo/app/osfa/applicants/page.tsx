@@ -214,7 +214,7 @@ function ApplicantsContent() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 40, height: 40, border: `3px solid #f3f4f6`, borderTop: `3px solid ${TEAL}`, borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
           <p style={{ color: '#6b7280', fontSize: 14 }}>Loading applicants...</p>
