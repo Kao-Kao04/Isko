@@ -261,48 +261,54 @@ export default function Page() {
             </div>
           )}
 
-          {/* Notifications / Announcements */}
+          {/* Notifications */}
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              </div>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Notifications</h3>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#111827' }}>Notifications</h3>
               {notifications.filter(n => !n.read).length > 0 && (
-                <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, background: TEAL, color: '#fff', padding: '2px 8px', borderRadius: 99 }}>
+                <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, background: TEAL, color: '#fff', padding: '2px 7px', borderRadius: 99 }}>
                   {notifications.filter(n => !n.read).length} new
                 </span>
               )}
             </div>
-            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               {notifications.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: '12px 0' }}>No notifications yet.</p>
-              ) : notifications.slice(0, 5).map(n => {
-                const typeColor: Record<string, string> = {
-                  approved: TEAL, rejected: '#dc2626', incomplete: '#ea580c',
-                  deadline: '#d97706', status: '#2563eb', info: TEAL,
+                <div style={{ padding: '28px 18px', textAlign: 'center' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>No notifications yet.</p>
+                </div>
+              ) : notifications.slice(0, 5).map((n, idx) => {
+                const cfg: Record<string, { color: string; bg: string; icon: React.ReactNode }> = {
+                  approved:   { color: '#059669', bg: '#f0fdf4', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> },
+                  rejected:   { color: '#dc2626', bg: '#fef2f2', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> },
+                  incomplete: { color: '#ea580c', bg: '#fff7ed', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
+                  deadline:   { color: '#d97706', bg: '#fffbeb', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+                  resubmit:   { color: '#7c3aed', bg: '#f5f3ff', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> },
+                  info:       { color: '#2563eb', bg: '#eff6ff', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg> },
                 };
-                const typeIcon: Record<string, string> = {
-                  approved: '✅', rejected: '❌', incomplete: '⚠️',
-                  deadline: '⏰', status: '📋', info: '📢', resubmit: '📤',
-                };
-                const color = typeColor[n.type] ?? TEAL;
+                const c = cfg[n.type] ?? cfg.info;
                 return (
-                  <div key={n.id} style={{ padding: '12px 14px 12px 16px', background: n.read ? '#fafafa' : '#fff5f5', borderRadius: 10, borderLeft: `3px solid ${n.read ? '#e5e7eb' : color}` }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                          <span style={{ fontSize: 14 }}>{typeIcon[n.type] ?? '🔔'}</span>
-                          {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: TEAL, flexShrink: 0 }} />}
-                        </div>
-                        <p style={{ margin: '0 0 6px', fontSize: 12, color: '#4b5563', lineHeight: 1.5 }}>{n.message}</p>
-                        <span style={{ fontSize: 11, color: '#9ca3af' }}>{timeAgo(n.created_at)}</span>
-                      </div>
+                  <Link key={n.id} href="/student/notifications" style={{ textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px', borderBottom: idx < Math.min(notifications.length, 5) - 1 ? '1px solid #f3f4f6' : 'none', background: n.read ? '#fff' : '#fafffe', transition: 'background 0.12s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = n.read ? '#fff' : '#fafffe'}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                      {c.icon}
                     </div>
-                  </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: '0 0 3px', fontSize: 12, color: '#111827', lineHeight: 1.5, fontWeight: n.read ? 400 : 600 }}>{n.message}</p>
+                      <span style={{ fontSize: 11, color: '#9ca3af' }}>{timeAgo(n.created_at)}</span>
+                    </div>
+                    {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: TEAL, flexShrink: 0, marginTop: 6 }} />}
+                  </Link>
                 );
               })}
             </div>
+            {notifications.length > 0 && (
+              <Link href="/student/notifications" style={{ display: 'block', textAlign: 'center', padding: '10px', fontSize: 12, fontWeight: 600, color: TEAL, textDecoration: 'none', borderTop: '1px solid #f3f4f6', background: '#fafafa' }}>
+                View all notifications →
+              </Link>
+            )}
           </div>
         </div>
       </div>
