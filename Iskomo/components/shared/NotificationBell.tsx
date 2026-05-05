@@ -1,20 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
 import { COLORS } from '@/lib/theme';
 
 const MAROON = COLORS.maroon;
 
-const TYPE_ICON: Record<string, string> = {
-  status:     '📋',
-  deadline:   '⏰',
-  info:       '🔔',
-  approved:   '✅',
-  rejected:   '❌',
-  incomplete: '⚠️',
-  resubmit:   '📤',
+const TYPE_CFG: Record<string, { color: string; bg: string; icon: React.ReactNode }> = {
+  approved:   { color: '#059669', bg: '#f0fdf4', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> },
+  rejected:   { color: '#dc2626', bg: '#fef2f2', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> },
+  incomplete: { color: '#ea580c', bg: '#fff7ed', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
+  deadline:   { color: '#d97706', bg: '#fffbeb', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+  resubmit:   { color: '#7c3aed', bg: '#f5f3ff', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> },
+  status:     { color: '#2563eb', bg: '#eff6ff', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
+  info:       { color: '#2563eb', bg: '#eff6ff', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> },
 };
 
 function formatTime(createdAt: string): string {
@@ -112,29 +112,35 @@ export default function NotificationBell() {
             </div>
 
             {notifs.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No notifications</div>
+              <div style={{ padding: '36px 16px', textAlign: 'center' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <p style={{ margin: 0, fontSize: 13, color: '#9ca3af' }}>No notifications</p>
+              </div>
             ) : (
               <div style={{ maxHeight: 380, overflowY: 'auto' }}>
-                {notifs.map(n => (
-                  <div key={n.id} onClick={() => handleItemClick(n)} title="Click to view" style={{ padding: '12px 16px', borderBottom: '1px solid #f9fafb', background: n.read ? '#fff' : '#fff5f5', display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer', transition: 'background 0.15s' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = n.read ? '#f9fafb' : '#fff0f0'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? '#fff' : '#fff5f5'; }}
-                  >
-                    <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{TYPE_ICON[n.type] ?? '🔔'}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: '0 0 4px', fontSize: 13, color: '#111827', lineHeight: 1.45 }}>{n.message}</p>
-                      <span style={{ fontSize: 11, color: '#9ca3af' }}>{formatTime(n.created_at)}</span>
+                {notifs.map(n => {
+                  const c = TYPE_CFG[n.type] ?? TYPE_CFG.info;
+                  return (
+                    <div key={n.id} onClick={() => handleItemClick(n)} style={{ padding: '11px 16px', borderBottom: '1px solid #f3f4f6', background: n.read ? '#fff' : '#fafffe', display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', transition: 'background 0.12s' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? '#fff' : '#fafffe'; }}
+                    >
+                      <div style={{ width: 28, height: 28, borderRadius: 7, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                        {c.icon}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: '0 0 3px', fontSize: 12, color: '#111827', lineHeight: 1.45, fontWeight: n.read ? 400 : 600 }}>{n.message}</p>
+                        <span style={{ fontSize: 11, color: '#9ca3af' }}>{formatTime(n.created_at)}</span>
+                      </div>
+                      {!n.read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: MAROON, flexShrink: 0, marginTop: 6 }} />}
+                      <button onClick={e => dismiss(n.id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d1d5db', padding: '0 0 0 4px', flexShrink: 0, fontSize: 15, lineHeight: 1 }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#9ca3af'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#d1d5db'; }}>×</button>
                     </div>
-                    {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: MAROON, flexShrink: 0, marginTop: 5 }} />}
-                    <button onClick={e => dismiss(n.id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d1d5db', padding: 0, flexShrink: 0, fontSize: 16, lineHeight: 1 }}>×</button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-
-            <div style={{ padding: '10px 16px', borderTop: '1px solid #f3f4f6', textAlign: 'center' }}>
-              <span style={{ fontSize: 12, color: '#9ca3af' }}>{notifs.length} notification{notifs.length !== 1 ? 's' : ''}</span>
-            </div>
           </div>
         </>
       )}

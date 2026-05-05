@@ -304,11 +304,6 @@ export default function Page() {
                 );
               })}
             </div>
-            {notifications.length > 0 && (
-              <Link href="/student/notifications" style={{ display: 'block', textAlign: 'center', padding: '10px', fontSize: 12, fontWeight: 600, color: TEAL, textDecoration: 'none', borderTop: '1px solid #f3f4f6', background: '#fafafa' }}>
-                View all notifications →
-              </Link>
-            )}
           </div>
         </div>
       </div>
