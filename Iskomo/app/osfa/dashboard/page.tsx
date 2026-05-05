@@ -294,14 +294,16 @@ export default function Page() {
             </div>
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {announcements.map((a, i) => (
-                <div key={i} style={{ padding: '14px 16px', background: '#fafafa', borderRadius: 10, borderLeft: `4px solid ${a.accent}` }}>
+                <Link key={i} href="/osfa/notifications" style={{ textDecoration: 'none', display: 'block', padding: '14px 16px', background: '#fafafa', borderRadius: 10, borderLeft: `4px solid ${a.accent}`, cursor: 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f1f5f9'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#fafafa'}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                     <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{a.title}</h4>
                     <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: a.tagBg, color: a.tagColor, flexShrink: 0, marginLeft: 8 }}>{a.tag}</span>
                   </div>
                   <p style={{ margin: '0 0 8px', fontSize: 12, color: '#475569', lineHeight: 1.55 }}>{a.body}</p>
                   <span style={{ fontSize: 11, color: '#94a3b8' }}>{a.time}</span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

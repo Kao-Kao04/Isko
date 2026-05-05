@@ -78,7 +78,7 @@ export default function PrivacyPage() {
         </div>
 
         {/* ── Body ── */}
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 80px', display: 'flex', gap: 32, alignItems: 'flex-start', marginTop: -36 }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px 80px', display: 'flex', gap: 32, alignItems: 'flex-start' }}>
 
           {/* ── Sidebar ── */}
           <aside className="no-print" style={{ width: 240, flexShrink: 0, position: 'sticky', top: 24 }}>

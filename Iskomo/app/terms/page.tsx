@@ -79,7 +79,7 @@ export default function TermsPage() {
         </div>
 
         {/* Main content */}
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: 28, alignItems: 'start', marginTop: -24 }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 24px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: 28, alignItems: 'start' }}>
 
           {/* Sidebar */}
           <aside className="no-print" style={{ position: 'sticky', top: 24, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
