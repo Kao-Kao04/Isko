@@ -161,11 +161,13 @@ const TEAM = [
 export default function Home() {
   const router = useRouter();
 
-  /* Intercept Supabase password-recovery hash and route to /reset-password */
+  /* Intercept Supabase auth hash redirects */
   useEffect(() => {
     const params = new URLSearchParams(window.location.hash.slice(1));
     if (params.get('type') === 'recovery' && params.get('access_token')) {
       router.replace('/reset-password' + window.location.hash);
+    } else if (params.get('error_code') === 'otp_expired' || params.get('error') === 'access_denied') {
+      router.replace('/login?error=link_expired');
     }
   }, [router]);
 
