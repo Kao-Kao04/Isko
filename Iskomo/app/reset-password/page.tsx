@@ -20,8 +20,14 @@ function ResetPasswordInner() {
   const [done,       setDone]       = useState(false);
 
   useEffect(() => {
-    if (!token) router.replace('/login');
+    if (!token) router.replace('/login?error=invalid_token');
   }, [token, router]);
+
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(() => router.push('/login?verified=true'), 3000);
+    return () => clearTimeout(t);
+  }, [done, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,9 +70,9 @@ function ResetPasswordInner() {
             </div>
             <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: '#111827' }}>Password reset!</h2>
             <p style={{ margin: '0 0 24px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
-              Your password has been updated. You can now log in with your new password.
+              Your password has been updated. Redirecting you to login&hellip;
             </p>
-            <button onClick={() => router.push('/login')}
+            <button onClick={() => router.push('/login?verified=true')}
               style={{ width: '100%', padding: '13px', background: TEAL, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
               Go to Login
             </button>
