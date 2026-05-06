@@ -34,7 +34,19 @@ export default function TermsPage() {
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          .print-content { max-width: 100% !important; margin: 0 !important; }
+          .terms-grid {
+            display: block !important;
+            margin-top: 0 !important;
+            padding: 16px 24px 40px !important;
+          }
+          .print-content {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            animation: none !important;
+          }
+          .section-card { break-inside: avoid; page-break-inside: avoid; }
           body { background: white !important; }
         }
         .nav-link:hover { color: #800000 !important; background: #fff5f5 !important; }
@@ -78,8 +90,18 @@ export default function TermsPage() {
           </div>
         </div>
 
+        {/* Print-only header */}
+        <div style={{ display: 'none' }} className="print-only-header">
+          <style>{`.print-only-header { display: none !important; } @media print { .print-only-header { display: block !important; padding: 24px 24px 0; } }`}</style>
+          <div style={{ borderBottom: '2px solid #800000', paddingBottom: 12, marginBottom: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#800000', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>Legal Document · IskoMo</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#111827' }}>Terms &amp; Conditions</div>
+            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>Last updated: January 2025 · Polytechnic University of the Philippines · OSFA</div>
+          </div>
+        </div>
+
         {/* Main content */}
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: 28, alignItems: 'start', marginTop: -24 }}>
+        <div className="terms-grid" style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: 28, alignItems: 'start', marginTop: -24 }}>
 
           {/* Sidebar */}
           <aside className="no-print" style={{ position: 'sticky', top: 24, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
