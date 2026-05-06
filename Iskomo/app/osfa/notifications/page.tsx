@@ -20,6 +20,7 @@ interface DisplayNotif {
   time: string;
   group: NotifGroup;
   isRead: boolean;
+  applicationId: number | null;
   actionLabel?: string;
   actionHref?: string;
 }
@@ -64,15 +65,16 @@ function getGroup(createdAt: string): NotifGroup {
 
 function mapNotif(n: NotificationResponse): DisplayNotif {
   return {
-    id:          n.id,
-    type:        n.type,
-    title:       notifTitles[n.type] ?? 'Notification',
-    message:     n.message,
-    time:        formatTime(n.created_at),
-    group:       getGroup(n.created_at),
-    isRead:      n.read,
-    actionLabel: n.type === 'deadline' ? 'Review Pending' : ['approved', 'rejected', 'incomplete', 'resubmit'].includes(n.type) ? 'View Application' : undefined,
-    actionHref:  '/osfa/applicants',
+    id:            n.id,
+    type:          n.application_id ? 'application' : 'info',
+    title:         n.title,
+    message:       n.body,
+    time:          formatTime(n.created_at),
+    group:         getGroup(n.created_at),
+    isRead:        n.is_read,
+    applicationId: n.application_id,
+    actionLabel:   n.application_id ? 'View Application' : undefined,
+    actionHref:    n.application_id ? `/osfa/applicants/${n.application_id}` : undefined,
   };
 }
 
@@ -142,8 +144,8 @@ export default function Page() {
 
   const filtered = notifications.filter(n => {
     if (activeFilter === 'Unread')       return !n.isRead;
-    if (activeFilter === 'Applications') return ['status', 'approved', 'rejected', 'incomplete', 'resubmit'].includes(n.type);
-    if (activeFilter === 'System')       return ['deadline', 'info'].includes(n.type);
+    if (activeFilter === 'Applications') return n.applicationId !== null;
+    if (activeFilter === 'System')       return n.applicationId === null;
     return true;
   });
 
@@ -262,8 +264,8 @@ export default function Page() {
               {[
                 { label: 'Total',        value: notifications.length,                                                       color: '#374151' },
                 { label: 'Unread',       value: unreadCount,                                                                color: '#dc2626' },
-                { label: 'Applications', value: notifications.filter(n => ['status','approved','rejected','incomplete'].includes(n.type)).length, color: '#2563eb' },
-                { label: 'Deadlines',    value: notifications.filter(n => n.type === 'deadline').length,                   color: '#d97706' },
+                { label: 'Applications', value: notifications.filter(n => n.applicationId !== null).length, color: '#2563eb' },
+                { label: 'System',       value: notifications.filter(n => n.applicationId === null).length, color: '#d97706' },
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 13, color: '#6b7280' }}>{row.label}</span>

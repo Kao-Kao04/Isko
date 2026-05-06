@@ -125,9 +125,10 @@ export interface AuditEntryResponse {
 
 export interface NotificationResponse {
   id: number;
-  type: string;
-  message: string;
-  read: boolean;
+  title: string;
+  body: string;
+  is_read: boolean;
+  application_id: number | null;
   created_at: string;
 }
 

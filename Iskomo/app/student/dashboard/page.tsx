@@ -69,7 +69,7 @@ export default function Page() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const firstName = user?.student_profile?.first_name ?? 'Student';
+  const firstName = user?.student_profile?.first_name ?? user?.email?.split('@')[0] ?? 'Student';
   const studentNo = user?.student_profile?.student_number ?? '—';
   const program   = user?.student_profile?.program ?? '—';
   const yearLevel = user?.student_profile?.year_level ? `${user.student_profile.year_level}${['st','nd','rd'][user.student_profile.year_level - 1] ?? 'th'} Year` : '—';

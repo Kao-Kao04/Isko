@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { applicationApi, scholarshipApi, type ApplicationResponse, type ScholarshipResponse } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
+import { applicationApi, scholarshipApi, notificationApi, type ApplicationResponse, type ScholarshipResponse, type NotificationResponse } from '@/lib/api-client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
@@ -27,14 +29,14 @@ const urgencyStyle: Record<string, { bg: string; border: string; color: string; 
   normal:   { bg: '#f8fafc', border: '#e2e8f0', color: '#64748b', chip: '#f1f5f9' },
 };
 
-const announcements = [
-  { title: 'System Maintenance Scheduled', body: 'IskoMo will be unavailable on Apr 20, 2026 from 2:00 AM – 4:00 AM for scheduled maintenance.', tag: 'System', tagBg: '#f1f5f9', tagColor: '#475569', accent: '#94a3b8', time: 'Today' },
-  { title: 'New Evaluation Guidelines', body: 'Updated scoring rubrics for financial need assessment are now in effect for all new evaluations.', tag: 'Policy', tagBg: TEAL_LIGHT, tagColor: TEAL_DARK, accent: TEAL, time: '3 days ago' },
-];
-
 export default function Page() {
-  const [applications, setApplications] = useState<ApplicationResponse[]>([]);
-  const [scholarships, setScholarships] = useState<ScholarshipResponse[]>([]);
+  const router = useRouter();
+  const { user } = useCurrentUser();
+  const displayName = user?.student_profile?.first_name ?? user?.email?.split('@')[0] ?? 'OSFA';
+
+  const [applications,  setApplications]  = useState<ApplicationResponse[]>([]);
+  const [scholarships,  setScholarships]  = useState<ScholarshipResponse[]>([]);
+  const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoveredCard, setHoveredCard]         = useState<string | null>(null);
   const [hoveredActivity, setHoveredActivity] = useState<string | null>(null);
@@ -42,18 +44,28 @@ export default function Page() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [appsRes, scholRes] = await Promise.all([
+      const [appsRes, scholRes, notifsRes] = await Promise.all([
         applicationApi.list(1, 100),
         scholarshipApi.list(1, 100),
+        notificationApi.list(1, 10),
       ]);
-      setApplications(appsRes.items);
-      setScholarships(scholRes.items);
+      setApplications(appsRes.items ?? []);
+      setScholarships(scholRes.items ?? []);
+      setNotifications(notifsRes.items ?? []);
     } catch {
       // silent fail — dashboard shows zeros
     } finally {
       setLoading(false);
     }
   }, []);
+
+  async function handleNotifClick(n: NotificationResponse) {
+    try {
+      await notificationApi.markRead(n.id);
+      setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+    } catch {}
+    router.push(n.application_id ? `/osfa/applicants/${n.application_id}` : '/osfa/notifications');
+  }
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -112,25 +124,16 @@ export default function Page() {
   ];
   const summaryTotal = applicationSummary.reduce((s, r) => s + r.count, 0);
 
-  if (loading) {
-    return (
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: `3px solid #f3f4f6`, borderTop: `3px solid ${TEAL}`, borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
-          <p style={{ color: '#6b7280', fontSize: 14 }}>Loading dashboard...</p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 28px' }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Page header */}
       <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>Dashboard</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>
+            Welcome, {displayName}!
+          </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
             {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
@@ -185,7 +188,11 @@ export default function Page() {
               <Link href="/osfa/applicants" style={{ fontSize: 12, fontWeight: 700, color: TEAL, textDecoration: 'none', padding: '5px 12px', background: TEAL_LIGHT, borderRadius: 7, border: '1px solid #F5D060' }}>View All</Link>
             </div>
             <div style={{ position: 'relative', padding: '6px 0' }}>
-              {applications.length === 0 ? (
+              {loading ? (
+                <div style={{ padding: '32px 24px', display: 'flex', justifyContent: 'center' }}>
+                  <div style={{ width: 24, height: 24, border: `2.5px solid #f3f4f6`, borderTop: `2.5px solid ${TEAL}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                </div>
+              ) : applications.length === 0 ? (
                 <div style={{ padding: '32px 24px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No applications yet.</div>
               ) : (
                 <div style={{ position: 'absolute', left: 29, top: 20, bottom: 20, width: 1.5, background: '#e2e8f0', zIndex: 0 }} />
@@ -290,20 +297,31 @@ export default function Page() {
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               </div>
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Announcements</h3>
-              <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, background: TEAL, color: '#fff', borderRadius: 99, padding: '2px 8px' }}>{announcements.length}</span>
+              {notifications.filter(n => !n.is_read).length > 0 && (
+                <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, background: TEAL, color: '#fff', borderRadius: 99, padding: '2px 8px' }}>
+                  {notifications.filter(n => !n.is_read).length} unread
+                </span>
+              )}
             </div>
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {announcements.map((a, i) => (
-                <Link key={i} href="/osfa/notifications" style={{ textDecoration: 'none', display: 'block', padding: '14px 16px', background: '#fafafa', borderRadius: 10, borderLeft: `4px solid ${a.accent}`, cursor: 'pointer', transition: 'background 0.15s' }}
+              {loading ? (
+                <div style={{ padding: '16px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading...</div>
+              ) : notifications.length === 0 ? (
+                <div style={{ padding: '16px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No announcements.</div>
+              ) : notifications.map(n => (
+                <button key={n.id} onClick={() => handleNotifClick(n)}
+                  style={{ textAlign: 'left', width: '100%', display: 'block', padding: '14px 16px', background: n.is_read ? '#fafafa' : '#fff9ff', borderRadius: 10, borderLeft: `4px solid ${n.application_id ? TEAL : '#94a3b8'}`, cursor: 'pointer', transition: 'background 0.15s', border: 'none', borderLeftWidth: 4, borderLeftStyle: 'solid', borderLeftColor: n.application_id ? TEAL : '#94a3b8' }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f1f5f9'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#fafafa'}>
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = n.is_read ? '#fafafa' : '#fff9ff'}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{a.title}</h4>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: a.tagBg, color: a.tagColor, flexShrink: 0, marginLeft: 8 }}>{a.tag}</span>
+                    <h4 style={{ margin: 0, fontSize: 13, fontWeight: n.is_read ? 600 : 700, color: '#0f172a' }}>{n.title}</h4>
+                    {!n.is_read && <div style={{ width: 7, height: 7, borderRadius: '50%', background: TEAL, flexShrink: 0, marginLeft: 8, marginTop: 3 }} />}
                   </div>
-                  <p style={{ margin: '0 0 8px', fontSize: 12, color: '#475569', lineHeight: 1.55 }}>{a.body}</p>
-                  <span style={{ fontSize: 11, color: '#94a3b8' }}>{a.time}</span>
-                </Link>
+                  <p style={{ margin: '0 0 8px', fontSize: 12, color: '#475569', lineHeight: 1.55 }}>{n.body}</p>
+                  <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                    {new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                </button>
               ))}
             </div>
           </div>
