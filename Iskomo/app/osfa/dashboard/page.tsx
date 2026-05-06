@@ -62,7 +62,7 @@ export default function Page() {
       await notificationApi.markRead(n.id);
       setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
     } catch {}
-    router.push(n.application_id ? `/osfa/applicants/${n.application_id}` : '/osfa/notifications');
+    router.push(n.route ? `/osfa${n.route}` : '/osfa/notifications');
   }
 
   useEffect(() => { fetchData(); }, [fetchData]);

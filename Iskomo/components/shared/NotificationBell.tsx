@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
 const MAROON = COLORS.maroon;
@@ -27,20 +28,10 @@ function formatTime(createdAt: string): string {
   return `${days}d ago`;
 }
 
-function getNotifRoute(n: NotificationResponse): string {
-  switch (n.type) {
-    case 'approved':
-    case 'rejected':
-    case 'incomplete':
-    case 'resubmit':
-    case 'status':   return '/student/applications';
-    case 'deadline': return '/student/iskolarships';
-    default:         return '/student/dashboard';
-  }
-}
-
 export default function NotificationBell() {
   const router = useRouter();
+  const { user } = useCurrentUser();
+  const roleBase = (user?.role === 'osfa_staff' || user?.role === 'super_admin') ? '/osfa' : '/student';
   const [notifs, setNotifs]   = useState<NotificationResponse[]>([]);
   const [open, setOpen]       = useState(false);
 
@@ -57,21 +48,21 @@ export default function NotificationBell() {
     return () => clearInterval(interval);
   }, [fetchNotifs]);
 
-  const unread = notifs.filter(n => !n.read).length;
+  const unread = notifs.filter(n => !n.is_read).length;
 
   async function handleItemClick(n: NotificationResponse) {
     try {
       await notificationApi.markRead(n.id);
-      setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
+      setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
     } catch { /* ignore */ }
     setOpen(false);
-    router.push(getNotifRoute(n));
+    if (n.route) router.push(roleBase + n.route);
   }
 
   async function markAllRead() {
     try {
       await notificationApi.markAllRead();
-      setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+      setNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch { /* ignore */ }
   }
 
@@ -119,20 +110,20 @@ export default function NotificationBell() {
             ) : (
               <div style={{ maxHeight: 380, overflowY: 'auto' }}>
                 {notifs.map(n => {
-                  const c = TYPE_CFG[n.type] ?? TYPE_CFG.info;
+                  const c = TYPE_CFG[n.application_id ? 'status' : 'info'];
                   return (
-                    <div key={n.id} onClick={() => handleItemClick(n)} style={{ padding: '11px 16px', borderBottom: '1px solid #f3f4f6', background: n.read ? '#fff' : '#fafffe', display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', transition: 'background 0.12s' }}
+                    <div key={n.id} onClick={() => handleItemClick(n)} style={{ padding: '11px 16px', borderBottom: '1px solid #f3f4f6', background: n.is_read ? '#fff' : '#fafffe', display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', transition: 'background 0.12s' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? '#fff' : '#fafffe'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.is_read ? '#fff' : '#fafffe'; }}
                     >
                       <div style={{ width: 28, height: 28, borderRadius: 7, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                         {c.icon}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: '0 0 3px', fontSize: 12, color: '#111827', lineHeight: 1.45, fontWeight: n.read ? 400 : 600 }}>{n.message}</p>
+                        <p style={{ margin: '0 0 3px', fontSize: 12, color: '#111827', lineHeight: 1.45, fontWeight: n.is_read ? 400 : 600 }}>{n.title}</p>
                         <span style={{ fontSize: 11, color: '#9ca3af' }}>{formatTime(n.created_at)}</span>
                       </div>
-                      {!n.read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: MAROON, flexShrink: 0, marginTop: 6 }} />}
+                      {!n.is_read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: MAROON, flexShrink: 0, marginTop: 6 }} />}
                       <button onClick={e => dismiss(n.id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d1d5db', padding: '0 0 0 4px', flexShrink: 0, fontSize: 15, lineHeight: 1 }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#9ca3af'; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#d1d5db'; }}>×</button>

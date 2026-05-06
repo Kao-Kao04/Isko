@@ -64,6 +64,7 @@ function getGroup(createdAt: string): NotifGroup {
 }
 
 function mapNotif(n: NotificationResponse): DisplayNotif {
+  const href = n.route ? `/osfa${n.route}` : (n.application_id ? `/osfa/applicants/${n.application_id}` : undefined);
   return {
     id:            n.id,
     type:          n.application_id ? 'application' : 'info',
@@ -73,8 +74,8 @@ function mapNotif(n: NotificationResponse): DisplayNotif {
     group:         getGroup(n.created_at),
     isRead:        n.is_read,
     applicationId: n.application_id,
-    actionLabel:   n.application_id ? 'View Application' : undefined,
-    actionHref:    n.application_id ? `/osfa/applicants/${n.application_id}` : undefined,
+    actionLabel:   href ? 'View Details' : undefined,
+    actionHref:    href,
   };
 }
 

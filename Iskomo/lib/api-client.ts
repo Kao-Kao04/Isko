@@ -131,6 +131,7 @@ export interface NotificationResponse {
   body: string;
   is_read: boolean;
   application_id: number | null;
+  route: string | null;
   created_at: string;
 }
 
