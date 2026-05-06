@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { applicationApi, scholarshipApi, notificationApi, type ApplicationResponse, type ScholarshipResponse, type NotificationResponse } from '@/lib/api-client';
+import { applicationApi, scholarshipApi, notificationApi, dashboardApi, type ApplicationResponse, type ScholarshipResponse, type NotificationResponse, type DashboardStats } from '@/lib/api-client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
@@ -34,29 +34,27 @@ export default function Page() {
   const { user } = useCurrentUser();
   const displayName = user?.student_profile?.first_name ?? user?.email?.split('@')[0] ?? 'OSFA';
 
-  const [applications,  setApplications]  = useState<ApplicationResponse[]>([]);
-  const [scholarships,  setScholarships]  = useState<ScholarshipResponse[]>([]);
-  const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
+  const [applications,   setApplications]   = useState<ApplicationResponse[]>([]);
+  const [scholarships,   setScholarships]   = useState<ScholarshipResponse[]>([]);
+  const [notifications,  setNotifications]  = useState<NotificationResponse[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [hoveredCard, setHoveredCard]         = useState<string | null>(null);
   const [hoveredActivity, setHoveredActivity] = useState<string | null>(null);
   const [hoveredDeadline, setHoveredDeadline] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
-    try {
-      const [appsRes, scholRes, notifsRes] = await Promise.all([
-        applicationApi.list(1, 100),
-        scholarshipApi.list(1, 100),
-        notificationApi.list(1, 10),
-      ]);
-      setApplications(appsRes.items ?? []);
-      setScholarships(scholRes.items ?? []);
-      setNotifications(notifsRes.items ?? []);
-    } catch {
-      // silent fail — dashboard shows zeros
-    } finally {
-      setLoading(false);
-    }
+    const [statsRes, appsRes, scholRes, notifsRes] = await Promise.allSettled([
+      dashboardApi.stats(),
+      applicationApi.list(1, 100),
+      scholarshipApi.list(1, 100),
+      notificationApi.list(1, 10),
+    ]);
+    if (statsRes.status  === 'fulfilled') setDashboardStats(statsRes.value);
+    if (appsRes.status   === 'fulfilled') setApplications(appsRes.value.items ?? []);
+    if (scholRes.status  === 'fulfilled') setScholarships(scholRes.value.items ?? []);
+    if (notifsRes.status === 'fulfilled') setNotifications(notifsRes.value.items ?? []);
+    setLoading(false);
   }, []);
 
   async function handleNotifClick(n: NotificationResponse) {
@@ -69,13 +67,15 @@ export default function Page() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const totalApplicants  = applications.length;
-  const pendingCount     = applications.filter(a => a.status === 'pending').length;
-  const approvedCount    = applications.filter(a => a.status === 'approved').length;
-  const rejectedCount    = applications.filter(a => a.status === 'rejected').length;
+  // Prefer backend stats endpoint; fall back to computing from fetched apps
+  const s = dashboardStats;
+  const totalApplicants  = s?.total_applications ?? applications.length;
+  const pendingCount     = s?.pending   ?? applications.filter(a => a.status === 'pending').length;
+  const approvedCount    = s?.approved  ?? applications.filter(a => a.status === 'approved').length;
+  const rejectedCount    = s?.rejected  ?? applications.filter(a => a.status === 'rejected').length;
   const incompleteCount  = applications.filter(a => a.status === 'incomplete').length;
   const inReviewCount    = applications.filter(a => a.eval_status === 'in_review').length;
-  const activeScholarships = scholarships.filter(s => s.status === 'active');
+  const activeScholarships = scholarships.filter(sc => sc.status === 'active');
 
   const stats = [
     {

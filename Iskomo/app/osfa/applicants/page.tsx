@@ -77,28 +77,42 @@ function ApplicantsContent() {
   const [hoveredRow, setHoveredRow]       = useState<number | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchApplications = useCallback(async () => {
+  const fetchApplications = useCallback(async (search?: string) => {
     try {
       setLoading(true);
-      // Fetch in batches to avoid huge payloads — max 100 per page, up to 500 total
-      const first = await applicationApi.list(1, 100);
-      const items = [...first.items];
-      if (first.total > 100) {
-        const pages = Math.min(Math.ceil(first.total / 100), 5);
-        const rest = await Promise.all(
-          Array.from({ length: pages - 1 }, (_, i) => applicationApi.list(i + 2, 100))
-        );
-        rest.forEach(r => items.push(...r.items));
+      if (search) {
+        // Backend search — single fetch, server handles filtering
+        const result = await applicationApi.list(1, 200, undefined, search);
+        setApplications(result.items ?? []);
+      } else {
+        // No search — batch-fetch all (up to 500)
+        const first = await applicationApi.list(1, 100);
+        const items = [...(first.items ?? [])];
+        if (first.total > 100) {
+          const pages = Math.min(Math.ceil(first.total / 100), 5);
+          const rest = await Promise.all(
+            Array.from({ length: pages - 1 }, (_, i) => applicationApi.list(i + 2, 100))
+          );
+          rest.forEach(r => items.push(...(r.items ?? [])));
+        }
+        setApplications(items);
       }
-      setApplications(items);
     } catch {
       addToast('error', 'Failed to load applications.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { fetchApplications(); }, [fetchApplications]);
+  // Single effect handles both initial load (empty query → immediate) and
+  // subsequent search changes (non-empty query → 400 ms debounce).
+  useEffect(() => {
+    const t = setTimeout(
+      () => fetchApplications(searchQuery || undefined),
+      searchQuery ? 400 : 0,
+    );
+    return () => clearTimeout(t);
+  }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = applications.filter(a => {
     const q = searchQuery.toLowerCase();
@@ -183,26 +197,44 @@ function ApplicantsContent() {
     }
   }
 
-  function handleExportCSV() {
-    const rows = [
-      ['Name', 'Email', 'College', 'Program', 'Year Level', 'Scholarship', 'Status', 'Submitted'],
-      ...sorted.map(a => [
-        getFullName(a),
-        a.student?.email ?? '',
-        a.student?.college ?? '',
-        a.student?.program ?? '',
-        String(a.student?.year_level ?? ''),
-        a.scholarship?.name ?? '',
-        a.status,
-        new Date(a.submitted_at).toLocaleDateString(),
-      ]),
-    ];
-    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a'); link.href = url; link.download = 'applicants.csv'; link.click();
-    URL.revokeObjectURL(url);
-    addToast('success', `Exported ${sorted.length} applicant${sorted.length !== 1 ? 's' : ''} to CSV.`);
+  async function handleExportCSV() {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = `applicants-${statusFilter}-${dateStr}.csv`;
+
+    function triggerDownload(blob: Blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    try {
+      // Try backend export endpoint first
+      const blob = await applicationApi.export(
+        statusFilter !== 'all' ? statusFilter : undefined,
+        searchQuery || undefined,
+      );
+      triggerDownload(blob);
+      addToast('success', `Exported to ${filename}`);
+    } catch {
+      // Fallback: generate CSV client-side from currently loaded data
+      const rows = [
+        ['Name', 'Email', 'College', 'Program', 'Year Level', 'Scholarship', 'Status', 'Submitted'],
+        ...sorted.map(a => [
+          getFullName(a),
+          a.student?.email ?? '',
+          a.student?.college ?? '',
+          a.student?.program ?? '',
+          String(a.student?.year_level ?? ''),
+          a.scholarship?.name ?? '',
+          a.status,
+          new Date(a.submitted_at).toLocaleDateString(),
+        ]),
+      ];
+      const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+      triggerDownload(new Blob([csv], { type: 'text/csv' }));
+      addToast('success', `Exported ${sorted.length} applicant${sorted.length !== 1 ? 's' : ''} to CSV.`);
+    }
   }
 
   const thStyle = (key: SortKey): React.CSSProperties => ({

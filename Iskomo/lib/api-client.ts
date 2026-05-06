@@ -1,4 +1,6 @@
-import { apiFetch } from './api';
+import { apiFetch, getAccessToken } from './api';
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 // ─── Scholarship Types ────────────────────────────────────────────────────────
 
@@ -132,6 +134,15 @@ export interface NotificationResponse {
   created_at: string;
 }
 
+export interface DashboardStats {
+  total_applications: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  active_scholarships: number;
+  total_scholars: number;
+}
+
 // ─── Student Account Types ────────────────────────────────────────────────────
 
 export interface RegistrationDocResponse {
@@ -202,10 +213,25 @@ export const scholarshipApi = {
 // ─── Application API ──────────────────────────────────────────────────────────
 
 export const applicationApi = {
-  list: (page = 1, pageSize = 20, status?: string) => {
+  list: (page = 1, pageSize = 20, status?: string, search?: string) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
-    if (status) params.set('status', status);
+    if (status && status !== 'all') params.set('status', status);
+    if (search) params.set('search', search);
     return apiFetch<PaginatedResponse<ApplicationResponse>>(`/api/applications?${params}`);
+  },
+
+  export: async (status?: string, search?: string): Promise<Blob> => {
+    const params = new URLSearchParams();
+    if (status && status !== 'all') params.set('status', status);
+    if (search) params.set('search', search);
+    const query = params.toString() ? `?${params}` : '';
+    const token = getAccessToken();
+    const res = await fetch(`${BASE_URL}/api/applications/export${query}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Export failed');
+    return res.blob();
   },
 
   get: (id: number) =>
@@ -466,4 +492,10 @@ export const reportsApi = {
   overview: () => apiFetch<ReportsOverview>('/api/reports/overview'),
   scholarships: () => apiFetch<ScholarshipBreakdown[]>('/api/reports/scholarships'),
   trends: () => apiFetch<ApplicationTrend[]>('/api/reports/applications'),
+};
+
+// ─── Dashboard Stats API ──────────────────────────────────────────────────────
+
+export const dashboardApi = {
+  stats: () => apiFetch<DashboardStats>('/api/dashboard/stats'),
 };
