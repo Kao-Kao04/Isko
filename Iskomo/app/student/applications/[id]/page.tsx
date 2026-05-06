@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { applicationApi, documentApi, type ApplicationResponse, type AuditEntryResponse } from '@/lib/api-client';
+import { applicationApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type WorkflowResponse } from '@/lib/api-client';
 import { COLORS } from '@/lib/theme';
+import { MAIN_STAGES, STAGE_LABEL, SUB_STATUS_LABEL, stageIndex, isTerminal, formatInterviewDt } from '@/lib/workflow';
 
 const STEPS = ['Submitted', 'Under Review', 'Interview', 'Doc Validation', 'Decision'];
 
@@ -54,9 +55,15 @@ export default function ApplicationDetailPage() {
   const { id }    = useParams<{ id: string }>();
   const router    = useRouter();
 
-  const [app,   setApp]   = useState<ApplicationResponse | null>(null);
-  const [audit, setAudit] = useState<AuditEntryResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [app,      setApp]      = useState<ApplicationResponse | null>(null);
+  const [audit,    setAudit]    = useState<AuditEntryResponse[]>([]);
+  const [workflow, setWorkflow] = useState<WorkflowResponse | null>(null);
+  const [loading,  setLoading]  = useState(true);
+  const [wfActionLoading, setWfActionLoading] = useState(false);
+  const [wfDialog, setWfDialog] = useState<string | null>(null);
+  const [scheduleForm, setScheduleForm] = useState({ datetime: '', location: '', note: '' });
+  const [withdrawReason, setWithdrawReason] = useState('');
+  const [wfError, setWfError] = useState('');
 
   const [appealText,       setAppealText]       = useState('');
   const [appealSubmitting, setAppealSubmitting] = useState(false);
@@ -70,15 +77,29 @@ export default function ApplicationDetailPage() {
 
   useEffect(() => {
     const numId = Number(id);
-    applicationApi.get(numId)
-      .then(async (a) => {
-        setApp(a);
-        const aud = await applicationApi.getAudit(numId).catch(() => []);
-        setAudit(aud);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      applicationApi.get(numId),
+      workflowApi.get(numId).catch(() => null),
+      applicationApi.getAudit(numId).catch(() => [] as AuditEntryResponse[]),
+    ]).then(([a, wf, aud]) => {
+      setApp(a);
+      if (wf) setWorkflow(wf);
+      setAudit(aud);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
+
+  async function doWfAction(fn: () => Promise<WorkflowResponse>, msg: string) {
+    setWfActionLoading(true);
+    setWfError('');
+    try {
+      setWorkflow(await fn());
+      setWfDialog(null);
+    } catch (err) {
+      setWfError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setWfActionLoading(false);
+    }
+  }
 
   async function submitAppeal() {
     if (!app || !appealText.trim()) return;
@@ -182,41 +203,168 @@ export default function ApplicationDetailPage() {
         {/* LEFT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-          {/* Progress stepper */}
+          {/* Workflow progress stepper */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <h3 style={{ margin: '0 0 18px', fontSize: 14, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Application Progress</h3>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {STEPS.map((step, i) => {
-                const s = i < currentStep ? 'done' : i === currentStep ? 'active' : 'pending';
-                return (
-                  <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 0 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: s === 'done' ? COLORS.maroon : s === 'active' ? '#fff' : '#f3f4f6',
-                        border: s === 'pending' ? '2px solid #e5e7eb' : `2px solid ${COLORS.maroon}`,
-                        boxShadow: s === 'active' ? `0 0 0 4px ${COLORS.maroon}20` : 'none',
-                      }}>
-                        {s === 'done' ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                        ) : s === 'active' ? (
-                          <div style={{ width: 11, height: 11, borderRadius: '50%', background: COLORS.maroon }} />
-                        ) : (
-                          <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#d1d5db' }} />
-                        )}
-                      </div>
-                      <span style={{ fontSize: 10, fontWeight: s === 'active' ? 700 : 500, color: s === 'pending' ? '#9ca3af' : s === 'active' ? COLORS.maroon : '#374151', textAlign: 'center', lineHeight: 1.3, maxWidth: 58 }}>
-                        {step}
-                      </span>
-                    </div>
-                    {i < STEPS.length - 1 && (
-                      <div style={{ flex: 1, height: 2, background: s === 'done' ? COLORS.maroon : '#e5e7eb', margin: '0 4px', marginBottom: 22 }} />
-                    )}
+            {workflow ? (() => {
+              const ms = workflow.main_status ?? '';
+              const ss = workflow.sub_status  ?? '';
+              const idx = stageIndex(ms);
+              const terminal = isTerminal(ms);
+              const MAROON = COLORS.maroon;
+              return (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
+                    {MAIN_STAGES.map((stage, i) => {
+                      const done   = !terminal && i < idx;
+                      const active = i === idx && !terminal;
+                      const fail   = terminal && i === idx;
+                      const color  = done ? MAROON : active ? MAROON : fail ? '#dc2626' : '#9ca3af';
+                      return (
+                        <div key={stage} style={{ display: 'flex', alignItems: 'center', flex: i < MAIN_STAGES.length - 1 ? 1 : 0 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: done ? MAROON : fail ? '#fef2f2' : active ? '#fff' : '#f3f4f6', border: `2px solid ${color}`, boxShadow: active ? `0 0 0 4px ${MAROON}20` : 'none' }}>
+                              {done ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                              : fail ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              : active ? <div style={{ width: 11, height: 11, borderRadius: '50%', background: MAROON }} />
+                              : <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#d1d5db' }} />}
+                            </div>
+                            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color, textAlign: 'center', lineHeight: 1.3, maxWidth: 58 }}>{STAGE_LABEL[stage]}</span>
+                          </div>
+                          {i < MAIN_STAGES.length - 1 && <div style={{ flex: 1, height: 2, background: done ? MAROON : '#e5e7eb', margin: '0 4px', marginBottom: 22 }} />}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 20, background: terminal ? '#fef2f2' : '#fff5f5', border: `1px solid ${terminal ? '#fca5a5' : '#fca5a5'}` }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: terminal ? '#dc2626' : MAROON }} />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: terminal ? '#dc2626' : MAROON }}>{SUB_STATUS_LABEL[ss] ?? ss}</span>
+                  </div>
+
+                  {/* Interview card */}
+                  {ms === 'interview' && workflow.interview_datetime && (
+                    <div style={{ marginTop: 18, padding: '14px 16px', background: '#fff5f5', borderRadius: 10, border: `1px solid ${COLORS.maroon}30` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Interview Scheduled
+                      </div>
+                      <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}><strong>Date & Time:</strong> {formatInterviewDt(workflow.interview_datetime)}</div>
+                      {workflow.interview_location && <div style={{ fontSize: 13, color: '#374151' }}><strong>Location:</strong> {workflow.interview_location}</div>}
+                    </div>
+                  )}
+
+                  {/* Decision banner */}
+                  {ms === 'decision' && (
+                    <div style={{ marginTop: 18, padding: '14px 16px', background: ss === 'approved' ? '#f0fdf4' : ss === 'rejected' ? '#fef2f2' : '#fffbeb', borderRadius: 10, border: `1px solid ${ss === 'approved' ? '#86efac' : ss === 'rejected' ? '#fca5a5' : '#fde68a'}` }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: ss === 'approved' ? '#15803d' : ss === 'rejected' ? '#dc2626' : '#92400e', marginBottom: workflow.decision_remarks ? 6 : 0 }}>
+                        {ss === 'approved' ? '🎉 Congratulations! Your application has been approved.' : ss === 'rejected' ? 'Your application has been rejected.' : ss === 'waitlisted' ? 'You are on the waitlist. Check back for updates.' : 'Your application is under review.'}
+                      </div>
+                      {workflow.decision_remarks && <div style={{ fontSize: 13, color: '#374151' }}>{workflow.decision_remarks}</div>}
+                    </div>
+                  )}
+
+                  {/* Completion pending requirements */}
+                  {ms === 'completion' && ss === 'pending_requirements' && (
+                    <div style={{ marginTop: 18, padding: '14px 16px', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a', fontSize: 13, color: '#92400e', fontWeight: 600 }}>
+                      Action required: Please submit your completion requirements to finalize your scholarship.
+                    </div>
+                  )}
+                </>
+              );
+            })() : (
+              // Fallback to old simple stepper when no workflow data
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {['Submitted', 'Under Review', 'Interview', 'Doc Validation', 'Decision'].map((step, i) => {
+                  const cur = { pending: 0, incomplete: 0, withdrawn: 0, approved: 4, rejected: 4 }[app?.status ?? 'pending'] ?? 0;
+                  const s = i < cur ? 'done' : i === cur ? 'active' : 'pending';
+                  return (
+                    <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < 4 ? 1 : 0 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: s === 'done' ? COLORS.maroon : s === 'active' ? '#fff' : '#f3f4f6', border: `2px solid ${s === 'pending' ? '#e5e7eb' : COLORS.maroon}`, boxShadow: s === 'active' ? `0 0 0 4px ${COLORS.maroon}20` : 'none' }}>
+                          {s === 'done' ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                          : s === 'active' ? <div style={{ width: 11, height: 11, borderRadius: '50%', background: COLORS.maroon }} />
+                          : <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#d1d5db' }} />}
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: s === 'active' ? 700 : 500, color: s === 'pending' ? '#9ca3af' : s === 'active' ? COLORS.maroon : '#374151', textAlign: 'center', lineHeight: 1.3, maxWidth: 58 }}>{step}</span>
+                      </div>
+                      {i < 4 && <div style={{ flex: 1, height: 2, background: s === 'done' ? COLORS.maroon : '#e5e7eb', margin: '0 4px', marginBottom: 22 }} />}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* Workflow student actions */}
+          {workflow && !isTerminal(workflow.main_status ?? '') && (() => {
+            const ms = workflow.main_status ?? '';
+            const ss = workflow.sub_status  ?? '';
+            const inp: React.CSSProperties = { width: '100%', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' };
+            const showSchedule = ms === 'interview' && (ss === 'not_scheduled' || ss === 'rescheduled');
+            const showWithdraw = !['rejected', 'withdrawn', 'completed'].includes(ms);
+            if (!showSchedule && !showWithdraw && !(ms === 'completion' && ss === 'pending_requirements')) return null;
+            return (
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</h3>
+                {wfError && <div style={{ marginBottom: 12, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, fontSize: 13, color: '#dc2626' }}>{wfError}</div>}
+
+                {showSchedule && wfDialog !== 'schedule' && (
+                  <button onClick={() => setWfDialog('schedule')} style={{ padding: '9px 18px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 10, display: 'block' }}>
+                    {ss === 'rescheduled' ? 'Set New Schedule' : 'Schedule Interview'}
+                  </button>
+                )}
+
+                {wfDialog === 'schedule' && (
+                  <div style={{ background: '#f8fafc', borderRadius: 10, padding: '16px', marginBottom: 12 }}>
+                    <h4 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827' }}>Schedule Interview</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+                      <div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Preferred Date & Time</label>
+                        <input type="datetime-local" value={scheduleForm.datetime} onChange={e => setScheduleForm(f => ({ ...f, datetime: e.target.value }))} style={inp} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Location</label>
+                        <input type="text" value={scheduleForm.location} onChange={e => setScheduleForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Room 301" style={inp} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Note (optional)</label>
+                        <input type="text" value={scheduleForm.note} onChange={e => setScheduleForm(f => ({ ...f, note: e.target.value }))} placeholder="Any preferred notes" style={inp} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button disabled={wfActionLoading || !scheduleForm.datetime || !scheduleForm.location}
+                        onClick={() => doWfAction(() => workflowApi.scheduleInterview(Number(id), { interview_datetime: new Date(scheduleForm.datetime).toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) }), 'Interview scheduled.')}
+                        style={{ padding: '8px 16px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: wfActionLoading ? 'not-allowed' : 'pointer', opacity: wfActionLoading ? 0.7 : 1 }}>
+                        {wfActionLoading ? 'Submitting…' : 'Submit'}
+                      </button>
+                      <button onClick={() => { setWfDialog(null); setScheduleForm({ datetime: '', location: '', note: '' }); }} style={{ padding: '8px 14px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#374151' }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {showWithdraw && wfDialog !== 'withdraw' && (
+                  <button onClick={() => setWfDialog('withdraw')} style={{ padding: '9px 18px', background: '#fff', color: '#dc2626', border: '1px solid #fca5a5', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                    Withdraw Application
+                  </button>
+                )}
+
+                {wfDialog === 'withdraw' && (
+                  <div style={{ background: '#fef2f2', borderRadius: 10, padding: '16px', border: '1px solid #fca5a5' }}>
+                    <h4 style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: '#dc2626' }}>Withdraw Application</h4>
+                    <textarea value={withdrawReason} onChange={e => setWithdrawReason(e.target.value)} placeholder="Reason for withdrawal (required)" rows={3} style={{ width: '100%', border: '1px solid #fca5a5', borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none', marginBottom: 10, resize: 'vertical', boxSizing: 'border-box' }} />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button disabled={wfActionLoading || !withdrawReason.trim()}
+                        onClick={() => doWfAction(() => workflowApi.withdraw(Number(id), withdrawReason), 'Application withdrawn.')}
+                        style={{ padding: '8px 16px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: wfActionLoading ? 'not-allowed' : 'pointer', opacity: wfActionLoading ? 0.7 : 1 }}>
+                        {wfActionLoading ? 'Withdrawing…' : 'Confirm Withdrawal'}
+                      </button>
+                      <button onClick={() => { setWfDialog(null); setWithdrawReason(''); }} style={{ padding: '8px 14px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#374151' }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Remarks / status notes */}
           {app.remarks && (

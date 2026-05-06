@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { applicationApi, scholarshipApi, documentApi, type ApplicationResponse, type AuditEntryResponse, type ScholarshipResponse, type DocumentResponse } from '@/lib/api-client';
+import { applicationApi, scholarshipApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type ScholarshipResponse, type DocumentResponse, type WorkflowResponse } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
+import { MAIN_STAGES, STAGE_LABEL, SUB_STATUS_LABEL, stageIndex, isTerminal, formatInterviewDt } from '@/lib/workflow';
 
 const TEAL       = COLORS.maroon;
 const TEAL_DARK  = COLORS.maroonD;
@@ -73,7 +74,16 @@ export default function ApplicantProfilePage() {
   const [scholarship, setScholarship] = useState<ScholarshipResponse | null>(null);
   const [loading,     setLoading]     = useState(true);
 
-  const [activeTab,            setActiveTab]            = useState<'overview' | 'documents' | 'evaluation' | 'history'>('overview');
+  const [activeTab,            setActiveTab]            = useState<'workflow' | 'overview' | 'documents' | 'evaluation' | 'history'>('workflow');
+  const [workflow,             setWorkflow]             = useState<WorkflowResponse | null>(null);
+  const [actionLoading,        setActionLoading]        = useState(false);
+  const [activeDialog,         setActiveDialog]         = useState<string | null>(null);
+  const [scheduleForm,         setScheduleForm]         = useState({ datetime: '', location: '', note: '' });
+  const [evalForm,             setEvalForm]             = useState({ score: '', notes: '' });
+  const [decideForm,           setDecideForm]           = useState({ decision: 'approved', remarks: '' });
+  const [revisionNote,         setRevisionNote]         = useState('');
+  const [failNote,             setFailNote]             = useState('');
+  const [withdrawReason,       setWithdrawReason]       = useState('');
   const [showApproveDialog,    setShowApproveDialog]    = useState(false);
   const [showRejectDialog,     setShowRejectDialog]     = useState(false);
   const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
@@ -123,30 +133,47 @@ export default function ApplicantProfilePage() {
     } catch { /* ignore */ }
   }, [id]);
 
+  const refreshWorkflow = useCallback(async () => {
+    try { setWorkflow(await workflowApi.get(Number(id))); } catch { /* silent */ }
+  }, [id]);
+
+  async function doWorkflowAction(fn: () => Promise<WorkflowResponse>, msg: string) {
+    setActionLoading(true);
+    try {
+      setWorkflow(await fn());
+      addToast('success', msg);
+      setActiveDialog(null);
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   useEffect(() => {
     const numId = Number(id);
-    applicationApi.get(numId)
-      .then(async (a) => {
-        setApp(a);
-        // Restore saved rubric scores if they exist
-        if (a.eval_score) {
-          setRubric({
-            financialNeed: a.eval_score.financial_need ?? 3,
-            essay:         a.eval_score.essay          ?? 3,
-            interview:     a.eval_score.interview       ?? 3,
-            community:     a.eval_score.community       ?? 3,
-          });
-          setRubricSaved(true);
-        }
-        const [aud, sch] = await Promise.all([
-          applicationApi.getAudit(numId),
-          scholarshipApi.get(a.scholarship_id),
-        ]);
-        setAudit(aud);
-        setScholarship(sch);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      applicationApi.get(numId),
+      workflowApi.get(numId).catch(() => null),
+    ]).then(async ([a, wf]) => {
+      setApp(a);
+      if (wf) setWorkflow(wf);
+      if (a.eval_score) {
+        setRubric({
+          financialNeed: a.eval_score.financial_need ?? 3,
+          essay:         a.eval_score.essay          ?? 3,
+          interview:     a.eval_score.interview       ?? 3,
+          community:     a.eval_score.community       ?? 3,
+        });
+        setRubricSaved(true);
+      }
+      const [aud, sch] = await Promise.all([
+        applicationApi.getAudit(numId),
+        scholarshipApi.get(a.scholarship_id),
+      ]);
+      setAudit(aud);
+      setScholarship(sch);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
   async function handleApprove() {
@@ -284,6 +311,7 @@ export default function ApplicantProfilePage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid #f3f4f6', marginBottom: 22 }}>
         {([
+          ['workflow',   'Workflow'],
           ['overview',   'Overview'],
           ['documents',  `Documents${flaggedRequirements.length > 0 ? ` (${flaggedRequirements.length} flagged)` : ''}`],
           ['evaluation', 'Evaluation'],
@@ -294,6 +322,288 @@ export default function ApplicantProfilePage() {
           </button>
         ))}
       </div>
+
+      {/* ── Workflow tab ── */}
+      {activeTab === 'workflow' && (() => {
+        const wf = workflow;
+        const inp: React.CSSProperties = { width: '100%', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' };
+        const btn = (color: string, bg: string): React.CSSProperties => ({ padding: '9px 18px', border: 'none', borderRadius: 8, background: bg, color, fontSize: 13, fontWeight: 600, cursor: actionLoading ? 'not-allowed' : 'pointer', opacity: actionLoading ? 0.7 : 1 });
+
+        if (!wf) return (
+          <div style={{ textAlign: 'center', padding: '48px 24px', color: '#9ca3af' }}>
+            <p style={{ marginBottom: 16, fontSize: 14 }}>No workflow data yet.</p>
+            <button onClick={() => doWorkflowAction(() => workflowApi.initialize(Number(id)), 'Workflow initialized.')} style={btn('#fff', TEAL)}>
+              Initialize Workflow
+            </button>
+          </div>
+        );
+
+        const ms = wf.main_status ?? '';
+        const ss = wf.sub_status  ?? '';
+        const idx = stageIndex(ms);
+        const terminal = isTerminal(ms);
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* Stage progress bar */}
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
+                {MAIN_STAGES.map((stage, i) => {
+                  const done   = !terminal && i < idx;
+                  const active = i === idx && !terminal;
+                  const failed = terminal && i === idx;
+                  const color  = done ? '#059669' : active ? TEAL : failed ? '#dc2626' : '#9ca3af';
+                  return (
+                    <div key={stage} style={{ display: 'flex', alignItems: 'center', flex: i < MAIN_STAGES.length - 1 ? 1 : 0 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: done ? '#059669' : active ? '#fff' : failed ? '#fef2f2' : '#f3f4f6', border: `2px solid ${color}`, boxShadow: active ? `0 0 0 4px ${TEAL}20` : 'none' }}>
+                          {done   ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                          : failed ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          : active ? <div style={{ width: 11, height: 11, borderRadius: '50%', background: TEAL }} />
+                          : <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#d1d5db' }} />}
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color, textAlign: 'center', maxWidth: 60 }}>{STAGE_LABEL[stage]}</span>
+                      </div>
+                      {i < MAIN_STAGES.length - 1 && <div style={{ flex: 1, height: 2, background: done ? '#059669' : '#e5e7eb', margin: '0 6px', marginBottom: 22 }} />}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Sub-status */}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 20, background: terminal ? '#fef2f2' : '#f0fdf4', border: `1px solid ${terminal ? '#fca5a5' : '#86efac'}` }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: terminal ? '#dc2626' : TEAL }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: terminal ? '#dc2626' : '#15803d' }}>
+                  {SUB_STATUS_LABEL[ss] ?? ss}
+                </span>
+              </div>
+
+              {/* Initialize button for null workflow */}
+              {!ms && (
+                <div style={{ marginTop: 16 }}>
+                  <button onClick={() => doWorkflowAction(() => workflowApi.initialize(Number(id)), 'Workflow initialized.')} style={btn('#fff', TEAL)}>
+                    Initialize Workflow
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Interview card */}
+            {ms === 'interview' && wf.interview_datetime && (
+              <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${TEAL}30`, padding: '20px 24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>Interview Scheduled</h3>
+                </div>
+                <div style={{ fontSize: 14, color: '#374151', marginBottom: 6 }}>
+                  <strong>Date & Time:</strong> {formatInterviewDt(wf.interview_datetime)}
+                </div>
+                {wf.interview_location && (
+                  <div style={{ fontSize: 14, color: '#374151' }}>
+                    <strong>Location:</strong> {wf.interview_location}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Decision banner */}
+            {ms === 'decision' && (
+              <div style={{ background: ss === 'approved' ? '#f0fdf4' : ss === 'rejected' ? '#fef2f2' : '#fffbeb', border: `1.5px solid ${ss === 'approved' ? '#86efac' : ss === 'rejected' ? '#fca5a5' : '#fde68a'}`, borderRadius: 14, padding: '18px 24px' }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: ss === 'approved' ? '#15803d' : ss === 'rejected' ? '#dc2626' : '#92400e', marginBottom: wf.decision_remarks ? 8 : 0 }}>
+                  {ss === 'approved' ? '✓ Application Approved' : ss === 'rejected' ? '✗ Application Rejected' : ss === 'waitlisted' ? '⏳ Waitlisted' : '⏳ Under Review'}
+                </div>
+                {wf.decision_remarks && <div style={{ fontSize: 13, color: '#374151' }}>{wf.decision_remarks}</div>}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            {!terminal && ms && (() => {
+              const actions: React.ReactNode[] = [];
+
+              if (ms === 'application') {
+                if (ss === 'submitted')
+                  actions.push(<button key="screen" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.screen(Number(id)), 'Screening started.')}>Start Screening</button>);
+                if (ss === 'screening')
+                  actions.push(
+                    <button key="pass" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.screeningResult(Number(id), true), 'Screening passed.')}>Pass Screening</button>,
+                    <button key="fail" style={btn('#fff', '#dc2626')} onClick={() => setActiveDialog('fail_screening')}>Fail Screening</button>,
+                  );
+                if (ss === 'screening_passed')
+                  actions.push(<button key="verify" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.startVerification(Number(id)), 'Verification started.')}>Start Verification</button>);
+              }
+
+              if (ms === 'verification') {
+                if (ss === 'pending_validation')
+                  actions.push(
+                    <button key="validated" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.verificationResult(Number(id), true), 'Documents validated.')}>Validated ✓</button>,
+                    <button key="revision" style={btn('#fff', '#d97706')} onClick={() => setActiveDialog('revision')}>Request Revision</button>,
+                    <button key="fail_val" style={btn('#fff', '#dc2626')} onClick={() => doWorkflowAction(() => workflowApi.verificationResult(Number(id), false), 'Validation failed.')}>Fail Validation</button>,
+                  );
+                if (ss === 'revision_requested')
+                  actions.push(<button key="resubmit" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.startVerification(Number(id)), 'Marked as resubmitted.')}>Mark as Resubmitted</button>);
+                if (ss === 'validated')
+                  actions.push(<button key="open_sched" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.openScheduling(Number(id)), 'Interview scheduling opened.')}>Open Interview Scheduling</button>);
+              }
+
+              if (ms === 'interview') {
+                if (ss === 'not_scheduled' || ss === 'rescheduled')
+                  actions.push(<button key="sched" style={btn('#fff', TEAL)} onClick={() => setActiveDialog('schedule')}>Schedule Interview</button>);
+                if (ss === 'scheduled')
+                  actions.push(
+                    <button key="complete" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.completeInterview(Number(id)), 'Interview completed.')}>Complete Interview</button>,
+                    <button key="reschedule" style={btn('#374151', '#f3f4f6')} onClick={() => setActiveDialog('reschedule')}>Reschedule</button>,
+                  );
+                if (ss === 'interview_completed')
+                  actions.push(<button key="evaluate" style={btn('#fff', TEAL)} onClick={() => setActiveDialog('evaluate')}>Submit Evaluation</button>);
+                if (ss === 'evaluated')
+                  actions.push(<button key="review" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.moveToReview(Number(id)), 'Moved to review.')}>Move to Review</button>);
+              }
+
+              if (ms === 'decision' && (ss === 'under_review' || ss === 'waitlisted'))
+                actions.push(<button key="decide" style={btn('#fff', TEAL)} onClick={() => setActiveDialog('decide')}>Make Decision</button>);
+
+              if (ms === 'completion' && ss === 'requirements_submitted')
+                actions.push(<button key="finalize" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.finalize(Number(id)), 'Application finalized.')}>Finalize Application</button>);
+
+              if (!actions.length) return null;
+              return (
+                <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px' }}>
+                  <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Actions</h3>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{actions}</div>
+                </div>
+              );
+            })()}
+
+            {/* Dialogs */}
+            {activeDialog === 'fail_screening' && (
+              <div style={{ background: '#fff', borderRadius: 14, border: '1.5px solid #fca5a5', padding: '20px 24px' }}>
+                <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#111827' }}>Fail Screening</h3>
+                <textarea value={failNote} onChange={e => setFailNote(e.target.value)} placeholder="Reason (optional)" rows={3} style={{ ...inp, marginBottom: 12, resize: 'vertical' }} />
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button style={btn('#fff', '#dc2626')} onClick={() => doWorkflowAction(() => workflowApi.screeningResult(Number(id), false, failNote || undefined), 'Screening failed.')}>Confirm Fail</button>
+                  <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setFailNote(''); }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {activeDialog === 'revision' && (
+              <div style={{ background: '#fff', borderRadius: 14, border: '1.5px solid #fde68a', padding: '20px 24px' }}>
+                <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#111827' }}>Request Revision</h3>
+                <textarea value={revisionNote} onChange={e => setRevisionNote(e.target.value)} placeholder="What needs to be revised? (required)" rows={3} style={{ ...inp, marginBottom: 12, resize: 'vertical' }} />
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button style={btn('#fff', '#d97706')} onClick={() => { if (!revisionNote.trim()) return; doWorkflowAction(() => workflowApi.requestRevision(Number(id), revisionNote), 'Revision requested.'); }}>Send Request</button>
+                  <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setRevisionNote(''); }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {(activeDialog === 'schedule' || activeDialog === 'reschedule') && (
+              <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${TEAL}40`, padding: '20px 24px' }}>
+                <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: '#111827' }}>{activeDialog === 'reschedule' ? 'Reschedule' : 'Schedule'} Interview</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Date & Time</label>
+                    <input type="datetime-local" value={scheduleForm.datetime} onChange={e => setScheduleForm(f => ({ ...f, datetime: e.target.value }))} style={inp} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Location</label>
+                    <input type="text" value={scheduleForm.location} onChange={e => setScheduleForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Room 301, Admin Building" style={inp} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Note (optional)</label>
+                    <input type="text" value={scheduleForm.note} onChange={e => setScheduleForm(f => ({ ...f, note: e.target.value }))} placeholder="Any additional notes" style={inp} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button style={btn('#fff', TEAL)} onClick={() => {
+                    if (!scheduleForm.datetime || !scheduleForm.location) return;
+                    const data = { interview_datetime: new Date(scheduleForm.datetime).toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) };
+                    const fn = activeDialog === 'reschedule' ? workflowApi.rescheduleInterview : workflowApi.scheduleInterview;
+                    doWorkflowAction(() => fn(Number(id), data), `Interview ${activeDialog === 'reschedule' ? 'rescheduled' : 'scheduled'}.`);
+                  }}>Confirm</button>
+                  <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setScheduleForm({ datetime: '', location: '', note: '' }); }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {activeDialog === 'evaluate' && (
+              <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${TEAL}40`, padding: '20px 24px' }}>
+                <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: '#111827' }}>Submit Evaluation</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Score (1–10)</label>
+                    <input type="number" min="1" max="10" value={evalForm.score} onChange={e => setEvalForm(f => ({ ...f, score: e.target.value }))} style={{ ...inp, width: 100 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Evaluation Notes</label>
+                    <textarea value={evalForm.notes} onChange={e => setEvalForm(f => ({ ...f, notes: e.target.value }))} placeholder="Interviewer observations..." rows={4} style={{ ...inp, resize: 'vertical' }} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.evaluate(Number(id), { ...(evalForm.score ? { score: Number(evalForm.score) } : {}), ...(evalForm.notes ? { notes: evalForm.notes } : {}) }), 'Evaluation submitted.')}>Submit</button>
+                  <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setEvalForm({ score: '', notes: '' }); }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {activeDialog === 'decide' && (
+              <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${TEAL}40`, padding: '20px 24px' }}>
+                <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: '#111827' }}>Make Decision</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Decision</label>
+                    <select value={decideForm.decision} onChange={e => setDecideForm(f => ({ ...f, decision: e.target.value }))} style={inp}>
+                      <option value="approved">Approve</option>
+                      <option value="rejected">Reject</option>
+                      <option value="waitlisted">Waitlist</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Remarks {decideForm.decision === 'rejected' ? '(required)' : '(optional)'}</label>
+                    <textarea value={decideForm.remarks} onChange={e => setDecideForm(f => ({ ...f, remarks: e.target.value }))} placeholder="Add remarks..." rows={3} style={{ ...inp, resize: 'vertical' }} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button style={btn('#fff', decideForm.decision === 'approved' ? '#059669' : decideForm.decision === 'rejected' ? '#dc2626' : '#d97706')}
+                    onClick={() => { if (decideForm.decision === 'rejected' && !decideForm.remarks.trim()) { addToast('error', 'Remarks are required for rejection.'); return; } doWorkflowAction(() => workflowApi.decide(Number(id), decideForm.decision, decideForm.remarks || undefined), `Decision: ${decideForm.decision}.`); }}>
+                    Confirm {decideForm.decision.charAt(0).toUpperCase() + decideForm.decision.slice(1)}
+                  </button>
+                  <button style={btn('#374151', '#f3f4f6')} onClick={() => setActiveDialog(null)}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {/* Audit trail */}
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px' }}>
+              <h3 style={{ margin: '0 0 18px', fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Workflow Audit Trail</h3>
+              {(!wf.logs || wf.logs.length === 0) ? (
+                <p style={{ color: '#9ca3af', fontSize: 13 }}>No audit entries yet.</p>
+              ) : (
+                <div style={{ position: 'relative', paddingLeft: 24 }}>
+                  <div style={{ position: 'absolute', left: 7, top: 0, bottom: 0, width: 2, background: '#f3f4f6', borderRadius: 99 }} />
+                  {[...wf.logs].reverse().map((log, i) => (
+                    <div key={log.id} style={{ position: 'relative', marginBottom: i < wf.logs.length - 1 ? 20 : 0 }}>
+                      <div style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: i === 0 ? TEAL : '#d1d5db', border: `2px solid ${i === 0 ? TEAL : '#e5e7eb'}` }} />
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+                        {log.from_main ? `${STAGE_LABEL[log.from_main] ?? log.from_main} → ` : ''}{STAGE_LABEL[log.to_main] ?? log.to_main}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6b7280', marginTop: 1 }}>
+                        {SUB_STATUS_LABEL[log.to_sub] ?? log.to_sub}
+                      </div>
+                      {log.note && <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic', marginTop: 2 }}>{log.note}</div>}
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{new Date(log.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        );
+      })()}
 
       {/* Overview tab */}
       {activeTab === 'overview' && (

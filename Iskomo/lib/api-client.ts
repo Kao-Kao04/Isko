@@ -500,3 +500,98 @@ export const reportsApi = {
 export const dashboardApi = {
   stats: () => apiFetch<DashboardStats>('/api/dashboard/stats'),
 };
+
+// ─── Workflow Types ────────────────────────────────────────────────────────────
+
+export interface WorkflowLog {
+  id: number;
+  from_main: string | null;
+  from_sub:  string | null;
+  to_main:   string;
+  to_sub:    string;
+  note:       string | null;
+  changed_by: number;
+  created_at: string;
+}
+
+export interface WorkflowResponse {
+  application_id:          number;
+  main_status:             string | null;
+  sub_status:              string | null;
+  submitted_at:            string | null;
+  screened_at:             string | null;
+  validated_at:            string | null;
+  interview_scheduled_at:  string | null;
+  interview_datetime:      string | null;
+  interview_location:      string | null;
+  interview_completed_at:  string | null;
+  evaluated_at:            string | null;
+  decision_released_at:    string | null;
+  completion_submitted_at: string | null;
+  closed_at:               string | null;
+  decision_remarks:        string | null;
+  logs:                    WorkflowLog[];
+}
+
+// ─── Workflow API ──────────────────────────────────────────────────────────────
+
+export const workflowApi = {
+  get:  (id: number) => apiFetch<WorkflowResponse>(`/api/workflow/${id}`),
+  logs: (id: number) => apiFetch<WorkflowLog[]>(`/api/workflow/${id}/logs`),
+
+  // OSFA-only actions
+  initialize:        (id: number) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/initialize`, { method: 'POST' }),
+  screen:            (id: number) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/screen`, { method: 'POST' }),
+  screeningResult:   (id: number, passed: boolean, note?: string) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/screening-result`, {
+      method: 'POST', body: JSON.stringify({ passed, ...(note ? { note } : {}) }),
+    }),
+  startVerification: (id: number) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/start-verification`, { method: 'POST' }),
+  requestRevision:   (id: number, note: string) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/request-revision`, {
+      method: 'POST', body: JSON.stringify({ note }),
+    }),
+  verificationResult: (id: number, passed: boolean) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/verification-result`, {
+      method: 'POST', body: JSON.stringify({ passed }),
+    }),
+  openScheduling: (id: number) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/open-scheduling`, { method: 'POST' }),
+  completeInterview: (id: number) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/complete-interview`, { method: 'POST' }),
+  evaluate: (id: number, data: { score?: number; notes?: string }) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/evaluate`, {
+      method: 'POST', body: JSON.stringify(data),
+    }),
+  moveToReview: (id: number) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/move-to-review`, { method: 'POST' }),
+  decide: (id: number, decision: string, remarks?: string) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/decide`, {
+      method: 'POST', body: JSON.stringify({ decision, ...(remarks ? { remarks } : {}) }),
+    }),
+  finalize: (id: number) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/finalize`, { method: 'POST' }),
+
+  // Available to both OSFA and student
+  scheduleInterview: (id: number, data: { interview_datetime: string; location: string; note?: string }) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/schedule-interview`, {
+      method: 'POST', body: JSON.stringify(data),
+    }),
+  rescheduleInterview: (id: number, data: { interview_datetime: string; location: string; note?: string }) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/reschedule-interview`, {
+      method: 'POST', body: JSON.stringify(data),
+    }),
+  withdraw: (id: number, reason: string) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/withdraw`, {
+      method: 'POST', body: JSON.stringify({ reason }),
+    }),
+
+  // Student-only
+  submitRequirements: (id: number, requirements: Array<{ requirement_type: string; file_url: string }>) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/submit-requirements`, {
+      method: 'POST', body: JSON.stringify({ requirements }),
+    }),
+};
