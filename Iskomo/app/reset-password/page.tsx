@@ -1,27 +1,38 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
-const API  = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const API  = 'https://web-production-c85b3c.up.railway.app';
 
-function ResetPasswordInner() {
-  const router       = useRouter();
-  const searchParams = useSearchParams();
-  const token        = searchParams.get('token') ?? '';
+export default function ResetPasswordPage() {
+  const router = useRouter();
 
-  const [password,   setPassword]   = useState('');
-  const [confirm,    setConfirm]    = useState('');
-  const [showPass,   setShowPass]   = useState(false);
-  const [loading,    setLoading]    = useState(false);
-  const [error,      setError]      = useState('');
-  const [done,       setDone]       = useState(false);
+  const [accessToken, setAccessToken] = useState('');
+  const [password,    setPassword]    = useState('');
+  const [confirm,     setConfirm]     = useState('');
+  const [showPass,    setShowPass]    = useState(false);
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState('');
+  const [done,        setDone]        = useState(false);
+  const [ready,       setReady]       = useState(false);
 
   useEffect(() => {
-    if (!token) router.replace('/login?error=invalid_token');
-  }, [token, router]);
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const token  = params.get('access_token') ?? '';
+    const type   = params.get('type');
+
+    if (!token || type !== 'recovery') {
+      router.replace('/login?error=invalid_token');
+      return;
+    }
+
+    setAccessToken(token);
+    window.history.replaceState(null, '', window.location.pathname);
+    setReady(true);
+  }, [router]);
 
   useEffect(() => {
     if (!done) return;
@@ -36,14 +47,14 @@ function ResetPasswordInner() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/auth/reset-password`, {
+      const res = await fetch(`${API}/api/auth/reset-password-token`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ token, new_password: password }),
+        body:    JSON.stringify({ access_token: accessToken, new_password: password }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Reset failed. The link may have expired.');
+        throw new Error(data.message || 'Reset link has expired or is invalid. Please request a new one.');
       }
       setDone(true);
     } catch (err: unknown) {
@@ -58,6 +69,15 @@ function ResetPasswordInner() {
     padding: '10px 14px', fontSize: 14, color: '#111827',
     background: '#fff', boxSizing: 'border-box', outline: 'none',
   };
+
+  if (!ready && !done) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #fff5f5 0%, #fffbf0 50%, #fef2f2 100%)' }}>
+        <div style={{ width: 32, height: 32, border: `3px solid ${TEAL}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #fff5f5 0%, #fffbf0 50%, #fef2f2 100%)', padding: 24 }}>
@@ -131,8 +151,4 @@ function ResetPasswordInner() {
       </div>
     </div>
   );
-}
-
-export default function ResetPasswordPage() {
-  return <Suspense><ResetPasswordInner /></Suspense>;
 }
