@@ -11,6 +11,17 @@ const PRINT_CSS = `
 @media print {
   .no-print { display: none !important; }
   body { background: #fff !important; }
+  .privacy-header {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    padding-bottom: 24px !important;
+  }
+  .privacy-body {
+    margin-top: 0 !important;
+    padding-top: 16px !important;
+    display: block !important;
+  }
+  .privacy-body > * { margin-bottom: 16px; }
 }
 `;
 
@@ -52,7 +63,7 @@ export default function PrivacyPage() {
       <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
 
         {/* ── Header ── */}
-        <div style={{ background: `linear-gradient(135deg, #5C0000, ${MAROON})`, padding: '64px 24px 80px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div className="privacy-header" style={{ background: `linear-gradient(135deg, #5C0000, ${MAROON})`, padding: '64px 24px 80px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', border: '1px solid rgba(201,160,39,0.15)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -40, left: -40, width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.07)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
@@ -78,7 +89,7 @@ export default function PrivacyPage() {
         </div>
 
         {/* ── Body ── */}
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px 80px', display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+        <div className="privacy-body" style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px 80px', display: 'flex', gap: 32, alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
 
           {/* ── Sidebar ── */}
           <aside className="no-print" style={{ width: 240, flexShrink: 0, position: 'sticky', top: 24 }}>
