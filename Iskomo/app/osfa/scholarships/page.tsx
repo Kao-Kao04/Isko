@@ -216,6 +216,7 @@ export default function Page() {
   }
 
   async function duplicateScholarship(s: ScholarshipResponse) {
+    setOpenMenuId(null);
     try {
       const copy = await scholarshipApi.duplicate(s.id);
       setScholarships(prev => [copy, ...prev]);
@@ -223,7 +224,6 @@ export default function Page() {
     } catch {
       addToast('error', 'Failed to duplicate scholarship.');
     }
-    setOpenMenuId(null);
   }
 
   async function publishScholarship(id: number) {
@@ -423,14 +423,17 @@ export default function Page() {
             const amount = s.amount_raw ? `₱${s.amount_raw.toLocaleString()}` : '—';
 
             return (
-              <div key={s.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', opacity: isArchived ? 0.72 : 1 }}>
+              // overflow must be visible so the absolute dropdown isn't clipped
+              <div key={s.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', opacity: isArchived ? 0.72 : 1 }}>
 
-                {/* Cover image or colored accent bar */}
+                {/* Cover image — own overflow:hidden so border-radius clips correctly */}
                 {s.cover_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.cover_image_url} alt={s.name} style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }} />
+                  <div style={{ borderRadius: '14px 14px 0 0', overflow: 'hidden' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.cover_image_url} alt={s.name} style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }} />
+                  </div>
                 ) : (
-                  <div style={{ height: 5, background: s.status === 'active' ? `linear-gradient(90deg, ${TEAL}, ${TEAL_DARK})` : s.status === 'draft' ? '#94a3b8' : s.status === 'closed' ? '#f97316' : '#d1d5db' }} />
+                  <div style={{ height: 5, borderRadius: '14px 14px 0 0', background: s.status === 'active' ? `linear-gradient(90deg, ${TEAL}, ${TEAL_DARK})` : s.status === 'draft' ? '#94a3b8' : s.status === 'closed' ? '#f97316' : '#d1d5db' }} />
                 )}
 
                 <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -452,26 +455,37 @@ export default function Page() {
                       )}
                     </div>
                     <div style={{ position: 'relative' }}>
-                      <button onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)} style={{ padding: '4px 7px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 7, cursor: 'pointer', color: '#6b7280', display: 'flex', alignItems: 'center' }}>
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)}
+                        style={{ padding: '4px 7px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 7, cursor: 'pointer', color: '#6b7280', display: 'flex', alignItems: 'center' }}
+                      >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
                       </button>
                       {openMenuId === s.id && (
-                        <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 180, overflow: 'hidden' }}>
-                          {[
-                            { label: 'Edit',                color: '#374151', show: !isArchived,           action: () => openEdit(s) },
-                            { label: 'Duplicate',           color: '#374151', show: true,                  action: () => duplicateScholarship(s) },
-                            { label: 'Publish',             color: TEAL,      show: s.status === 'draft',  action: () => { setConfirmPublish(s); setOpenMenuId(null); } },
-                            { label: 'Reopen Applications', color: '#2563eb', show: s.status === 'closed', action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
-                            { label: 'Close Applications',  color: '#ea580c', show: s.status === 'active', action: () => { setConfirmClose(s); setOpenMenuId(null); } },
-                            { label: 'Archive',             color: '#dc2626', show: !isArchived,           action: () => { setConfirmArchive(s); setArchiveConfirmText(''); setOpenMenuId(null); } },
-                            { label: 'Delete',              color: '#dc2626', show: true,                  action: () => { setConfirmDelete(s); setOpenMenuId(null); } },
-                          ].filter(item => item.show).map(item => (
-                            <button key={item.label} onClick={item.action} style={{ width: '100%', padding: '10px 16px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, fontWeight: 500, color: item.color, cursor: 'pointer', display: 'block' }}
-                              onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
-                              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                            >{item.label}</button>
-                          ))}
-                        </div>
+                        <>
+                          {/* Invisible backdrop — catches clicks outside the menu */}
+                          <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setOpenMenuId(null)} />
+                          <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 180, overflow: 'hidden' }}>
+                            {[
+                              { label: 'Edit',                color: '#374151', show: !isArchived,           action: () => openEdit(s) },
+                              { label: 'Duplicate',           color: '#374151', show: true,                  action: () => duplicateScholarship(s) },
+                              { label: 'Publish',             color: TEAL,      show: s.status === 'draft',  action: () => { setConfirmPublish(s); setOpenMenuId(null); } },
+                              { label: 'Reopen Applications', color: '#2563eb', show: s.status === 'closed', action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
+                              { label: 'Close Applications',  color: '#ea580c', show: s.status === 'active', action: () => { setConfirmClose(s); setOpenMenuId(null); } },
+                              { label: 'Archive',             color: '#dc2626', show: !isArchived,           action: () => { setConfirmArchive(s); setArchiveConfirmText(''); setOpenMenuId(null); } },
+                              { label: 'Delete',              color: '#dc2626', show: true,                  action: () => { setConfirmDelete(s); setOpenMenuId(null); } },
+                            ].filter(item => item.show).map(item => (
+                              // onMouseDown fires before the trigger button's blur, so the menu
+                              // is still mounted when the action runs.
+                              <button key={item.label}
+                                onMouseDown={e => { e.preventDefault(); item.action(); }}
+                                style={{ width: '100%', padding: '10px 16px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, fontWeight: 500, color: item.color, cursor: 'pointer', display: 'block' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                              >{item.label}</button>
+                            ))}
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
