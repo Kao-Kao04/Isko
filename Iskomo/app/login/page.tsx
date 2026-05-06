@@ -25,6 +25,7 @@ function LoginPageInner() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const [emailVerifiedBanner, setEmailVerifiedBanner] = useState(false);
+  const [linkExpiredBanner,   setLinkExpiredBanner]   = useState(false);
   const [showForgot,    setShowForgot]    = useState(false);
   const [forgotEmail,   setForgotEmail]   = useState('');
   const [forgotSending, setForgotSending] = useState(false);
@@ -52,6 +53,7 @@ function LoginPageInner() {
 
   useEffect(() => {
     if (searchParams.get('verified') === 'true') setEmailVerifiedBanner(true);
+    if (searchParams.get('error') === 'link_expired') setLinkExpiredBanner(true);
   }, [searchParams]);
   const [isSignup, setIsSignup] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -120,6 +122,12 @@ function LoginPageInner() {
         <div style={{ width: '100%', maxWidth: 820, marginBottom: 14, padding: '12px 20px', background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>Email verified! You can now log in.</span>
+        </div>
+      )}
+      {linkExpiredBanner && (
+        <div style={{ width: '100%', maxWidth: 820, marginBottom: 14, padding: '12px 20px', background: '#fef2f2', border: '1.5px solid #fca5a5', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>Reset link has expired. Please request a new one below.</span>
         </div>
       )}
       {/* Card */}
