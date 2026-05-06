@@ -40,6 +40,10 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
       res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include' });
+    } else {
+      clearAccessToken();
+      if (typeof window !== 'undefined') window.location.href = '/login';
+      throw new Error('Session expired. Please log in again.');
     }
   }
 

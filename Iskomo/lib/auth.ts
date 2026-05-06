@@ -50,12 +50,12 @@ export async function signup(email: string, password: string): Promise<{ dev: bo
   return { dev: isDev };
 }
 
-export async function login(email: string, password: string): Promise<User> {
+export async function login(email: string, password: string, rememberMe = false): Promise<User> {
   const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, remember_me: rememberMe }),
   });
 
   if (!res.ok) {

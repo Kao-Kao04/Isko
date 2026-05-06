@@ -92,6 +92,7 @@ function LoginPageInner() {
     if (searchParams.get('verified') === 'true') setEmailVerifiedBanner(true);
     if (searchParams.get('error') === 'link_expired') setLinkExpiredBanner(true);
   }, [searchParams]);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
@@ -111,7 +112,7 @@ function LoginPageInner() {
     setError('');
     setLoading(true);
     try {
-      const user = await login(email, password);
+      const user = await login(email, password, rememberMe);
       if (user.role === 'super_admin')    { router.push('/admin/staff');    return; }
       if (user.role === 'osfa_staff')     { router.push('/osfa/dashboard'); return; }
       // Students: route based on verification / registration status
@@ -280,7 +281,7 @@ function LoginPageInner() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151', fontWeight: 500 }}>
-                    <input type="checkbox" defaultChecked={false} style={{ accentColor: TEAL }} /> Remember me
+                    <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} style={{ accentColor: TEAL }} /> Remember me
                   </label>
                   <button type="button" onClick={() => { setShowForgot(true); setForgotSent(false); setForgotEmail(''); setForgotError(''); }}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEAL, fontWeight: 600, padding: 0, fontSize: 13 }}>
