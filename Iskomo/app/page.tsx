@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import LandingNavbar from '@/components/shared/LandingNavbar';
 import { COLORS } from '@/lib/theme';
 
@@ -158,6 +159,16 @@ const TEAM = [
    PAGE
 ═══════════════════════════════════════════════════════════════ */
 export default function Home() {
+  const router = useRouter();
+
+  /* Intercept Supabase password-recovery hash and route to /reset-password */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    if (params.get('type') === 'recovery' && params.get('access_token')) {
+      router.replace('/reset-password' + window.location.hash);
+    }
+  }, [router]);
+
   /* Hero parallax on scroll */
   const [scrollY, setScrollY] = useState(0);
   const onScroll = useCallback(() => setScrollY(window.scrollY), []);
