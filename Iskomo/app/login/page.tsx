@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { login, signup } from '@/lib/auth';
 import { COLORS } from '@/lib/theme';
 
@@ -31,6 +31,26 @@ function LoginPageInner() {
   const [forgotSending, setForgotSending] = useState(false);
   const [forgotSent,    setForgotSent]    = useState(false);
   const [forgotError,   setForgotError]   = useState('');
+  const [forgotCooldown, setForgotCooldown] = useState(0);
+  const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => () => { if (cooldownTimer.current) clearInterval(cooldownTimer.current); }, []);
+
+  const startCooldown = (secs: number) => {
+    setForgotCooldown(secs);
+    if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+    cooldownTimer.current = setInterval(() => {
+      setForgotCooldown(c => {
+        if (c <= 1) {
+          clearInterval(cooldownTimer.current!);
+          cooldownTimer.current = null;
+          setForgotError('');
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,11 +58,28 @@ function LoginPageInner() {
     setForgotSending(true);
     try {
       const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
-      await fetch(`${base}/api/auth/forgot-password`, {
+      const res = await fetch(`${base}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail }),
       });
+      if (res.status === 429) {
+        setForgotError('Too many requests. Please try again later.');
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const msg: string = data.message ?? '';
+        const match = msg.match(/(\d+)\s*second/i);
+        if (match) {
+          const secs = parseInt(match[1], 10);
+          setForgotError(`Too many attempts. Please wait ${secs}s before trying again.`);
+          startCooldown(secs);
+        } else {
+          setForgotError(msg || 'Something went wrong. Please try again.');
+        }
+        return;
+      }
       setForgotSent(true);
     } catch {
       setForgotError('Something went wrong. Please try again.');
@@ -374,14 +411,16 @@ function LoginPageInner() {
         email={forgotEmail} setEmail={setForgotEmail}
         onSubmit={handleForgotPassword} sending={forgotSending}
         sent={forgotSent} error={forgotError} teal={TEAL}
+        cooldown={forgotCooldown}
       />
     </div>
   );
 }
 
-function ForgotPasswordModal({ show, onClose, email, setEmail, onSubmit, sending, sent, error, teal }: {
+function ForgotPasswordModal({ show, onClose, email, setEmail, onSubmit, sending, sent, error, teal, cooldown }: {
   show: boolean; onClose: () => void; email: string; setEmail: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void; sending: boolean; sent: boolean; error: string; teal: string;
+  cooldown: number;
 }) {
   if (!show) return null;
   return (
@@ -417,9 +456,9 @@ function ForgotPasswordModal({ show, onClose, email, setEmail, onSubmit, sending
                   style={{ flex: 1, padding: '10px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>
                   Cancel
                 </button>
-                <button type="submit" disabled={sending}
-                  style={{ flex: 1, padding: '10px', background: sending ? '#9ca3af' : teal, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', color: '#fff' }}>
-                  {sending ? 'Sending…' : 'Send Link'}
+                <button type="submit" disabled={sending || cooldown > 0}
+                  style={{ flex: 1, padding: '10px', background: (sending || cooldown > 0) ? '#9ca3af' : teal, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, cursor: (sending || cooldown > 0) ? 'not-allowed' : 'pointer', color: '#fff' }}>
+                  {cooldown > 0 ? `Please wait ${cooldown}s…` : sending ? 'Sending…' : 'Send Link'}
                 </button>
               </div>
             </form>
