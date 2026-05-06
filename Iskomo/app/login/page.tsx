@@ -130,6 +130,9 @@ function LoginPageInner() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError('');
+    if (signupPassword.length < 8)              { setSignupError('Password must be at least 8 characters.'); return; }
+    if (!/[A-Z]/.test(signupPassword))          { setSignupError('Password must contain at least one uppercase letter.'); return; }
+    if (!/[^a-zA-Z0-9]/.test(signupPassword))  { setSignupError('Password must contain at least one special character.'); return; }
     setSignupLoading(true);
     try {
       const result = await signup(signupEmail, signupPassword);
@@ -259,7 +262,7 @@ function LoginPageInner() {
                       placeholder="Enter your password"
                       autoComplete="current-password"
                       value={password}
-                      onChange={e => setPassword(e.target.value)}
+                      onChange={e => setPassword(e.target.value.replace(/\s/g, ''))}
                       required
                     />
                     <button type="button" onClick={() => setShowPass(!showPass)}
@@ -368,13 +371,54 @@ function LoginPageInner() {
                           placeholder="Min. 8 characters"
                           minLength={8} autoComplete="new-password"
                           value={signupPassword}
-                          onChange={e => setSignupPassword(e.target.value)} required
+                          onChange={e => setSignupPassword(e.target.value.replace(/\s/g, ''))} required
                         />
                         <button type="button" onClick={() => setShowPass2(!showPass2)}
                           style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#6b7280' }}>
                           {showPass2 ? 'Hide' : 'Show'}
                         </button>
                       </div>
+
+                      {/* ── Password strength ── */}
+                      {signupPassword.length > 0 && (() => {
+                        const hasLen     = signupPassword.length >= 8;
+                        const hasUpper   = /[A-Z]/.test(signupPassword);
+                        const hasSpecial = /[^a-zA-Z0-9]/.test(signupPassword);
+                        const score      = [hasLen, hasUpper, hasSpecial].filter(Boolean).length;
+                        const strength   = score <= 1
+                          ? { label: 'Weak',   color: '#ef4444' }
+                          : score === 2
+                          ? { label: 'Fair',   color: '#f59e0b' }
+                          : { label: 'Strong', color: '#16a34a' };
+                        return (
+                          <div style={{ marginTop: 10 }}>
+                            {/* Bar */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                              {[1, 2, 3].map(i => (
+                                <div key={i} style={{ flex: 1, height: 4, borderRadius: 4, background: score >= i ? strength.color : '#e5e7eb', transition: 'background 0.2s' }} />
+                              ))}
+                              <span style={{ fontSize: 11, fontWeight: 700, color: strength.color, minWidth: 38, textAlign: 'right' }}>{strength.label}</span>
+                            </div>
+                            {/* Requirements */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              {[
+                                { met: hasLen,     label: 'At least 8 characters' },
+                                { met: hasUpper,   label: 'One uppercase letter (A–Z)' },
+                                { met: hasSpecial, label: 'One special character (!@#$…)' },
+                              ].map(({ met, label }) => (
+                                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: met ? '#16a34a' : '#9ca3af' }}>
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                    {met
+                                      ? <polyline points="20 6 9 17 4 12"/>
+                                      : <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>}
+                                  </svg>
+                                  {label}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {signupError && (
