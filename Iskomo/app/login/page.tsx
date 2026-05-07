@@ -91,6 +91,22 @@ function LoginPageInner() {
   useEffect(() => {
     if (searchParams.get('verified') === 'true') setEmailVerifiedBanner(true);
     if (searchParams.get('error') === 'link_expired') setLinkExpiredBanner(true);
+
+    // Handle Supabase implicit flow — access_token in hash with type=signup
+    const hash = window.location.hash;
+    if (hash.includes('access_token') && hash.includes('type=signup')) {
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        window.history.replaceState(null, '', window.location.pathname);
+        apiFetch('/api/auth/confirm-email-token', {
+          method: 'POST',
+          body: JSON.stringify({ access_token: accessToken }),
+        })
+          .then(() => setEmailVerifiedBanner(true))
+          .catch(() => setError('Verification link has expired. Please sign up again.'));
+      }
+    }
   }, [searchParams]);
   const [rememberMe, setRememberMe] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
