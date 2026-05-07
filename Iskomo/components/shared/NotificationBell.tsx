@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { getAccessToken } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
+
+const WS_BASE = 'wss://web-production-c85b3c.up.railway.app/ws/notifications';
 
 const MAROON = COLORS.maroon;
 
@@ -32,8 +35,10 @@ export default function NotificationBell() {
   const router = useRouter();
   const { user } = useCurrentUser();
   const roleBase = (user?.role === 'osfa_staff' || user?.role === 'super_admin') ? '/osfa' : '/student';
-  const [notifs, setNotifs]   = useState<NotificationResponse[]>([]);
-  const [open, setOpen]       = useState(false);
+  const [notifs,   setNotifs]   = useState<NotificationResponse[]>([]);
+  const [open,     setOpen]     = useState(false);
+  const [wsAlert,  setWsAlert]  = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   const fetchNotifs = useCallback(async () => {
     try {
@@ -47,6 +52,43 @@ export default function NotificationBell() {
     const interval = setInterval(fetchNotifs, 30000);
     return () => clearInterval(interval);
   }, [fetchNotifs]);
+
+  // WebSocket for real-time notifications
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    let dead = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function connect() {
+      const ws = new WebSocket(`${WS_BASE}?token=${token}`);
+      wsRef.current = ws;
+
+      ws.onmessage = (e) => {
+        try {
+          const notif = JSON.parse(e.data) as NotificationResponse;
+          setNotifs(prev => [notif, ...prev.filter(n => n.id !== notif.id)]);
+          setWsAlert(notif.title);
+          setTimeout(() => setWsAlert(null), 4000);
+        } catch { /* ignore malformed frames */ }
+      };
+
+      ws.onclose = () => {
+        if (!dead) retryTimer = setTimeout(connect, 5000);
+      };
+
+      ws.onerror = () => ws.close();
+    }
+
+    connect();
+
+    return () => {
+      dead = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      wsRef.current?.close();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const unread = notifs.filter(n => !n.is_read).length;
 
@@ -87,6 +129,13 @@ export default function NotificationBell() {
           </span>
         )}
       </button>
+
+      {/* Real-time alert pill */}
+      {wsAlert && !open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, background: MAROON, color: '#fff', fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8, whiteSpace: 'nowrap', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 999, pointerEvents: 'none' }}>
+          🔔 {wsAlert}
+        </div>
+      )}
 
       {open && (
         <>

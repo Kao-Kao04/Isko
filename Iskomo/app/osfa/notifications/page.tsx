@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
@@ -80,6 +81,8 @@ function mapNotif(n: NotificationResponse): DisplayNotif {
 }
 
 export default function Page() {
+  const { user } = useCurrentUser();
+  const isSuperAdmin = user?.role === 'super_admin';
   const [notifications, setNotifications] = useState<DisplayNotif[]>([]);
   const [loading, setLoading]             = useState(true);
   const [activeFilter, setActiveFilter]   = useState<NotifFilter>('All');
@@ -182,10 +185,12 @@ export default function Page() {
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Stay updated on application activity and system events</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => setShowBroadcast(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: `linear-gradient(135deg, ${TEAL}, #5C0000)`, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3h20a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3zm-8 4H10"/></svg>
-            Send Announcement
-          </button>
+          {isSuperAdmin && (
+            <button onClick={() => setShowBroadcast(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: `linear-gradient(135deg, ${TEAL}, #5C0000)`, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3h20a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3zm-8 4H10"/></svg>
+              Send Announcement
+            </button>
+          )}
           {unreadCount > 0 && (
             <button onClick={markAllAsRead} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', background: '#fff', border: '1px solid #e5e7eb', color: '#374151', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>

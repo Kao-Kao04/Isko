@@ -46,7 +46,7 @@ export default function Page() {
   const fetchData = useCallback(async () => {
     const [statsRes, appsRes, scholRes, notifsRes] = await Promise.allSettled([
       dashboardApi.stats(),
-      applicationApi.list(1, 100),
+      applicationApi.list(1, 50),
       scholarshipApi.list(1, 100),
       notificationApi.list(1, 10),
     ]);

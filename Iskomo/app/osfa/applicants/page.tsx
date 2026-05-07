@@ -82,16 +82,16 @@ function ApplicantsContent() {
       setLoading(true);
       if (search) {
         // Backend search — single fetch, server handles filtering
-        const result = await applicationApi.list(1, 200, undefined, search);
+        const result = await applicationApi.list(1, 50, undefined, search);
         setApplications(result.items ?? []);
       } else {
-        // No search — batch-fetch all (up to 500)
-        const first = await applicationApi.list(1, 100);
+        // No search — batch-fetch up to 250 (5 pages × 50)
+        const first = await applicationApi.list(1, 50);
         const items = [...(first.items ?? [])];
-        if (first.total > 100) {
-          const pages = Math.min(Math.ceil(first.total / 100), 5);
+        if (first.total > 50) {
+          const pages = Math.min(Math.ceil(first.total / 50), 5);
           const rest = await Promise.all(
-            Array.from({ length: pages - 1 }, (_, i) => applicationApi.list(i + 2, 100))
+            Array.from({ length: pages - 1 }, (_, i) => applicationApi.list(i + 2, 50))
           );
           rest.forEach(r => items.push(...(r.items ?? [])));
         }

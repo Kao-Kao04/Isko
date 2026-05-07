@@ -26,7 +26,7 @@ export default function ApplicationsPage() {
 
   const fetchApplications = useCallback(async () => {
     try {
-      const res = await applicationApi.list(1, 100);
+      const res = await applicationApi.list(1, 50);
       setApplications(res.items);
     } catch {
       // silent fail

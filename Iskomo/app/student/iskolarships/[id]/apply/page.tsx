@@ -41,7 +41,7 @@ export default function ApplyPage() {
   useEffect(() => {
     Promise.all([
       scholarshipApi.get(Number(id)),
-      applicationApi.list(1, 100),
+      applicationApi.list(1, 50),
     ]).then(([sch, apps]) => {
       setScholarship(sch);
       setAlreadyApplied(apps.items.some(a => a.scholarship_id === Number(id)));

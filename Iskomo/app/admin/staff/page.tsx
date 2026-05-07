@@ -64,7 +64,7 @@ export default function StaffPage() {
     try {
       const [staffData, appsRes, scholRes] = await Promise.allSettled([
         adminApi.listStaff(),
-        applicationApi.list(1, 200),
+        applicationApi.list(1, 50),
         scholarshipApi.list(1, 200),
       ]);
       if (staffData.status === 'fulfilled') setStaff(staffData.value);
