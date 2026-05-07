@@ -6,6 +6,7 @@ import { COLORS } from '@/lib/theme';
 import EmptyState from '@/components/ui/EmptyState';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { applicationApi, type ApplicationResponse } from '@/lib/api-client';
+import { SUB_STATUS_LABEL } from '@/lib/workflow';
 
 const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   pending:    { bg: '#fef3c7', color: '#92400e' },
@@ -138,9 +139,9 @@ export default function ApplicationsPage() {
                         <h3 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#111827' }}>{scholarshipName}</h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 10px', borderRadius: 20, background: badge.bg, color: badge.color, fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>
-                            {app.status}
+                            {app.sub_status ? (SUB_STATUS_LABEL[app.sub_status] ?? app.status) : app.status}
                           </span>
-                          {app.eval_status === 'in_review' && app.status === 'pending' && (
+                          {app.eval_status === 'in_review' && app.status === 'pending' && !app.sub_status && (
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 9px', borderRadius: 20, background: '#eff6ff', color: '#0369a1', fontSize: 11, fontWeight: 700, border: '1px solid #bfdbfe' }}>
                               Evaluating
                             </span>

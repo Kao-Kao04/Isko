@@ -1,5 +1,25 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
+const ERROR_MAP: Array<[string, string]> = [
+  ['Not eligible: college restriction',           'Your college is not eligible for this scholarship'],
+  ['Not eligible: program restriction',           'Your program is not eligible for this scholarship'],
+  ['Not eligible: year level restriction',        'Your year level is not eligible for this scholarship'],
+  ['Not eligible: GWA does not meet minimum',     'Your GWA does not meet the minimum requirement'],
+  ['This scholarship has no available slots',     'This scholarship is already full'],
+  ['The application deadline has passed',         'The application deadline has already passed'],
+  ['Already applied to this scholarship',         'You have already applied to this scholarship'],
+  ['Application is already in a terminal state',  'No further actions available for this application'],
+  ['Cannot transition scholarship status',        'This status change is not allowed'],
+  ['At least one completion requirement',         'Please add at least one requirement'],
+];
+
+function mapError(msg: string): string {
+  for (const [prefix, friendly] of ERROR_MAP) {
+    if (msg.startsWith(prefix) || msg.includes(prefix)) return friendly;
+  }
+  return msg;
+}
+
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('access_token');
@@ -49,8 +69,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    const msg = (typeof error.detail === 'string' ? error.detail : error.detail?.message) || error.message;
-    throw new Error(msg || 'Request failed');
+    const raw = (typeof error.detail === 'string' ? error.detail : error.detail?.message) || error.message;
+    throw new Error(mapError(raw || 'Request failed'));
   }
 
   if (res.status === 204) return undefined as T;

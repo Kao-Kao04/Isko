@@ -341,7 +341,7 @@ export default function ApplicantProfilePage() {
         const ms = wf.main_status ?? '';
         const ss = wf.sub_status  ?? '';
         const idx = stageIndex(ms);
-        const terminal = isTerminal(ms);
+        const terminal = isTerminal(ms, ss);
 
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

@@ -62,7 +62,9 @@ export default function ApplicationDetailPage() {
   const [wfActionLoading, setWfActionLoading] = useState(false);
   const [wfDialog, setWfDialog] = useState<string | null>(null);
   const [scheduleForm, setScheduleForm] = useState({ datetime: '', location: '', note: '' });
-  const [withdrawReason, setWithdrawReason] = useState('');
+  const [withdrawReason,   setWithdrawReason]   = useState('');
+  const [rescheduleReason, setRescheduleReason] = useState('');
+  const [completionReqs,   setCompletionReqs]   = useState<Array<{ type: string; url: string }>>([{ type: '', url: '' }]);
   const [wfError, setWfError] = useState('');
 
   const [appealText,       setAppealText]       = useState('');
@@ -127,8 +129,12 @@ export default function ApplicationDetailPage() {
     try {
       const updated = await applicationApi.resubmit(Number(id));
       setApp(updated);
-      const aud = await applicationApi.getAudit(Number(id)).catch(() => audit);
+      const [aud, wf] = await Promise.all([
+        applicationApi.getAudit(Number(id)).catch(() => audit),
+        workflowApi.get(Number(id)).catch(() => null),
+      ]);
       setAudit(aud);
+      if (wf) setWorkflow(wf);
     } catch (err: unknown) {
       setResubmitError(err instanceof Error ? err.message : 'Failed to resubmit. Please try again.');
     } finally {
@@ -296,21 +302,24 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Workflow student actions */}
-          {workflow && !isTerminal(workflow.main_status ?? '') && (() => {
+          {workflow && !isTerminal(workflow.main_status ?? '', workflow.sub_status ?? '') && (() => {
             const ms = workflow.main_status ?? '';
             const ss = workflow.sub_status  ?? '';
             const inp: React.CSSProperties = { width: '100%', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' };
-            const showSchedule = ms === 'interview' && (ss === 'not_scheduled' || ss === 'rescheduled');
-            const showWithdraw = !['rejected', 'withdrawn', 'completed'].includes(ms);
-            if (!showSchedule && !showWithdraw && !(ms === 'completion' && ss === 'pending_requirements')) return null;
+            const showSchedule   = ms === 'interview' && ss === 'not_scheduled';
+            const showReschedule = ms === 'interview' && (ss === 'scheduled' || ss === 'rescheduled');
+            const showSubmitReqs = ms === 'completion' && ss === 'pending_requirements';
+            const showWithdraw   = !isTerminal(ms, ss) && ms !== 'completion';
+            if (!showSchedule && !showReschedule && !showWithdraw && !showSubmitReqs) return null;
             return (
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</h3>
                 {wfError && <div style={{ marginBottom: 12, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, fontSize: 13, color: '#dc2626' }}>{wfError}</div>}
 
+                {/* Schedule Interview (only when not yet scheduled) */}
                 {showSchedule && wfDialog !== 'schedule' && (
                   <button onClick={() => setWfDialog('schedule')} style={{ padding: '9px 18px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 10, display: 'block' }}>
-                    {ss === 'rescheduled' ? 'Set New Schedule' : 'Schedule Interview'}
+                    Schedule Interview
                   </button>
                 )}
 
@@ -338,6 +347,68 @@ export default function ApplicationDetailPage() {
                         {wfActionLoading ? 'Submitting…' : 'Submit'}
                       </button>
                       <button onClick={() => { setWfDialog(null); setScheduleForm({ datetime: '', location: '', note: '' }); }} style={{ padding: '8px 14px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#374151' }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Request Reschedule (when already scheduled or rescheduled) */}
+                {showReschedule && wfDialog !== 'reschedule' && (
+                  <button onClick={() => setWfDialog('reschedule')} style={{ padding: '9px 18px', background: '#fff', color: COLORS.maroon, border: `1px solid ${COLORS.maroon}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 10, display: 'block' }}>
+                    Request Reschedule
+                  </button>
+                )}
+
+                {wfDialog === 'reschedule' && (
+                  <div style={{ background: '#f8fafc', borderRadius: 10, padding: '16px', marginBottom: 12, border: `1px solid ${COLORS.maroon}30` }}>
+                    <h4 style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: '#111827' }}>Request Reschedule</h4>
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Reason for rescheduling (required)</label>
+                      <textarea value={rescheduleReason} onChange={e => setRescheduleReason(e.target.value)} placeholder="e.g. I have a class conflict on that day..." rows={3} style={{ ...inp, resize: 'vertical' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button disabled={wfActionLoading || !rescheduleReason.trim()}
+                        onClick={() => doWfAction(() => workflowApi.requestReschedule(Number(id), rescheduleReason), 'Reschedule request submitted.')}
+                        style={{ padding: '8px 16px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: wfActionLoading || !rescheduleReason.trim() ? 'not-allowed' : 'pointer', opacity: wfActionLoading || !rescheduleReason.trim() ? 0.7 : 1 }}>
+                        {wfActionLoading ? 'Submitting…' : 'Submit Request'}
+                      </button>
+                      <button onClick={() => { setWfDialog(null); setRescheduleReason(''); }} style={{ padding: '8px 14px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#374151' }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Submit Completion Requirements */}
+                {showSubmitReqs && wfDialog !== 'requirements' && (
+                  <button onClick={() => { setWfDialog('requirements'); setCompletionReqs([{ type: '', url: '' }]); }} style={{ padding: '9px 18px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 10, display: 'block' }}>
+                    Submit Completion Requirements
+                  </button>
+                )}
+
+                {wfDialog === 'requirements' && (
+                  <div style={{ background: '#f8fafc', borderRadius: 10, padding: '16px', marginBottom: 12, border: `1px solid ${COLORS.maroon}30` }}>
+                    <h4 style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#111827' }}>Completion Requirements</h4>
+                    <p style={{ margin: '0 0 12px', fontSize: 12, color: '#6b7280' }}>Add at least one requirement. Provide the requirement type and an optional file URL.</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                      {completionReqs.map((req, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <input type="text" value={req.type} onChange={e => setCompletionReqs(prev => prev.map((r, j) => j === i ? { ...r, type: e.target.value } : r))} placeholder="Requirement type (e.g. Transcript of Records)" style={{ ...inp, flex: 2 }} />
+                          <input type="url" value={req.url} onChange={e => setCompletionReqs(prev => prev.map((r, j) => j === i ? { ...r, url: e.target.value } : r))} placeholder="File URL (optional)" style={{ ...inp, flex: 1 }} />
+                          {completionReqs.length > 1 && (
+                            <button onClick={() => setCompletionReqs(prev => prev.filter((_, j) => j !== i))} style={{ padding: '6px 10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 7, cursor: 'pointer', color: '#dc2626', fontSize: 12, flexShrink: 0 }}>✕</button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => setCompletionReqs(prev => [...prev, { type: '', url: '' }])} style={{ fontSize: 12, color: COLORS.maroon, background: 'none', border: `1px dashed ${COLORS.maroon}`, borderRadius: 7, padding: '5px 12px', cursor: 'pointer', marginBottom: 12 }}>
+                      + Add Requirement
+                    </button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        disabled={wfActionLoading || completionReqs.every(r => !r.type.trim())}
+                        onClick={() => doWfAction(() => workflowApi.submitRequirements(Number(id), completionReqs.filter(r => r.type.trim()).map(r => ({ requirement_type: r.type.trim(), ...(r.url.trim() ? { file_url: r.url.trim() } : {}) }))), 'Requirements submitted.')}
+                        style={{ padding: '8px 16px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: wfActionLoading ? 'not-allowed' : 'pointer', opacity: wfActionLoading ? 0.7 : 1 }}>
+                        {wfActionLoading ? 'Submitting…' : 'Submit'}
+                      </button>
+                      <button onClick={() => setWfDialog(null)} style={{ padding: '8px 14px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', color: '#374151' }}>Cancel</button>
                     </div>
                   </div>
                 )}

@@ -43,8 +43,11 @@ export function stageIndex(mainStatus: string): number {
   return MAIN_STAGES.indexOf(mainStatus as MainStage);
 }
 
-export function isTerminal(mainStatus: string): boolean {
-  return mainStatus === 'rejected' || mainStatus === 'withdrawn';
+export function isTerminal(mainStatus: string, subStatus = ''): boolean {
+  if (mainStatus === 'rejected' || mainStatus === 'withdrawn') return true;
+  if (mainStatus === 'completion' && subStatus === 'completed') return true;
+  if (mainStatus === 'decision' && subStatus === 'rejected') return true;
+  return false;
 }
 
 export function formatInterviewDt(dt: string): string {

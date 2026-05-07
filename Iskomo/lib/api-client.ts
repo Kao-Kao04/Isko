@@ -102,6 +102,8 @@ export interface ApplicationResponse {
   student_id: number;
   scholarship_id: number;
   status: ApplicationStatus;
+  main_status: string | null;
+  sub_status:  string | null;
   eval_status: EvalStatus;
   rejected_docs: number[] | null;
   eval_score: EvalScore | null;
@@ -589,8 +591,14 @@ export const workflowApi = {
       method: 'POST', body: JSON.stringify({ reason }),
     }),
 
+  // Student reschedule — only sends reason; OSFA sets the new datetime
+  requestReschedule: (id: number, reason: string) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/reschedule-interview`, {
+      method: 'POST', body: JSON.stringify({ reason }),
+    }),
+
   // Student-only
-  submitRequirements: (id: number, requirements: Array<{ requirement_type: string; file_url: string }>) =>
+  submitRequirements: (id: number, requirements: Array<{ requirement_type: string; file_url?: string }>) =>
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/submit-requirements`, {
       method: 'POST', body: JSON.stringify({ requirements }),
     }),
