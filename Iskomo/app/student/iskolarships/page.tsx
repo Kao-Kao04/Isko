@@ -5,7 +5,7 @@ import { COLORS } from '@/lib/theme';
 import ScholarshipCard from '@/components/scholarship/ScholarshipCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { scholarshipApi } from '@/lib/api-client';
+import { scholarshipApi, applicationApi } from '@/lib/api-client';
 import { mapScholarship } from '@/lib/adapters';
 import type { Scholarship } from '@/lib/osfa-data';
 
@@ -66,8 +66,9 @@ export default function IskolarshipsPage() {
   const userYearLevel = user?.student_profile?.year_level ?? null;
   const userGwa      = user?.student_profile?.gwa        ?? null;
 
-  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
-  const [loading, setLoading]           = useState(true);
+  const [scholarships,  setScholarships]  = useState<Scholarship[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [appliedIds,    setAppliedIds]    = useState<Set<number>>(new Set());
   const [search,        setSearch]        = useState('');
   const [filterType,    setFilterType]    = useState('all');
   const [filterCollege, setFilterCollege] = useState('all');
@@ -76,8 +77,12 @@ export default function IskolarshipsPage() {
 
   const fetchScholarships = useCallback(async () => {
     try {
-      const res = await scholarshipApi.list(1, 100);
-      setScholarships(res.items.map(mapScholarship));
+      const [schRes, appRes] = await Promise.all([
+        scholarshipApi.list(1, 100),
+        applicationApi.list(1, 50).catch(() => ({ items: [] })),
+      ]);
+      setScholarships(schRes.items.map(mapScholarship));
+      setAppliedIds(new Set(appRes.items.map((a: { scholarship_id: number }) => a.scholarship_id)));
     } catch {
       // silent fail
     } finally {
@@ -104,10 +109,15 @@ export default function IskolarshipsPage() {
   }
 
   const active = scholarships.filter(s => s.status === 'Active');
-  const withEligibility = active.map(s => ({
-    s,
-    ...checkEligibility(s, userCollege, userProgram, userYearLevel, userGwa),
-  }));
+  const withEligibility = active.map(s => {
+    const slotsFull    = s.slots > 0 && s.applicants >= s.slots;
+    const deadlinePast = s.daysLeft === 0;
+    const alreadyAppl  = appliedIds.has(Number(s.id));
+    if (slotsFull)    return { s, eligible: false, reason: 'Slots full' };
+    if (deadlinePast) return { s, eligible: false, reason: 'Application closed' };
+    if (alreadyAppl)  return { s, eligible: false, reason: 'Already applied' };
+    return { s, ...checkEligibility(s, userCollege, userProgram, userYearLevel, userGwa) };
+  });
   const filtered = withEligibility.filter(({ s, eligible }) => {
     const matchSearch   = s.title.toLowerCase().includes(search.toLowerCase());
     const matchType     = filterType === 'all' || s.type === filterType;

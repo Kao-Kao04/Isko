@@ -110,6 +110,7 @@ export default function Page() {
   const [confirmClose, setConfirmClose]               = useState<ScholarshipResponse | null>(null);
   const [confirmPublish, setConfirmPublish]           = useState<ScholarshipResponse | null>(null);
   const [confirmDelete, setConfirmDelete]             = useState<ScholarshipResponse | null>(null);
+  const [deleteError,   setDeleteError]               = useState('');
   const [archiveConfirmText, setArchiveConfirmText]   = useState('');
 
   const fetchScholarships = useCallback(async () => {
@@ -261,14 +262,15 @@ export default function Page() {
   }
 
   async function deleteScholarship(id: number) {
+    setDeleteError('');
     try {
       await scholarshipApi.delete(id);
       setScholarships(prev => prev.filter(s => s.id !== id));
+      setConfirmDelete(null);
       addToast('error', 'Scholarship permanently deleted.');
-    } catch {
-      addToast('error', 'Failed to delete scholarship.');
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete scholarship.');
     }
-    setConfirmDelete(null);
   }
 
   function setField(key: keyof typeof EMPTY_FORM, value: string | string[]) {
@@ -472,7 +474,7 @@ export default function Page() {
                               { label: 'Publish',             color: TEAL,      show: s.status === 'draft',  action: () => { setOpenMenuId(null); setTimeout(() => setConfirmPublish(s), 50); } },
                               { label: 'Reopen Applications', color: '#2563eb', show: s.status === 'closed', action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
                               { label: 'Close Applications',  color: '#ea580c', show: s.status === 'active', action: () => { setOpenMenuId(null); setTimeout(() => setConfirmClose(s), 50); } },
-                              { label: 'Archive',             color: '#dc2626', show: !isArchived,           action: () => { setOpenMenuId(null); setTimeout(() => { setConfirmArchive(s); setArchiveConfirmText(''); }, 50); } },
+                              { label: 'Archive',             color: '#dc2626', show: s.status === 'draft' || s.status === 'closed', action: () => { setOpenMenuId(null); setTimeout(() => { setConfirmArchive(s); setArchiveConfirmText(''); }, 50); } },
                               { label: 'Delete',              color: '#dc2626', show: true,                  action: () => { setOpenMenuId(null); setTimeout(() => setConfirmDelete(s), 50); } },
                             ].filter(item => item.show).map(item => (
                               // onMouseDown fires before the trigger button's blur, so the menu
@@ -822,14 +824,19 @@ export default function Page() {
 
       {/* Delete confirmation */}
       {confirmDelete && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setConfirmDelete(null)}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => { setConfirmDelete(null); setDeleteError(''); }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
             <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Delete Scholarship</h2>
-            <p style={{ margin: '0 0 22px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
+            <p style={{ margin: '0 0 16px', fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
               <strong>{confirmDelete.name}</strong> will be permanently deleted. This cannot be undone.
             </p>
+            {deleteError && (
+              <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626', fontWeight: 500 }}>
+                {deleteError}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
+              <button onClick={() => { setConfirmDelete(null); setDeleteError(''); }} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
               <button onClick={() => deleteScholarship(confirmDelete.id)} style={{ flex: 1, padding: 10, background: '#dc2626', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff' }}>Delete Permanently</button>
             </div>
           </div>

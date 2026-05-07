@@ -396,8 +396,8 @@ export default function ApplicationDetailPage() {
             )}
           </div>
 
-          {/* Resubmit section — shown when OSFA marks application as Incomplete */}
-          {app.status === 'incomplete' && (() => {
+          {/* Resubmit section — shown when OSFA marks application as Incomplete or requests document revision */}
+          {(app.status === 'incomplete' || workflow?.sub_status === 'revision_requested') && (() => {
             const scholarship = app.scholarship;
             const requirements = (scholarship as unknown as { requirements?: { id: number; name: string; is_required: boolean }[] })?.requirements ?? [];
             return (
@@ -481,7 +481,7 @@ export default function ApplicationDetailPage() {
           })()}
 
           {/* Appeal section */}
-          {app.status === 'rejected' && (
+          {(app.status === 'rejected' || (workflow?.main_status === 'decision' && workflow?.sub_status === 'rejected')) && (
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 700, color: '#111827' }}>File an Appeal</h3>
               <p style={{ margin: '0 0 14px', fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>

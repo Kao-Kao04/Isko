@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/admin') && role !== 'super_admin') {
     return NextResponse.redirect(new URL('/login', request.url));
   }
-  if (pathname.startsWith('/osfa') && role !== 'osfa_staff') {
+  if (pathname.startsWith('/osfa') && role !== 'osfa_staff' && role !== 'super_admin') {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   if (pathname.startsWith('/student') && role !== 'student') {

@@ -266,9 +266,9 @@ export default function Page() {
             <div style={{ padding: '14px 18px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 8 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#111827' }}>Notifications</h3>
-              {notifications.filter(n => !n.read).length > 0 && (
+              {notifications.filter(n => !n.is_read).length > 0 && (
                 <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, background: TEAL, color: '#fff', padding: '2px 7px', borderRadius: 99 }}>
-                  {notifications.filter(n => !n.read).length} new
+                  {notifications.filter(n => !n.is_read).length} new
                 </span>
               )}
             </div>
@@ -287,19 +287,19 @@ export default function Page() {
                   resubmit:   { color: '#7c3aed', bg: '#f5f3ff', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> },
                   info:       { color: '#2563eb', bg: '#eff6ff', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg> },
                 };
-                const c = cfg[n.type] ?? cfg.info;
+                const c = cfg[n.application_id ? 'info' : 'info'] ?? cfg.info;
                 return (
-                  <Link key={n.id} href="/student/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px', borderBottom: idx < Math.min(notifications.length, 5) - 1 ? '1px solid #f3f4f6' : 'none', background: n.read ? '#fff' : '#fafffe', transition: 'background 0.12s' }}
+                  <Link key={n.id} href="/student/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px', borderBottom: idx < Math.min(notifications.length, 5) - 1 ? '1px solid #f3f4f6' : 'none', background: n.is_read ? '#fff' : '#fafffe', transition: 'background 0.12s' }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = n.read ? '#fff' : '#fafffe'}>
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = n.is_read ? '#fff' : '#fafffe'}>
                     <div style={{ width: 30, height: 30, borderRadius: 8, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                       {c.icon}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: '0 0 3px', fontSize: 12, color: '#111827', lineHeight: 1.5, fontWeight: n.read ? 400 : 600 }}>{n.message}</p>
+                      <p style={{ margin: '0 0 3px', fontSize: 12, color: '#111827', lineHeight: 1.5, fontWeight: n.is_read ? 400 : 600 }}>{n.title}</p>
                       <span style={{ fontSize: 11, color: '#9ca3af' }}>{timeAgo(n.created_at)}</span>
                     </div>
-                    {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: TEAL, flexShrink: 0, marginTop: 6 }} />}
+                    {!n.is_read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: TEAL, flexShrink: 0, marginTop: 6 }} />}
                   </Link>
                 );
               })}

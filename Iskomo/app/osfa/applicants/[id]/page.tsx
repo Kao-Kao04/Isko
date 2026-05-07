@@ -239,7 +239,7 @@ export default function ApplicantProfilePage() {
   const student    = app.student;
   const name       = student ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() : `Student #${app.student_id}`;
   const initials   = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const isTerminal = ['approved', 'rejected'].includes(app.status);
+  const appFinalized = ['approved', 'rejected'].includes(app.status);
 
   const rejectedDocIds  = app.rejected_docs ?? [];
   const requirements    = scholarship?.requirements ?? [];
@@ -272,7 +272,7 @@ export default function ApplicantProfilePage() {
             <div style={{ fontSize: 13, color: '#6b7280' }}>{student?.email ?? '—'}</div>
           </div>
           <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignSelf: 'center', flexWrap: 'wrap' }}>
-            {!isTerminal && (
+            {!appFinalized && (
               <>
                 <button onClick={() => setShowIncompleteDialog(true)} style={{ padding: '9px 14px', background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                   Mark Incomplete
@@ -285,7 +285,7 @@ export default function ApplicantProfilePage() {
                 </button>
               </>
             )}
-            {isTerminal && (
+            {appFinalized && (
               <div style={{ padding: '9px 18px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, color: '#9ca3af' }}>
                 {statusLabel[app.status as AppStatus]} — no further action required
               </div>
