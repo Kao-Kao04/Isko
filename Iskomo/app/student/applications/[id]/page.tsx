@@ -5,17 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { applicationApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type WorkflowResponse } from '@/lib/api-client';
 import { COLORS } from '@/lib/theme';
-import { MAIN_STAGES, STAGE_LABEL, SUB_STATUS_LABEL, stageIndex, isTerminal, formatInterviewDt } from '@/lib/workflow';
-
-const STEPS = ['Submitted', 'Under Review', 'Interview', 'Doc Validation', 'Decision'];
-
-const STATUS_STEP: Record<string, number> = {
-  pending:    0,
-  incomplete: 0,
-  withdrawn:  0,
-  approved:   4,
-  rejected:   4,
-};
+import { MAIN_STAGES, STAGE_LABEL, STUDENT_SUB_STATUS_LABEL, stageIndex, isTerminal, formatInterviewDt } from '@/lib/workflow';
 
 const STATUS_BADGE: Record<string, { bg: string; color: string; label: string }> = {
   pending:    { bg: '#fef3c7', color: '#92400e', label: 'Pending' },
@@ -167,7 +157,6 @@ export default function ApplicationDetailPage() {
   const scholarshipName = app.scholarship?.name ?? `Scholarship #${app.scholarship_id}`;
   const studentName     = app.student ? `${app.student.first_name ?? ''} ${app.student.last_name ?? ''}`.trim() : '';
   const badge           = STATUS_BADGE[app.status] ?? STATUS_BADGE.pending;
-  const currentStep     = STATUS_STEP[app.status] ?? 0;
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 16px' }}>
@@ -244,7 +233,7 @@ export default function ApplicationDetailPage() {
                   </div>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 20, background: terminal ? '#fef2f2' : '#fff5f5', border: `1px solid ${terminal ? '#fca5a5' : '#fca5a5'}` }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: terminal ? '#dc2626' : MAROON }} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: terminal ? '#dc2626' : MAROON }}>{SUB_STATUS_LABEL[ss] ?? ss}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: terminal ? '#dc2626' : MAROON }}>{STUDENT_SUB_STATUS_LABEL[ss] ?? ss}</span>
                   </div>
 
                   {/* Interview card */}
@@ -278,25 +267,9 @@ export default function ApplicationDetailPage() {
                 </>
               );
             })() : (
-              // Fallback to old simple stepper when no workflow data
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {['Submitted', 'Under Review', 'Interview', 'Doc Validation', 'Decision'].map((step, i) => {
-                  const cur = { pending: 0, incomplete: 0, withdrawn: 0, approved: 4, rejected: 4 }[app?.status ?? 'pending'] ?? 0;
-                  const s = i < cur ? 'done' : i === cur ? 'active' : 'pending';
-                  return (
-                    <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < 4 ? 1 : 0 }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: s === 'done' ? COLORS.maroon : s === 'active' ? '#fff' : '#f3f4f6', border: `2px solid ${s === 'pending' ? '#e5e7eb' : COLORS.maroon}`, boxShadow: s === 'active' ? `0 0 0 4px ${COLORS.maroon}20` : 'none' }}>
-                          {s === 'done' ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                          : s === 'active' ? <div style={{ width: 11, height: 11, borderRadius: '50%', background: COLORS.maroon }} />
-                          : <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#d1d5db' }} />}
-                        </div>
-                        <span style={{ fontSize: 10, fontWeight: s === 'active' ? 700 : 500, color: s === 'pending' ? '#9ca3af' : s === 'active' ? COLORS.maroon : '#374151', textAlign: 'center', lineHeight: 1.3, maxWidth: 58 }}>{step}</span>
-                      </div>
-                      {i < 4 && <div style={{ flex: 1, height: 2, background: s === 'done' ? COLORS.maroon : '#e5e7eb', margin: '0 4px', marginBottom: 22 }} />}
-                    </div>
-                  );
-                })}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 0', color: '#9ca3af', fontSize: 13 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Workflow not yet initialized by OSFA.
               </div>
             )}
           </div>

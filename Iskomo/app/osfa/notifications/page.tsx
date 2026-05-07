@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
@@ -81,6 +82,7 @@ function mapNotif(n: NotificationResponse): DisplayNotif {
 }
 
 export default function Page() {
+  const router = useRouter();
   const { user } = useCurrentUser();
   const isSuperAdmin = user?.role === 'super_admin';
   const [notifications, setNotifications] = useState<DisplayNotif[]>([]);
@@ -233,7 +235,12 @@ export default function Page() {
                   {items.map(n => {
                     const ts = typeStyle[n.type] ?? typeStyle.info;
                     return (
-                      <div key={n.id} style={{ background: n.isRead ? '#fff' : '#fafffe', borderRadius: 12, border: n.isRead ? '1px solid #e5e7eb' : `1px solid ${TEAL}30`, padding: '16px 20px', display: 'flex', gap: 14, alignItems: 'flex-start', position: 'relative' }}>
+                      <div key={n.id}
+                        onClick={() => { if (n.actionHref) { markAsRead(n.id); router.push(n.actionHref); } else { markAsRead(n.id); } }}
+                        style={{ background: n.isRead ? '#fff' : '#fafffe', borderRadius: 12, border: n.isRead ? '1px solid #e5e7eb' : `1px solid ${TEAL}30`, padding: '16px 20px', display: 'flex', gap: 14, alignItems: 'flex-start', position: 'relative', cursor: n.actionHref ? 'pointer' : 'default', transition: 'background 0.12s' }}
+                        onMouseEnter={e => { if (n.actionHref) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.isRead ? '#fff' : '#fafffe'; }}
+                      >
                         {!n.isRead && <div style={{ position: 'absolute', top: 16, right: 16, width: 8, height: 8, borderRadius: '50%', background: TEAL }} />}
                         <div style={{ width: 38, height: 38, borderRadius: 9, background: ts.bg, color: ts.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ts.icon}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -242,7 +249,7 @@ export default function Page() {
                             <span style={{ fontSize: 11, color: '#9ca3af', whiteSpace: 'nowrap', marginTop: 1, flexShrink: 0 }}>{n.time}</span>
                           </div>
                           <p style={{ margin: '0 0 12px', fontSize: 13, color: '#4b5563', lineHeight: 1.5 }}>{n.message}</p>
-                          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} onClick={e => e.stopPropagation()}>
                             {n.actionLabel && n.actionHref && (
                               <Link href={n.actionHref} onClick={() => markAsRead(n.id)} style={{ fontSize: 12, fontWeight: 700, color: TEAL, textDecoration: 'none', padding: '5px 12px', background: TEAL_LIGHT, borderRadius: 7, border: '1px solid #fca5a5' }}>{n.actionLabel}</Link>
                             )}

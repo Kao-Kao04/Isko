@@ -39,6 +39,30 @@ export const SUB_STATUS_LABEL: Record<string, string> = {
   withdrawn: 'Withdrawn',
 };
 
+export const STUDENT_SUB_STATUS_LABEL: Record<string, string> = {
+  submitted:              'Your application has been submitted',
+  screening:              'Your application is being reviewed',
+  screening_passed:       'Initial review passed — documents being checked',
+  screening_failed:       'Initial review unsuccessful',
+  pending_validation:     'Your documents are being reviewed',
+  revision_requested:     'Document revision needed — please re-upload',
+  validated:              'Documents verified',
+  validation_failed:      'Document verification unsuccessful',
+  not_scheduled:          'Awaiting interview schedule',
+  scheduled:              'Interview scheduled — see details below',
+  rescheduled:            'Interview rescheduled — see new details below',
+  interview_completed:    'Interview completed',
+  evaluated:              'Interview evaluation done',
+  under_review:           'Under final review',
+  approved:               'Congratulations! Your application is approved',
+  rejected:               'Your application was not selected',
+  waitlisted:             'You are on the waitlist',
+  pending_requirements:   'Action required — submit your completion requirements',
+  requirements_submitted: 'Completion requirements received',
+  completed:              'Scholarship completed',
+  withdrawn:              'Application withdrawn',
+};
+
 export function stageIndex(mainStatus: string): number {
   return MAIN_STAGES.indexOf(mainStatus as MainStage);
 }

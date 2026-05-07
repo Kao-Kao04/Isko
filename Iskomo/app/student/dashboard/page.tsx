@@ -7,6 +7,7 @@ import ScholarshipCard from '@/components/scholarship/ScholarshipCard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { applicationApi, scholarshipApi, scholarApi, notificationApi, type ApplicationResponse, type ScholarResponse, type NotificationResponse } from '@/lib/api-client';
 import { mapScholarship } from '@/lib/adapters';
+import { STUDENT_SUB_STATUS_LABEL } from '@/lib/workflow';
 import type { Scholarship } from '@/lib/osfa-data';
 
 const TEAL      = COLORS.maroon;
@@ -198,9 +199,11 @@ export default function Page() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px', border: '1px solid #f3f4f6' }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 6 }}>{latestApp.scholarship?.name ?? `Scholarship #${latestApp.scholarship_id}`}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20, background: STATUS_BADGE[latestApp.status]?.bg ?? '#f3f4f6', color: STATUS_BADGE[latestApp.status]?.color ?? '#374151', textTransform: 'capitalize' }}>
-                        {latestApp.status}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20, background: STATUS_BADGE[latestApp.status]?.bg ?? '#f3f4f6', color: STATUS_BADGE[latestApp.status]?.color ?? '#374151' }}>
+                        {latestApp.sub_status
+                          ? (STUDENT_SUB_STATUS_LABEL[latestApp.sub_status] ?? latestApp.sub_status)
+                          : (latestApp.status.charAt(0).toUpperCase() + latestApp.status.slice(1))}
                       </span>
                       <span style={{ fontSize: 11, color: '#9ca3af' }}>
                         {new Date(latestApp.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -288,8 +291,9 @@ export default function Page() {
                   info:       { color: '#2563eb', bg: '#eff6ff', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg> },
                 };
                 const c = cfg[n.application_id ? 'info' : 'info'] ?? cfg.info;
+                const notifHref = n.route ? `/student${n.route}` : n.application_id ? `/student/applications/${n.application_id}` : '/student/applications';
                 return (
-                  <Link key={n.id} href="/student/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px', borderBottom: idx < Math.min(notifications.length, 5) - 1 ? '1px solid #f3f4f6' : 'none', background: n.is_read ? '#fff' : '#fafffe', transition: 'background 0.12s' }}
+                  <Link key={n.id} href={notifHref} style={{ textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 18px', borderBottom: idx < Math.min(notifications.length, 5) - 1 ? '1px solid #f3f4f6' : 'none', background: n.is_read ? '#fff' : '#fafffe', transition: 'background 0.12s' }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = n.is_read ? '#fff' : '#fafffe'}>
                     <div style={{ width: 30, height: 30, borderRadius: 8, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
