@@ -42,7 +42,7 @@ export async function signup(email: string, password: string): Promise<{ dev: bo
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Registration failed');
+    throw new Error(err.detail?.message || err.message || 'Registration failed');
   }
   const data = await res.json();
   // Backend returns { message: "Dev mode..." } or { message: "Verification email sent..." }
@@ -60,7 +60,7 @@ export async function login(email: string, password: string, rememberMe = false)
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Invalid email or password');
+    throw new Error(err.detail?.message || err.message || 'Invalid email or password');
   }
 
   const { access_token } = await res.json();
