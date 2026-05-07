@@ -7,7 +7,14 @@ import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
 
-const input: React.CSSProperties = {
+const readonlyInput: React.CSSProperties = {
+  width: '100%', border: '1px solid #e5e7eb', borderRadius: 8,
+  padding: '9px 12px', fontSize: 13, color: '#6b7280',
+  background: '#f9fafb', boxSizing: 'border-box', outline: 'none',
+  cursor: 'default',
+};
+
+const editableInput: React.CSSProperties = {
   width: '100%', border: '1px solid #d1d5db', borderRadius: 8,
   padding: '9px 12px', fontSize: 13, color: '#111827',
   background: '#fff', boxSizing: 'border-box', outline: 'none',
@@ -18,34 +25,26 @@ const label: React.CSSProperties = {
   marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em',
 };
 
+function ReadOnlyField({ lbl, value }: { lbl: string; value: string }) {
+  return (
+    <div>
+      <label style={label}>{lbl}</label>
+      <input type="text" style={readonlyInput} value={value} readOnly />
+    </div>
+  );
+}
+
 export default function Page() {
   const { user, loading } = useCurrentUser();
   const [saved, setSaved]   = useState(false);
   const [saving, setSaving] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({
-    first_name:  '',
-    last_name:   '',
-    middle_name: '',
-    college:     '',
-    program:     '',
-    year_level:  '',
-    gwa:         '',
-  });
+  const [gwa, setGwa] = useState('');
 
   useEffect(() => {
     if (user?.student_profile) {
-      const p = user.student_profile;
-      setForm({
-        first_name:  p.first_name ?? '',
-        last_name:   p.last_name ?? '',
-        middle_name: p.middle_name ?? '',
-        college:     p.college ?? '',
-        program:     p.program ?? '',
-        year_level:  String(p.year_level ?? ''),
-        gwa:         p.gwa ?? '',
-      });
+      setGwa(user.student_profile.gwa ?? '');
     }
   }, [user]);
 
@@ -55,15 +54,7 @@ export default function Page() {
     try {
       await apiFetch('/api/users/me', {
         method: 'PUT',
-        body: JSON.stringify({
-          first_name:  form.first_name  || undefined,
-          last_name:   form.last_name   || undefined,
-          middle_name: form.middle_name || undefined,
-          college:     form.college     || undefined,
-          program:     form.program     || undefined,
-          year_level:  form.year_level ? parseInt(form.year_level) : undefined,
-          gwa:         form.gwa         || undefined,
-        }),
+        body: JSON.stringify({ gwa: gwa || undefined }),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -72,9 +63,14 @@ export default function Page() {
     }
   };
 
-  const initials = user?.student_profile
-    ? `${user.student_profile.first_name?.[0] ?? ''}${user.student_profile.last_name?.[0] ?? ''}`.toUpperCase()
+  const p = user?.student_profile;
+  const initials = p
+    ? `${p.first_name?.[0] ?? ''}${p.last_name?.[0] ?? ''}`.toUpperCase()
     : '??';
+  const yearLabel = (y: number | undefined) => {
+    if (!y) return '—';
+    return y === 1 ? '1st Year' : y === 2 ? '2nd Year' : y === 3 ? '3rd Year' : `${y}th Year`;
+  };
 
   if (loading) {
     return (
@@ -101,65 +97,57 @@ export default function Page() {
         </div>
         <div>
           <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#111827' }}>
-            {user?.student_profile ? `${user.student_profile.first_name ?? ''} ${user.student_profile.last_name ?? ''}`.trim() : 'My Profile'}
+            {p ? `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() : 'My Profile'}
           </h2>
           <p style={{ margin: '0 0 4px', fontSize: 13, color: '#6b7280' }}>
-            {user?.student_profile?.program ?? '—'} · {user?.student_profile?.year_level ? `${user.student_profile.year_level}th Year` : '—'}
+            {p?.program ?? '—'} · {yearLabel(p?.year_level)}
           </p>
           <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>{user?.email ?? ''}</p>
         </div>
       </div>
 
-      {/* Profile Form */}
+      {/* Read-only registration info */}
+      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Personal Information</h3>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', background: '#f3f4f6', padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            From Registration
+          </span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
+          <ReadOnlyField lbl="First Name"      value={p?.first_name ?? '—'} />
+          <ReadOnlyField lbl="Last Name"       value={p?.last_name ?? '—'} />
+          <ReadOnlyField lbl="Middle Name"     value={p?.middle_name ?? '—'} />
+          <ReadOnlyField lbl="Student Number"  value={p?.student_number ?? '—'} />
+          <ReadOnlyField lbl="Email Address"   value={user?.email ?? '—'} />
+          <ReadOnlyField lbl="College"         value={p?.college ?? '—'} />
+          <div style={{ gridColumn: '1 / -1' }}>
+            <ReadOnlyField lbl="Program / Course" value={p?.program ?? '—'} />
+          </div>
+          <ReadOnlyField lbl="Year Level"      value={yearLabel(p?.year_level)} />
+        </div>
+      </div>
+
+      {/* Editable GWA only */}
       <form onSubmit={handleSave}>
         <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', marginBottom: 20 }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>Personal Information</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
-            <div>
-              <label style={label}>First Name</label>
-              <input type="text" style={input} value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} />
-            </div>
-            <div>
-              <label style={label}>Last Name</label>
-              <input type="text" style={input} value={form.last_name} onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))} />
-            </div>
-            <div>
-              <label style={label}>Middle Name</label>
-              <input type="text" style={input} value={form.middle_name} onChange={e => setForm(p => ({ ...p, middle_name: e.target.value }))} />
-            </div>
-            <div>
-              <label style={label}>Student Number</label>
-              <input type="text" style={{ ...input, background: '#f9fafb', color: '#6b7280', cursor: 'not-allowed' }} value={user?.student_profile?.student_number ?? '—'} readOnly />
-            </div>
-            <div>
-              <label style={label}>Email Address</label>
-              <input type="email" style={{ ...input, background: '#f9fafb', color: '#6b7280', cursor: 'not-allowed' }} value={user?.email ?? ''} readOnly />
-            </div>
-            <div>
-              <label style={label}>College</label>
-              <input type="text" style={input} value={form.college} onChange={e => setForm(p => ({ ...p, college: e.target.value }))} />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={label}>Program / Course</label>
-              <input type="text" style={input} value={form.program} onChange={e => setForm(p => ({ ...p, program: e.target.value }))} />
-            </div>
-            <div>
-              <label style={label}>Year Level</label>
-              <select style={input} value={form.year_level} onChange={e => setForm(p => ({ ...p, year_level: e.target.value }))}>
-                <option value="">Select year level</option>
-                {['1','2','3','4','5'].map(y => <option key={y} value={y}>{y === '1' ? '1st' : y === '2' ? '2nd' : y === '3' ? '3rd' : `${y}th`} Year</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={label}>GWA</label>
-              <input type="number" step="0.01" min="1.0" max="5.0" style={input} value={form.gwa} onChange={e => setForm(p => ({ ...p, gwa: e.target.value }))} placeholder="e.g., 1.75" />
-            </div>
+          <h3 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>Academic Information</h3>
+          <div style={{ maxWidth: 240 }}>
+            <label style={label}>General Weighted Average (GWA)</label>
+            <input
+              type="number" step="0.01" min="1.0" max="5.0"
+              style={editableInput}
+              value={gwa}
+              onChange={e => setGwa(e.target.value)}
+              placeholder="e.g., 1.75"
+            />
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: '#9ca3af' }}>Updates each semester. Lower is better (PUP scale).</p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <button type="submit" disabled={saving} style={{ padding: '11px 32px', background: saving ? '#9ca3af' : TEAL, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: saving ? 'not-allowed' : 'pointer' }}>
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? 'Saving...' : 'Update GWA'}
           </button>
           {saved && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: TEAL }}>
