@@ -469,11 +469,11 @@ export default function Page() {
                             {[
                               { label: 'Edit',                color: '#374151', show: !isArchived,           action: () => openEdit(s) },
                               { label: 'Duplicate',           color: '#374151', show: true,                  action: () => duplicateScholarship(s) },
-                              { label: 'Publish',             color: TEAL,      show: s.status === 'draft',  action: () => { setConfirmPublish(s); setOpenMenuId(null); } },
+                              { label: 'Publish',             color: TEAL,      show: s.status === 'draft',  action: () => { setOpenMenuId(null); setTimeout(() => setConfirmPublish(s), 50); } },
                               { label: 'Reopen Applications', color: '#2563eb', show: s.status === 'closed', action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
-                              { label: 'Close Applications',  color: '#ea580c', show: s.status === 'active', action: () => { setConfirmClose(s); setOpenMenuId(null); } },
-                              { label: 'Archive',             color: '#dc2626', show: !isArchived,           action: () => { setConfirmArchive(s); setArchiveConfirmText(''); setOpenMenuId(null); } },
-                              { label: 'Delete',              color: '#dc2626', show: true,                  action: () => { setConfirmDelete(s); setOpenMenuId(null); } },
+                              { label: 'Close Applications',  color: '#ea580c', show: s.status === 'active', action: () => { setOpenMenuId(null); setTimeout(() => setConfirmClose(s), 50); } },
+                              { label: 'Archive',             color: '#dc2626', show: !isArchived,           action: () => { setOpenMenuId(null); setTimeout(() => { setConfirmArchive(s); setArchiveConfirmText(''); }, 50); } },
+                              { label: 'Delete',              color: '#dc2626', show: true,                  action: () => { setOpenMenuId(null); setTimeout(() => setConfirmDelete(s), 50); } },
                             ].filter(item => item.show).map(item => (
                               // onMouseDown fires before the trigger button's blur, so the menu
                               // is still mounted when the action runs.
