@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { login, signup } from '@/lib/auth';
+import { apiFetch } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
