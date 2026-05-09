@@ -2,8 +2,8 @@
 
 import { COLORS } from '@/lib/theme';
 
-export default function OsfaError({ error, reset }: { error: Error; reset: () => void }) {
-  console.error('[OsfaError]', error);
+export default function AdminError({ error, reset }: { error: Error; reset: () => void }) {
+  console.error('[AdminError]', error);
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem', textAlign: 'center' }}>
       <h2 style={{ color: '#1f2937' }}>Something went wrong</h2>

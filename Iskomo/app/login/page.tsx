@@ -25,8 +25,9 @@ const inp: React.CSSProperties = {
 function LoginPageInner() {
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const [emailVerifiedBanner, setEmailVerifiedBanner] = useState(false);
-  const [linkExpiredBanner,   setLinkExpiredBanner]   = useState(false);
+  const [emailVerifiedBanner,  setEmailVerifiedBanner]  = useState(false);
+  const [linkExpiredBanner,    setLinkExpiredBanner]    = useState(false);
+  const [sessionExpiredBanner, setSessionExpiredBanner] = useState(false);
   const [showForgot,    setShowForgot]    = useState(false);
   const [forgotEmail,   setForgotEmail]   = useState('');
   const [forgotSending, setForgotSending] = useState(false);
@@ -92,6 +93,7 @@ function LoginPageInner() {
   useEffect(() => {
     if (searchParams.get('verified') === 'true') setEmailVerifiedBanner(true);
     if (searchParams.get('error') === 'link_expired') setLinkExpiredBanner(true);
+    if (searchParams.get('reason') === 'session_expired') setSessionExpiredBanner(true);
 
     // Handle Supabase implicit flow — access_token in hash with type=signup
     const hash = window.location.hash;
@@ -145,9 +147,19 @@ function LoginPageInner() {
     }
   };
 
+  const ALLOWED_DOMAINS = ['iskolarngbayan.pup.edu.ph', 'gmail.com'];
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError('');
+
+    // Domain check
+    const domain = signupEmail.split('@')[1]?.toLowerCase();
+    if (!domain || !ALLOWED_DOMAINS.includes(domain)) {
+      setSignupError('Only @iskolarngbayan.pup.edu.ph and @gmail.com email addresses are accepted.');
+      return;
+    }
+
     if (signupPassword.length < 8)              { setSignupError('Password must be at least 8 characters.'); return; }
     if (!/[A-Z]/.test(signupPassword))          { setSignupError('Password must contain at least one uppercase letter.'); return; }
     if (!/[^a-zA-Z0-9]/.test(signupPassword))  { setSignupError('Password must contain at least one special character.'); return; }
@@ -186,6 +198,12 @@ function LoginPageInner() {
         <div style={{ width: '100%', maxWidth: 820, marginBottom: 14, padding: '12px 20px', background: '#fef2f2', border: '1.5px solid #fca5a5', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>Reset link has expired. Please request a new one below.</span>
+        </div>
+      )}
+      {sessionExpiredBanner && (
+        <div style={{ width: '100%', maxWidth: 820, marginBottom: 14, padding: '12px 20px', background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>Your session has expired. Please log in again.</span>
         </div>
       )}
       {/* Card */}
@@ -280,10 +298,11 @@ function LoginPageInner() {
                       placeholder="Enter your password"
                       autoComplete="current-password"
                       value={password}
-                      onChange={e => setPassword(e.target.value.replace(/\s/g, ''))}
+                      onChange={e => setPassword(e.target.value)}
                       required
                     />
                     <button type="button" onClick={() => setShowPass(!showPass)}
+                      aria-label={showPass ? 'Hide password' : 'Show password'}
                       style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#6b7280' }}>
                       {showPass ? 'Hide' : 'Show'}
                     </button>
@@ -389,9 +408,10 @@ function LoginPageInner() {
                           placeholder="Min. 8 characters"
                           minLength={8} autoComplete="new-password"
                           value={signupPassword}
-                          onChange={e => setSignupPassword(e.target.value.replace(/\s/g, ''))} required
+                          onChange={e => setSignupPassword(e.target.value)} required
                         />
                         <button type="button" onClick={() => setShowPass2(!showPass2)}
+                          aria-label={showPass2 ? 'Hide password' : 'Show password'}
                           style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#6b7280' }}>
                           {showPass2 ? 'Hide' : 'Show'}
                         </button>
@@ -484,9 +504,22 @@ function ForgotPasswordModal({ show, onClose, email, setEmail, onSubmit, sending
   onSubmit: (e: React.FormEvent) => void; sending: boolean; sent: boolean; error: string; teal: string;
   cooldown: number;
 }) {
+  const emailRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (show) emailRef.current?.focus();
+  }, [show]);
+
+  useEffect(() => {
+    if (!show) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [show, onClose]);
+
   if (!show) return null;
   return (
-    <div role="dialog" aria-modal="true"
+    <div role="dialog" aria-modal="true" aria-labelledby="forgot-pwd-title"
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
       onClick={onClose}>
       <div style={{ background: '#fff', borderRadius: 16, padding: '32px 36px', maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
@@ -506,10 +539,10 @@ function ForgotPasswordModal({ show, onClose, email, setEmail, onSubmit, sending
           </div>
         ) : (
           <>
-            <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>Forgot password?</h3>
+            <h3 id="forgot-pwd-title" style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>Forgot password?</h3>
             <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>Enter your email and we&apos;ll send a reset link.</p>
             <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+              <input ref={emailRef} type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="your@email.com" required
                 style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '10px 14px', fontSize: 14, boxSizing: 'border-box', outline: 'none' }} />
               {error && <p style={{ margin: 0, fontSize: 13, color: '#dc2626' }}>{error}</p>}

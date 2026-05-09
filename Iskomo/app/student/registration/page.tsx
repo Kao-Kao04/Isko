@@ -74,6 +74,31 @@ export default function RegistrationPage() {
   const colleges   = Object.keys(PUP_COLLEGE_PROGRAMS);
   const programs   = college ? PUP_COLLEGE_PROGRAMS[college] ?? [] : [];
 
+  // ── Input formatters ─────────────────────────────────────────────────────
+
+  // Names: letters, spaces, hyphens only (no digits, no symbols)
+  function cleanName(v: string) {
+    return v.replace(/[^a-zA-ZÀ-ÿ\s-]/g, '');
+  }
+
+  // Student number: YYYY-NNNNN-MN-0 (PUP Manila only — campus and sequence fixed)
+  // Students only type the year (4 digits) and the 5-digit number; suffix is appended automatically.
+  function formatStudentNo(raw: string) {
+    // Strip everything that's not a digit
+    const digits = raw.replace(/\D/g, '').slice(0, 9); // max 9 digits (4 year + 5 number)
+    const year = digits.slice(0, 4);
+    const num  = digits.slice(4, 9);
+    let result = year;
+    if (num.length > 0) result += '-' + num;
+    // Append the fixed PUP Manila suffix once 9 digits are present
+    if (digits.length === 9) result += '-MN-0';
+    return result;
+  }
+
+  const STUDENT_NO_REGEX = /^\d{4}-\d{5}-MN-0$/;
+  const studentNoValid = STUDENT_NO_REGEX.test(studentNumber);
+  const studentNoTouched = studentNumber.length > 0;
+
   // Pre-fill from existing profile
   useEffect(() => {
     if (!user?.student_profile) return;
@@ -97,6 +122,10 @@ export default function RegistrationPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!STUDENT_NO_REGEX.test(studentNumber)) {
+      setError('Student number must follow the format YYYY-NNNNN-XX-N (e.g. 2021-12345-MN-0).');
+      return;
+    }
     if (!schoolIdFile || !corFile) { setError('Please upload both your School ID and COR.'); return; }
     setError('');
     setSubmitting(true);
@@ -219,15 +248,29 @@ export default function RegistrationPage() {
             <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
               <div>
                 <label style={lbl}>First Name <span style={{ color: '#dc2626' }}>*</span></label>
-                <input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. Juan" required />
+                <input
+                  style={inp} value={firstName} required
+                  placeholder="e.g. Juan"
+                  onChange={e => setFirstName(cleanName(e.target.value))}
+                />
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>Letters and spaces only</p>
               </div>
               <div>
                 <label style={lbl}>Last Name <span style={{ color: '#dc2626' }}>*</span></label>
-                <input style={inp} value={lastName} onChange={e => setLastName(e.target.value)} placeholder="e.g. Dela Cruz" required />
+                <input
+                  style={inp} value={lastName} required
+                  placeholder="e.g. Dela Cruz"
+                  onChange={e => setLastName(cleanName(e.target.value))}
+                />
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>Letters and spaces only</p>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={lbl}>Middle Name <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
-                <input style={inp} value={middleName} onChange={e => setMiddleName(e.target.value)} placeholder="e.g. Santos" />
+                <input
+                  style={inp} value={middleName}
+                  placeholder="e.g. Santos"
+                  onChange={e => setMiddleName(cleanName(e.target.value))}
+                />
               </div>
             </div>
           </div>
@@ -238,7 +281,32 @@ export default function RegistrationPage() {
             <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={lbl}>Student Number <span style={{ color: '#dc2626' }}>*</span></label>
-                <input style={inp} value={studentNumber} onChange={e => setStudentNumber(e.target.value)} placeholder="e.g. 2021-00001-MN-0" required />
+                <input
+                  style={{
+                    ...inp,
+                    borderColor: studentNoTouched && !studentNoValid ? '#ef4444' : studentNoValid ? '#16a34a' : undefined,
+                    fontFamily: 'monospace',
+                    letterSpacing: '0.06em',
+                  }}
+                  value={studentNumber}
+                  onChange={e => setStudentNumber(formatStudentNo(e.target.value))}
+                  placeholder="e.g. 2021-00001"
+                  maxLength={15}
+                  inputMode="text"
+                  autoComplete="off"
+                  required
+                />
+                {/* Format hint + live status */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 }}>
+                  <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>
+                    Type your year and 5-digit number — <span style={{ fontFamily: 'monospace' }}>-MN-0</span> is added automatically.
+                  </p>
+                  {studentNoTouched && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: studentNoValid ? '#16a34a' : '#6b7280', flexShrink: 0, marginLeft: 8 }}>
+                      {studentNoValid ? '✓ Valid' : studentNumber.replace('-MN-0', '').replace(/\D/g,'').length + '/9 digits'}
+                    </span>
+                  )}
+                </div>
               </div>
               <div>
                 <label style={lbl}>College <span style={{ color: '#dc2626' }}>*</span></label>

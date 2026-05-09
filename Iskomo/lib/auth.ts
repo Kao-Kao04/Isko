@@ -40,9 +40,12 @@ export async function signup(email: string, password: string): Promise<{ dev: bo
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
+  if (res.status === 429) {
+    throw new Error('Too many attempts. Please wait a minute before trying again.');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const msg = (typeof err.detail === 'string' ? err.detail : err.detail?.message) || err.message;
+    const msg = err.message || (typeof err.detail === 'string' ? err.detail : err.detail?.message);
     throw new Error(msg || 'Registration failed');
   }
   const data = await res.json();
@@ -59,9 +62,12 @@ export async function login(email: string, password: string, rememberMe = false)
     body: JSON.stringify({ email, password, remember_me: rememberMe }),
   });
 
+  if (res.status === 429) {
+    throw new Error('Too many attempts. Please wait a minute before trying again.');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const msg = (typeof err.detail === 'string' ? err.detail : err.detail?.message) || err.message;
+    const msg = err.message || (typeof err.detail === 'string' ? err.detail : err.detail?.message);
     throw new Error(msg || 'Invalid email or password');
   }
 
