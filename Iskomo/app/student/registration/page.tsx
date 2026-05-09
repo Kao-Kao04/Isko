@@ -74,6 +74,40 @@ export default function RegistrationPage() {
   const colleges   = Object.keys(PUP_COLLEGE_PROGRAMS);
   const programs   = college ? PUP_COLLEGE_PROGRAMS[college] ?? [] : [];
 
+  // ── Input formatters ─────────────────────────────────────────────────────
+
+  // Names: letters, spaces, hyphens only (no digits, no symbols)
+  function cleanName(v: string) {
+    return v.replace(/[^a-zA-ZÀ-ÿ\s-]/g, '');
+  }
+
+  // Student number auto-formatter: YYYY-NNNNN-XX-N
+  // Raw positions (no dashes): 0-3=year(digits) 4-8=number(digits) 9-10=campus(letters) 11=seq(digit)
+  function formatStudentNo(raw: string) {
+    // Strip dashes and spaces, keep only alphanumeric, uppercase
+    const clean = raw.replace(/[-\s]/g, '').toUpperCase();
+
+    let filtered = '';
+    for (let i = 0; i < Math.min(clean.length, 12); i++) {
+      const c = clean[i];
+      if (i < 4)  { if (/\d/.test(c))    filtered += c; }  // year: digits
+      else if (i < 9)  { if (/\d/.test(c))    filtered += c; }  // num:  digits
+      else if (i < 11) { if (/[A-Z]/.test(c)) filtered += c; }  // campus: letters
+      else             { if (/\d/.test(c))    filtered += c; }  // seq:  digit
+    }
+
+    // Re-insert dashes
+    let result = filtered.slice(0, 4);
+    if (filtered.length > 4)  result += '-' + filtered.slice(4, 9);
+    if (filtered.length > 9)  result += '-' + filtered.slice(9, 11);
+    if (filtered.length > 11) result += '-' + filtered.slice(11, 12);
+    return result;
+  }
+
+  const STUDENT_NO_REGEX = /^\d{4}-\d{5}-[A-Z]{2}-\d$/;
+  const studentNoValid = STUDENT_NO_REGEX.test(studentNumber);
+  const studentNoTouched = studentNumber.length > 0;
+
   // Pre-fill from existing profile
   useEffect(() => {
     if (!user?.student_profile) return;
@@ -97,6 +131,10 @@ export default function RegistrationPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!STUDENT_NO_REGEX.test(studentNumber)) {
+      setError('Student number must follow the format YYYY-NNNNN-XX-N (e.g. 2021-12345-MN-0).');
+      return;
+    }
     if (!schoolIdFile || !corFile) { setError('Please upload both your School ID and COR.'); return; }
     setError('');
     setSubmitting(true);
@@ -219,15 +257,29 @@ export default function RegistrationPage() {
             <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
               <div>
                 <label style={lbl}>First Name <span style={{ color: '#dc2626' }}>*</span></label>
-                <input style={inp} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. Juan" required />
+                <input
+                  style={inp} value={firstName} required
+                  placeholder="e.g. Juan"
+                  onChange={e => setFirstName(cleanName(e.target.value))}
+                />
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>Letters and spaces only</p>
               </div>
               <div>
                 <label style={lbl}>Last Name <span style={{ color: '#dc2626' }}>*</span></label>
-                <input style={inp} value={lastName} onChange={e => setLastName(e.target.value)} placeholder="e.g. Dela Cruz" required />
+                <input
+                  style={inp} value={lastName} required
+                  placeholder="e.g. Dela Cruz"
+                  onChange={e => setLastName(cleanName(e.target.value))}
+                />
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>Letters and spaces only</p>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={lbl}>Middle Name <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
-                <input style={inp} value={middleName} onChange={e => setMiddleName(e.target.value)} placeholder="e.g. Santos" />
+                <input
+                  style={inp} value={middleName}
+                  placeholder="e.g. Santos"
+                  onChange={e => setMiddleName(cleanName(e.target.value))}
+                />
               </div>
             </div>
           </div>
@@ -238,7 +290,38 @@ export default function RegistrationPage() {
             <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={lbl}>Student Number <span style={{ color: '#dc2626' }}>*</span></label>
-                <input style={inp} value={studentNumber} onChange={e => setStudentNumber(e.target.value)} placeholder="e.g. 2021-00001-MN-0" required />
+                <input
+                  style={{
+                    ...inp,
+                    borderColor: studentNoTouched && !studentNoValid ? '#ef4444' : studentNoValid ? '#16a34a' : undefined,
+                    fontFamily: 'monospace',
+                    letterSpacing: '0.06em',
+                  }}
+                  value={studentNumber}
+                  onChange={e => setStudentNumber(formatStudentNo(e.target.value))}
+                  placeholder="e.g. 2021-00001-MN-0"
+                  maxLength={15}
+                  inputMode="text"
+                  autoComplete="off"
+                  required
+                />
+                {/* Format hint + live status */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 }}>
+                  <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>
+                    Format: <span style={{ fontFamily: 'monospace' }}>YYYY-NNNNN-XX-N</span>
+                    {' '}— year · 5-digit number · campus code · sequence
+                  </p>
+                  {studentNoTouched && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: studentNoValid ? '#16a34a' : '#ef4444', flexShrink: 0, marginLeft: 8 }}>
+                      {studentNoValid ? '✓ Valid' : `${studentNumber.length}/15`}
+                    </span>
+                  )}
+                </div>
+                {studentNoTouched && !studentNoValid && studentNumber.length === 15 && (
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#ef4444' }}>
+                    Please check the format — example: 2021-00001-MN-0
+                  </p>
+                )}
               </div>
               <div>
                 <label style={lbl}>College <span style={{ color: '#dc2626' }}>*</span></label>
