@@ -64,18 +64,21 @@ function parseErrorBody(body: Record<string, unknown>, status: number): string {
   return (body.message as string) || 'Request failed';
 }
 
-// ── Token helpers ─────────────────────────────────────────────────────────────
+// ── Token helpers (cookie-based so middleware can read and validate the JWT) ───
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('access_token');
+  const match = document.cookie.match(/(?:^|;\s*)access_token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 function setAccessToken(token: string) {
-  localStorage.setItem('access_token', token);
+  const secure = location.protocol === 'https:' ? '; Secure' : '';
+  const maxAge = 60 * 60 * 24 * 7;
+  document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=${maxAge}; SameSite=Strict${secure}`;
 }
 
 function clearAccessToken() {
-  localStorage.removeItem('access_token');
+  document.cookie = 'access_token=; path=/; max-age=0; SameSite=Strict';
 }
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -109,7 +112,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
     } else {
       clearAccessToken();
-      if (typeof window !== 'undefined') window.location.href = '/login';
+      if (typeof window !== 'undefined') window.location.href = '/login?reason=session_expired';
       throw new Error('Session expired. Please log in again.');
     }
   }

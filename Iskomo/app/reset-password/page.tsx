@@ -133,12 +133,13 @@ export default function ResetPasswordPage() {
                   <input
                     type={showPass ? 'text' : 'password'}
                     value={password}
-                    onChange={e => setPassword(e.target.value.replace(/\s/g, ''))}
+                    onChange={e => setPassword(e.target.value)}
                     placeholder="Min. 8 characters"
                     required
                     style={{ ...inp, paddingRight: 56 }}
                   />
                   <button type="button" onClick={() => setShowPass(v => !v)}
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
                     style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#6b7280' }}>
                     {showPass ? 'Hide' : 'Show'}
                   </button>
@@ -180,7 +181,7 @@ export default function ResetPasswordPage() {
                   <input
                     type={showConf ? 'text' : 'password'}
                     value={confirm}
-                    onChange={e => setConfirm(e.target.value.replace(/\s/g, ''))}
+                    onChange={e => setConfirm(e.target.value)}
                     placeholder="Repeat your new password"
                     required
                     style={{
@@ -192,6 +193,7 @@ export default function ResetPasswordPage() {
                     }}
                   />
                   <button type="button" onClick={() => setShowConf(v => !v)}
+                    aria-label={showConf ? 'Hide confirm password' : 'Show confirm password'}
                     style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#6b7280' }}>
                     {showConf ? 'Hide' : 'Show'}
                   </button>
