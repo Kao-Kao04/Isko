@@ -81,30 +81,21 @@ export default function RegistrationPage() {
     return v.replace(/[^a-zA-ZÀ-ÿ\s-]/g, '');
   }
 
-  // Student number auto-formatter: YYYY-NNNNN-XX-N
-  // Raw positions (no dashes): 0-3=year(digits) 4-8=number(digits) 9-10=campus(letters) 11=seq(digit)
+  // Student number: YYYY-NNNNN-MN-0 (PUP Manila only — campus and sequence fixed)
+  // Students only type the year (4 digits) and the 5-digit number; suffix is appended automatically.
   function formatStudentNo(raw: string) {
-    // Strip dashes and spaces, keep only alphanumeric, uppercase
-    const clean = raw.replace(/[-\s]/g, '').toUpperCase();
-
-    let filtered = '';
-    for (let i = 0; i < Math.min(clean.length, 12); i++) {
-      const c = clean[i];
-      if (i < 4)  { if (/\d/.test(c))    filtered += c; }  // year: digits
-      else if (i < 9)  { if (/\d/.test(c))    filtered += c; }  // num:  digits
-      else if (i < 11) { if (/[A-Z]/.test(c)) filtered += c; }  // campus: letters
-      else             { if (/\d/.test(c))    filtered += c; }  // seq:  digit
-    }
-
-    // Re-insert dashes
-    let result = filtered.slice(0, 4);
-    if (filtered.length > 4)  result += '-' + filtered.slice(4, 9);
-    if (filtered.length > 9)  result += '-' + filtered.slice(9, 11);
-    if (filtered.length > 11) result += '-' + filtered.slice(11, 12);
+    // Strip everything that's not a digit
+    const digits = raw.replace(/\D/g, '').slice(0, 9); // max 9 digits (4 year + 5 number)
+    const year = digits.slice(0, 4);
+    const num  = digits.slice(4, 9);
+    let result = year;
+    if (num.length > 0) result += '-' + num;
+    // Append the fixed PUP Manila suffix once 9 digits are present
+    if (digits.length === 9) result += '-MN-0';
     return result;
   }
 
-  const STUDENT_NO_REGEX = /^\d{4}-\d{5}-[A-Z]{2}-\d$/;
+  const STUDENT_NO_REGEX = /^\d{4}-\d{5}-MN-0$/;
   const studentNoValid = STUDENT_NO_REGEX.test(studentNumber);
   const studentNoTouched = studentNumber.length > 0;
 
@@ -299,7 +290,7 @@ export default function RegistrationPage() {
                   }}
                   value={studentNumber}
                   onChange={e => setStudentNumber(formatStudentNo(e.target.value))}
-                  placeholder="e.g. 2021-00001-MN-0"
+                  placeholder="e.g. 2021-00001"
                   maxLength={15}
                   inputMode="text"
                   autoComplete="off"
@@ -308,20 +299,14 @@ export default function RegistrationPage() {
                 {/* Format hint + live status */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 }}>
                   <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>
-                    Format: <span style={{ fontFamily: 'monospace' }}>YYYY-NNNNN-XX-N</span>
-                    {' '}— year · 5-digit number · campus code · sequence
+                    Type your year and 5-digit number — <span style={{ fontFamily: 'monospace' }}>-MN-0</span> is added automatically.
                   </p>
                   {studentNoTouched && (
-                    <span style={{ fontSize: 11, fontWeight: 700, color: studentNoValid ? '#16a34a' : '#ef4444', flexShrink: 0, marginLeft: 8 }}>
-                      {studentNoValid ? '✓ Valid' : `${studentNumber.length}/15`}
+                    <span style={{ fontSize: 11, fontWeight: 700, color: studentNoValid ? '#16a34a' : '#6b7280', flexShrink: 0, marginLeft: 8 }}>
+                      {studentNoValid ? '✓ Valid' : studentNumber.replace('-MN-0', '').replace(/\D/g,'').length + '/9 digits'}
                     </span>
                   )}
                 </div>
-                {studentNoTouched && !studentNoValid && studentNumber.length === 15 && (
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#ef4444' }}>
-                    Please check the format — example: 2021-00001-MN-0
-                  </p>
-                )}
               </div>
               <div>
                 <label style={lbl}>College <span style={{ color: '#dc2626' }}>*</span></label>
