@@ -4,6 +4,32 @@ export const COLORS = {
   maroonL: '#fff5f5',
   gold:    '#C9A027',
   goldL:   '#F5D060',
+
+  // Gray scale — use these instead of hardcoded hex throughout the app
+  gray900: '#0f172a',
+  gray800: '#111827',
+  gray700: '#374151',
+  gray600: '#4b5563',
+  gray500: '#6b7280',
+  gray400: '#9ca3af',
+  gray300: '#d1d5db',
+  gray200: '#e5e7eb',
+  gray100: '#f3f4f6',
+  gray50:  '#f9fafb',
+
+  // Semantic
+  success:       '#059669',
+  successBg:     '#f0fdf4',
+  successBorder: '#bbf7d0',
+  warning:       '#d97706',
+  warningBg:     '#fffbeb',
+  warningBorder: '#fde68a',
+  error:         '#dc2626',
+  errorBg:       '#fef2f2',
+  errorBorder:   '#fecaca',
+  info:          '#2563eb',
+  infoBg:        '#eff6ff',
+  infoBorder:    '#bfdbfe',
 } as const;
 
 export const STATUS_BADGE: Record<string, { bg: string; color: string }> = {

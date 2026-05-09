@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { adminApi, type StaffResponse } from '@/lib/api-client';
 import { apiFetch, getAccessToken } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
+import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 
 const MAROON = COLORS.maroon;
 
@@ -85,11 +86,10 @@ const TABS: { key: TabKey; label: string }[] = [
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const { toasts, addToast, removeToast } = useToast();
 
   function showToast(type: 'success' | 'error', msg: string) {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 3500);
+    addToast(type, msg);
   }
 
   // ── Dashboard ──
@@ -322,12 +322,7 @@ export default function AdminPage() {
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      {/* Toast */}
-      {toast && (
-        <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, padding: '12px 20px', borderRadius: 10, background: toast.type === 'success' ? '#f0fdf4' : '#fef2f2', border: `1px solid ${toast.type === 'success' ? '#bbf7d0' : '#fecaca'}`, color: toast.type === 'success' ? '#15803d' : '#dc2626', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.1)', maxWidth: 360 }}>
-          {toast.type === 'success' ? '✓ ' : '✗ '}{toast.msg}
-        </div>
-      )}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>

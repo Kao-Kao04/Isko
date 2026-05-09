@@ -1,4 +1,5 @@
 import StudentNav from '@/components/shared/StudentNav';
+import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import SignOutButton from '@/components/shared/SignOutButton';
 import NotificationBell from '@/components/shared/NotificationBell';
 import AccountStatusGuard from '@/components/shared/AccountStatusGuard';
@@ -8,11 +9,7 @@ import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
 
-interface StudentLayoutProps {
-  children: React.ReactNode;
-}
-
-export default function StudentLayout({ children }: StudentLayoutProps) {
+export default function StudentLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {/* ── Top Navigation Bar ── */}
@@ -24,7 +21,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
         borderBottom: '1px solid #e5e7eb',
         boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
       }}>
-        {/* Teal accent line at top */}
+        {/* Brand accent bar */}
         <div style={{ height: 3, background: `linear-gradient(90deg, ${TEAL}, #5C0000, #C9A027)` }} />
 
         <div style={{
@@ -36,42 +33,37 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
           padding: '0 16px',
           minHeight: 60,
           gap: 12,
-          flexWrap: 'wrap',
         }}>
-
-          {/* Left: Logo + Wordmark */}
+          {/* Logo */}
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
+              width: 36, height: 36, borderRadius: 10,
               background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: `0 2px 8px ${TEAL}40`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 2px 8px ${TEAL}40`, flexShrink: 0,
             }}>
               <Image
                 src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
                 alt="IskoMo"
-                width={22}
-                height={22}
+                width={22} height={22}
                 style={{ filter: 'brightness(0) invert(1)' }}
               />
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: '#111827', lineHeight: 1, letterSpacing: '-0.02em' }}>IskoMo</div>
-              <div style={{ fontSize: 10, fontWeight: 500, color: '#9ca3af', lineHeight: 1, marginTop: 2, letterSpacing: '0.04em' }}>STUDENT PORTAL</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', lineHeight: 1, marginTop: 2, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Student Portal</div>
             </div>
           </Link>
 
-          {/* Center: Nav Links */}
-          <StudentNav />
+          {/* Desktop nav — hidden on mobile via CSS class */}
+          <div className="student-top-nav">
+            <StudentNav />
+          </div>
 
           {/* Right: Bell + Sign Out */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <NotificationBell />
-            <div style={{ width: 1, height: 22, background: '#e5e7eb' }} />
+            <div style={{ width: 1, height: 20, background: '#e5e7eb' }} />
             <SignOutButton />
           </div>
         </div>
@@ -79,10 +71,13 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
 
       {/* Page Content */}
       <AccountStatusGuard>
-        <div style={{ minHeight: 'calc(100vh - 63px)', background: '#f0f4f8' }}>
+        <div className="student-page-content" style={{ minHeight: 'calc(100vh - 63px)', background: '#f0f4f8' }}>
           {children}
         </div>
       </AccountStatusGuard>
+
+      {/* Mobile bottom tab bar — shown only on mobile via CSS */}
+      <StudentBottomNav />
     </>
   );
 }

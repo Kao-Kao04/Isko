@@ -11,10 +11,10 @@ export interface Toast {
 }
 
 const CONFIG: Record<ToastType, { bg: string; border: string; iconBg: string; color: string; symbol: string }> = {
-  success: { bg: '#fff5f5', border: '#6ee7b7', iconBg: '#fff5f5', color: '#065f46', symbol: '✓' },
-  error:   { bg: '#fff5f5', border: '#fca5a5', iconBg: '#fef2f2', color: '#991b1b', symbol: '✕' },
-  warning: { bg: '#fffdf0', border: '#fcd34d', iconBg: '#fffbeb', color: '#92400e', symbol: '!' },
-  info:    { bg: '#f0f7ff', border: '#93c5fd', iconBg: '#eff6ff', color: '#1e40af', symbol: 'i' },
+  success: { bg: '#f0fdf4', border: '#86efac', iconBg: '#dcfce7', color: '#065f46', symbol: '✓' },
+  error:   { bg: '#fef2f2', border: '#fca5a5', iconBg: '#fee2e2', color: '#991b1b', symbol: '✕' },
+  warning: { bg: '#fffbeb', border: '#fcd34d', iconBg: '#fef9c3', color: '#92400e', symbol: '!' },
+  info:    { bg: '#eff6ff', border: '#93c5fd', iconBg: '#dbeafe', color: '#1e40af', symbol: 'i' },
 };
 
 export function useToast() {
