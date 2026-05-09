@@ -409,13 +409,9 @@ a {
   }
 }
 
-/* ── OSFA hamburger / sidebar ──────────────────────────────────────────────── */
-.osfa-hamburger { display: none; }
-
-@media (max-width: 1023px) {
-  .osfa-hamburger { display: flex; }
-  .osfa-desktop-nav { display: none !important; }
-}
+/* ── OSFA nav — always show desktop nav, never show hamburger ──────────────── */
+.osfa-hamburger { display: none !important; }
+.osfa-desktop-nav { display: flex !important; }
 
 /* ── Tablet adjustments ────────────────────────────────────────────────────── */
 @media (max-width: 900px) {

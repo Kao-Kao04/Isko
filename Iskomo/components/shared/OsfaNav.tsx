@@ -132,10 +132,10 @@ export default function OsfaNav() {
         onMouseLeave={() => setHovered(null)}
         style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-          padding: '6px 10px', borderRadius: 9, textDecoration: 'none',
+          padding: '6px 8px', borderRadius: 9, textDecoration: 'none',
           color: isActive ? MAROON : isHov ? '#374151' : '#6b7280',
           background: isActive ? MAROON_LIGHT : isHov ? '#f3f4f6' : 'transparent',
-          fontWeight: isActive ? 700 : 500, fontSize: 11, minWidth: 52,
+          fontWeight: isActive ? 700 : 500, fontSize: 10.5, minWidth: 48,
           position: 'relative', transition: 'all 0.15s ease',
         }}
       >
