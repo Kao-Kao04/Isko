@@ -92,6 +92,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Better text selection */
+::selection {
+  background: rgba(128, 0, 0, 0.15);
+  color: var(--gray-900);
+}
+
 /* ── Accessibility ─────────────────────────────────────────────────────────── */
 /* Never go below 11px for visible text */
 * { min-font-size: 11px; }
@@ -257,6 +263,46 @@ a {
   from { opacity: 0; transform: scale(0.93) translateY(8px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* ── Page content animation ────────────────────────────────────────────────── */
+.student-page-content > *:first-child,
+.page-content {
+  animation: pageIn 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* ── Skeleton loader ───────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--r-sm);
+}
+
+/* ── Badge utility ─────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-success { background: var(--success-bg); color: var(--success-text); }
+.badge-warning { background: var(--warning-bg); color: var(--warning-text); }
+.badge-error   { background: var(--error-bg);   color: var(--error-text);   }
+.badge-info    { background: var(--info-bg);     color: var(--info-text);    }
+.badge-neutral { background: var(--gray-100);    color: var(--gray-600);     }
 
 /* ── Tables ────────────────────────────────────────────────────────────────── */
 .table-scroll {

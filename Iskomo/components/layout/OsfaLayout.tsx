@@ -86,7 +86,7 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
         </div>
       </header>
 
-      <div style={{ minHeight: 'calc(100vh - 65px)', background: '#f0f4f8' }}>
+      <div style={{ minHeight: 'calc(100vh - 65px)', background: 'linear-gradient(180deg, #f4f7fb 0%, #eef2f7 100%)' }}>
         {children}
       </div>
     </>

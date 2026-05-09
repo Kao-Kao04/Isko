@@ -71,7 +71,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
       {/* Page Content */}
       <AccountStatusGuard>
-        <div className="student-page-content" style={{ minHeight: 'calc(100vh - 63px)', background: '#f0f4f8' }}>
+        <div className="student-page-content" style={{ minHeight: 'calc(100vh - 63px)', background: 'linear-gradient(180deg, #f4f7fb 0%, #eef2f7 100%)' }}>
           {children}
         </div>
       </AccountStatusGuard>
