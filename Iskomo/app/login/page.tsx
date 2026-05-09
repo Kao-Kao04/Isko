@@ -145,9 +145,19 @@ function LoginPageInner() {
     }
   };
 
+  const ALLOWED_DOMAINS = ['iskolarngbayan.pup.edu.ph', 'gmail.com'];
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError('');
+
+    // Domain check
+    const domain = signupEmail.split('@')[1]?.toLowerCase();
+    if (!domain || !ALLOWED_DOMAINS.includes(domain)) {
+      setSignupError('Only @iskolarngbayan.pup.edu.ph and @gmail.com email addresses are accepted.');
+      return;
+    }
+
     if (signupPassword.length < 8)              { setSignupError('Password must be at least 8 characters.'); return; }
     if (!/[A-Z]/.test(signupPassword))          { setSignupError('Password must contain at least one uppercase letter.'); return; }
     if (!/[^a-zA-Z0-9]/.test(signupPassword))  { setSignupError('Password must contain at least one special character.'); return; }

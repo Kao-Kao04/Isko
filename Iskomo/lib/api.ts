@@ -99,14 +99,14 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  let res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include' });
+  let res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
 
   // ── 401: try refresh, then retry once ──────────────────────────────────────
   if (res.status === 401) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include' });
+      res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
     } else {
       clearAccessToken();
       if (typeof window !== 'undefined') window.location.href = '/login';
