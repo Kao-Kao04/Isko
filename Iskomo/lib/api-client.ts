@@ -32,6 +32,8 @@ export interface ScholarshipResponse {
   cover_image_url: string | null;
   applicants_count: number;
   requirements: RequirementResponse[];
+  max_semesters: number | null;
+  requires_thank_you_letter: boolean;
   created_at: string;
 }
 
@@ -50,6 +52,31 @@ export interface ScholarshipCreate {
   eligibility_text?: string;
   cover_image_url?: string;
   requirements?: { name: string; description?: string; is_required: boolean }[];
+  max_semesters?: number | null;
+  requires_thank_you_letter?: boolean;
+}
+
+// ─── Compliance Types ──────────────────────────────────────────────────────────
+
+export interface ComplianceDocType {
+  id: number;
+  scholarship_id: number;
+  name: string;
+  description: string | null;
+  is_required: boolean;
+  order: number;
+}
+
+export interface ComplianceSubmission {
+  id: number;
+  application_id: number;
+  requirement_type: string;
+  file_url: string | null;
+  is_verified: boolean;
+  verified_by: number | null;
+  verified_at: string | null;
+  notes: string | null;
+  submitted_at: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -211,6 +238,19 @@ export const scholarshipApi = {
     apiFetch<ScholarshipResponse>(`/api/scholarships/${id}/duplicate`, {
       method: 'POST',
     }),
+
+  // Compliance doc types
+  listComplianceDocs: (id: number) =>
+    apiFetch<ComplianceDocType[]>(`/api/scholarships/${id}/compliance-docs`),
+
+  addComplianceDoc: (id: number, data: { name: string; description?: string; is_required: boolean; order: number }) =>
+    apiFetch<ComplianceDocType>(`/api/scholarships/${id}/compliance-docs`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  deleteComplianceDoc: (docId: number) =>
+    apiFetch<void>(`/api/scholarships/compliance-docs/${docId}`, { method: 'DELETE' }),
 };
 
 // ─── Application API ──────────────────────────────────────────────────────────
@@ -289,6 +329,25 @@ export const applicationApi = {
 
   getAudit: (id: number) =>
     apiFetch<AuditEntryResponse[]>(`/api/applications/${id}/audit`),
+
+  // Compliance submissions
+  getCompliance: (id: number) =>
+    apiFetch<ComplianceSubmission[]>(`/api/applications/${id}/compliance`),
+
+  submitCompliance: (id: number, data: { requirement_type: string; file_url?: string }) =>
+    apiFetch<ComplianceSubmission>(`/api/applications/${id}/compliance`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  verifyCompliance: (appId: number, reqId: number) =>
+    apiFetch<ComplianceSubmission>(`/api/applications/${appId}/compliance/${reqId}/verify`, {
+      method: 'PATCH',
+    }),
+
+  // Document generation — return the URL to open in a new tab (backend returns styled HTML)
+  documentUrl: (id: number, type: 'confirmation-letter' | 'terms') =>
+    `${BASE_URL}/api/applications/${id}/documents/${type}`,
 };
 
 // ─── Scholar API ──────────────────────────────────────────────────────────────
@@ -328,6 +387,10 @@ export interface ScholarResponse {
     is_enrolled: boolean;
     notes: string | null;
     has_grade_below_2_5: boolean;
+    benefit_released: boolean;
+    benefit_released_at: string | null;
+    thank_you_submitted: boolean;
+    thank_you_submitted_at: string | null;
     created_at: string;
   }>;
   status_logs: ScholarStatusLog[];
@@ -364,6 +427,16 @@ export const scholarApi = {
     apiFetch<ScholarResponse['semester_records'][0]>(`/api/scholars/${scholarId}/semester-records/${recordId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+
+  releaseBenefit: (scholarId: number, recordId: number) =>
+    apiFetch<ScholarResponse['semester_records'][0]>(`/api/scholars/${scholarId}/semester-records/${recordId}/release-benefit`, {
+      method: 'PATCH',
+    }),
+
+  confirmThankYou: (scholarId: number, recordId: number) =>
+    apiFetch<ScholarResponse['semester_records'][0]>(`/api/scholars/${scholarId}/semester-records/${recordId}/thank-you`, {
+      method: 'PATCH',
     }),
 };
 

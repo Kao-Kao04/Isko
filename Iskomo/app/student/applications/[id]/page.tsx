@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { applicationApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type WorkflowResponse } from '@/lib/api-client';
+import { applicationApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type WorkflowResponse, type ComplianceSubmission } from '@/lib/api-client';
 import { COLORS } from '@/lib/theme';
 import { MAIN_STAGES, STAGE_LABEL, STUDENT_SUB_STATUS_LABEL, stageIndex, isTerminal, formatInterviewDt } from '@/lib/workflow';
 
@@ -67,6 +67,9 @@ export default function ApplicationDetailPage() {
   const [newFiles,      setNewFiles]      = useState<Record<string, File>>({});
   const [newFileNames,  setNewFileNames]  = useState<Record<string, string>>({});
   const [docCount,      setDocCount]      = useState(0);
+  const [compliance,    setCompliance]    = useState<ComplianceSubmission[]>([]);
+  const [complianceLoading, setComplianceLoading] = useState(false);
+  const [complianceDocs,    setComplianceDocs]    = useState<{ id: number; name: string; is_required: boolean }[]>([]);
 
   const DOC_LIMIT = 20;
 
@@ -82,6 +85,15 @@ export default function ApplicationDetailPage() {
       if (wf) setWorkflow(wf);
       setAudit(aud);
       setDocCount(docs.length);
+      // Load compliance if at completion stage
+      if (wf?.main_status === 'COMPLETION') {
+        applicationApi.getCompliance(numId).then(setCompliance).catch(() => {});
+        if (a.scholarship_id) {
+          import('@/lib/api-client').then(({ scholarshipApi }) =>
+            scholarshipApi.listComplianceDocs(a.scholarship_id).then(setComplianceDocs).catch(() => {})
+          );
+        }
+      }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
@@ -560,6 +572,98 @@ export default function ApplicationDetailPage() {
                   style={{ width: '100%', padding: '11px 0', background: resubmitting ? '#9ca3af' : '#ea580c', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#fff', cursor: resubmitting ? 'not-allowed' : 'pointer' }}>
                   {resubmitting ? 'Uploading & Resubmitting…' : '↩ Resubmit Application'}
                 </button>
+              </div>
+            );
+          })()}
+
+          {/* Generate Documents — available at COMPLETION stage */}
+          {workflow?.main_status === 'COMPLETION' && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate Documents</h3>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <a href={applicationApi.documentUrl(app.id, 'confirmation-letter')} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Confirmation Letter
+                </a>
+                <a href={applicationApi.documentUrl(app.id, 'terms')} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Terms & Conditions
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Compliance Checklist — COMPLETION + PENDING_REQUIREMENTS */}
+          {workflow?.main_status === 'COMPLETION' && workflow?.sub_status === 'PENDING_REQUIREMENTS' && (() => {
+            const requiredDocs = complianceDocs.filter(d => d.is_required);
+            const verifiedCount = compliance.filter(c => c.is_verified).length;
+            const totalRequired = requiredDocs.length;
+            const allVerified = totalRequired > 0 && requiredDocs.every(d =>
+              compliance.some(c => c.requirement_type === d.name && c.is_verified)
+            );
+            return (
+              <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${allVerified ? '#86efac' : '#fcd34d'}`, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: '#111827' }}>Compliance Checklist</h3>
+                    <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
+                      {verifiedCount} of {totalRequired} required documents verified
+                    </p>
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: allVerified ? '#dcfce7' : '#fffbeb', color: allVerified ? '#15803d' : '#92400e' }}>
+                    {allVerified ? 'All Verified ✓' : `${totalRequired - verifiedCount} remaining`}
+                  </div>
+                </div>
+
+                {allVerified ? (
+                  <div style={{ padding: '12px 16px', background: '#f0fdf4', borderRadius: 9, border: '1px solid #bbf7d0', fontSize: 13, color: '#166534', lineHeight: 1.5 }}>
+                    All required documents have been verified. Waiting for OSFA to finalize your scholarship.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {complianceDocs.map(docType => {
+                      const submitted = compliance.find(c => c.requirement_type === docType.name);
+                      const isVerified = submitted?.is_verified;
+                      return (
+                        <div key={docType.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 9, border: `1px solid ${isVerified ? '#bbf7d0' : submitted ? '#bfdbfe' : '#e5e7eb'}`, background: isVerified ? '#f0fdf4' : submitted ? '#eff6ff' : '#fafafa' }}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: isVerified ? '#dcfce7' : submitted ? '#dbeafe' : '#f3f4f6' }}>
+                            {isVerified
+                              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                              : submitted
+                              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+                              {docType.name}
+                              {docType.is_required && <span style={{ marginLeft: 5, fontSize: 10, color: '#9ca3af' }}>Required</span>}
+                            </div>
+                            <div style={{ fontSize: 11, color: isVerified ? '#15803d' : submitted ? '#1d4ed8' : '#9ca3af', marginTop: 2 }}>
+                              {isVerified ? `Verified by OSFA${submitted?.verified_at ? ` · ${new Date(submitted.verified_at).toLocaleDateString()}` : ''}` : submitted ? 'Submitted — awaiting verification' : 'Not submitted yet'}
+                            </div>
+                          </div>
+                          {!submitted && (
+                            <button
+                              disabled={complianceLoading}
+                              onClick={async () => {
+                                setComplianceLoading(true);
+                                try {
+                                  const sub = await applicationApi.submitCompliance(app.id, { requirement_type: docType.name });
+                                  setCompliance(prev => [...prev.filter(c => c.requirement_type !== docType.name), sub]);
+                                } catch { /* toast would be better but keeping it simple */ }
+                                finally { setComplianceLoading(false); }
+                              }}
+                              style={{ padding: '6px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                              Mark Submitted
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })()}

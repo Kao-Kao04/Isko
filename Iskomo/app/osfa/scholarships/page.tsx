@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { scholarshipApi, type ScholarshipResponse, type ScholarshipStatus } from '@/lib/api-client';
+import { scholarshipApi, type ScholarshipResponse, type ScholarshipStatus, type ComplianceDocType } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
 
@@ -62,6 +62,13 @@ const COMMON_REQS = [
 
 type FormReq = { tempId: string; name: string; description?: string; is_required: boolean };
 
+const DEFAULT_COMPLIANCE_DOCS = [
+  { name: 'Scholarship Agreement',               is_required: true,  order: 1 },
+  { name: 'Acceptance Form',                      is_required: true,  order: 2 },
+  { name: 'Bank Details / Account Information',   is_required: true,  order: 3 },
+  { name: 'Maintaining Conditions Form',          is_required: false, order: 4 },
+];
+
 const EMPTY_FORM = {
   name: '', description: '', amount_raw: '', period: 'per semester',
   deadline: '', slots: '', scholarship_type: 'Merit-Based', eligibility_text: '',
@@ -71,6 +78,9 @@ const EMPTY_FORM = {
   programInput: '',
   requirements: [] as FormReq[],
   reqInput: '',
+  max_semesters: '',
+  requires_thank_you_letter: false,
+  category: '' as '' | 'public' | 'private',
 };
 
 function getDaysLeft(deadline: string | null): number {
@@ -113,6 +123,13 @@ export default function Page() {
   const [deleteError,   setDeleteError]               = useState('');
   const [archiveConfirmText, setArchiveConfirmText]   = useState('');
 
+  // Compliance doc types
+  const [complianceDocs, setComplianceDocs]     = useState<ComplianceDocType[]>([]);
+  const [complianceScholarId, setComplianceScholarId] = useState<number | null>(null);
+  const [complianceNewName, setComplianceNewName]     = useState('');
+  const [complianceNewReq, setComplianceNewReq]       = useState(true);
+  const [complianceSaving, setComplianceSaving]       = useState(false);
+
   const fetchScholarships = useCallback(async () => {
     try {
       setLoading(true);
@@ -151,23 +168,31 @@ export default function Page() {
   function openEdit(s: ScholarshipResponse) {
     setEditingId(s.id);
     setForm({
-      name:               s.name,
-      description:        s.description ?? '',
-      amount_raw:         s.amount_raw?.toString() ?? '',
-      period:             s.period ?? 'per semester',
-      deadline:           s.deadline ? new Date(s.deadline).toISOString().split('T')[0] : '',
-      slots:              s.slots?.toString() ?? '',
-      scholarship_type:   s.scholarship_type ?? 'Merit-Based',
-      eligibility_text:   s.eligibility_text ?? '',
-      eligible_colleges:  s.eligible_colleges ?? [],
-      eligible_programs:  s.eligible_programs ?? [],
-      cover_image_url:    s.cover_image_url ?? '',
-      programInput:       '',
-      requirements:       s.requirements.map(r => ({ tempId: String(r.id), name: r.name, description: r.description ?? undefined, is_required: r.is_required })),
-      reqInput:           '',
+      name:                      s.name,
+      description:               s.description ?? '',
+      amount_raw:                s.amount_raw?.toString() ?? '',
+      period:                    s.period ?? 'per semester',
+      deadline:                  s.deadline ? new Date(s.deadline).toISOString().split('T')[0] : '',
+      slots:                     s.slots?.toString() ?? '',
+      scholarship_type:          s.scholarship_type ?? 'Merit-Based',
+      eligibility_text:          s.eligibility_text ?? '',
+      eligible_colleges:         s.eligible_colleges ?? [],
+      eligible_programs:         s.eligible_programs ?? [],
+      cover_image_url:           s.cover_image_url ?? '',
+      programInput:              '',
+      requirements:              s.requirements.map(r => ({ tempId: String(r.id), name: r.name, description: r.description ?? undefined, is_required: r.is_required })),
+      reqInput:                  '',
+      max_semesters:             s.max_semesters?.toString() ?? '',
+      requires_thank_you_letter: s.requires_thank_you_letter,
+      category:                  s.category ?? '',
     });
     setShowForm(true);
     setOpenMenuId(null);
+    // Load compliance docs for this scholarship
+    setComplianceScholarId(s.id);
+    scholarshipApi.listComplianceDocs(s.id)
+      .then(setComplianceDocs)
+      .catch(() => {});
   }
 
   async function handleSaveForm(publishNow = false) {
@@ -178,18 +203,20 @@ export default function Page() {
     setFormLoading(true);
     try {
       const data = {
-        name:               form.name,
-        description:        form.description || undefined,
-        slots:              parseInt(form.slots) || undefined,
-        deadline:           form.deadline ? new Date(form.deadline).toISOString() : undefined,
-        eligible_colleges:  form.eligible_colleges.length > 0 ? form.eligible_colleges : undefined,
-        eligible_programs:  form.eligible_programs.length > 0 ? form.eligible_programs : undefined,
-        amount_raw:         form.amount_raw ? parseInt(form.amount_raw) : undefined,
-        period:             form.period || undefined,
-        scholarship_type:   form.scholarship_type || undefined,
-        eligibility_text:   form.eligibility_text || undefined,
-        cover_image_url:    form.cover_image_url || undefined,
-        requirements:       form.requirements.map(r => ({ name: r.name, description: r.description, is_required: r.is_required })),
+        name:                      form.name,
+        description:               form.description || undefined,
+        slots:                     parseInt(form.slots) || undefined,
+        deadline:                  form.deadline ? new Date(form.deadline).toISOString() : undefined,
+        eligible_colleges:         form.eligible_colleges.length > 0 ? form.eligible_colleges : undefined,
+        eligible_programs:         form.eligible_programs.length > 0 ? form.eligible_programs : undefined,
+        amount_raw:                form.amount_raw ? parseInt(form.amount_raw) : undefined,
+        period:                    form.period || undefined,
+        scholarship_type:          form.scholarship_type || undefined,
+        eligibility_text:          form.eligibility_text || undefined,
+        cover_image_url:           form.cover_image_url || undefined,
+        requirements:              form.requirements.map(r => ({ name: r.name, description: r.description, is_required: r.is_required })),
+        max_semesters:             form.max_semesters ? parseInt(form.max_semesters) : null,
+        requires_thank_you_letter: form.requires_thank_you_letter,
       };
 
       if (editingId) {
@@ -198,6 +225,10 @@ export default function Page() {
         addToast('success', `"${form.name}" updated successfully.`);
       } else {
         const created = await scholarshipApi.create(data);
+        // Seed default compliance doc types for new scholarships
+        await Promise.allSettled(
+          DEFAULT_COMPLIANCE_DOCS.map(d => scholarshipApi.addComplianceDoc(created.id, { ...d, description: undefined }))
+        );
         if (publishNow) {
           const published = await scholarshipApi.updateStatus(created.id, 'active');
           setScholarships(prev => [published, ...prev]);
@@ -273,8 +304,35 @@ export default function Page() {
     }
   }
 
-  function setField(key: keyof typeof EMPTY_FORM, value: string | string[]) {
+  function setField(key: keyof typeof EMPTY_FORM, value: string | string[] | boolean) {
     setForm(prev => ({ ...prev, [key]: value }));
+  }
+
+  async function handleAddComplianceDoc() {
+    if (!complianceScholarId || !complianceNewName.trim()) return;
+    setComplianceSaving(true);
+    try {
+      const doc = await scholarshipApi.addComplianceDoc(complianceScholarId, {
+        name: complianceNewName.trim(),
+        is_required: complianceNewReq,
+        order: complianceDocs.length + 1,
+      });
+      setComplianceDocs(prev => [...prev, doc]);
+      setComplianceNewName('');
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Failed to add document type.');
+    } finally {
+      setComplianceSaving(false);
+    }
+  }
+
+  async function handleDeleteComplianceDoc(docId: number) {
+    try {
+      await scholarshipApi.deleteComplianceDoc(docId);
+      setComplianceDocs(prev => prev.filter(d => d.id !== docId));
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Failed to remove document type.');
+    }
   }
 
   function toggleCollege(code: string) {
@@ -634,6 +692,32 @@ export default function Page() {
                 <input type="text" value={form.eligibility_text} onChange={e => setField('eligibility_text', e.target.value)} placeholder="e.g., GWA of 1.75 or better, full-time enrollment" style={inputStyle} />
               </div>
 
+              {/* Max semesters + requires thank-you letter */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={labelStyle}>Max Semesters</label>
+                  <input type="number" min="1" value={form.max_semesters} onChange={e => setField('max_semesters', e.target.value)} placeholder="Leave blank for no limit" style={inputStyle} />
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Maximum number of semesters this scholarship is valid. Leave blank for no limit.</div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Category</label>
+                  <select value={form.category} onChange={e => setField('category', e.target.value)} style={inputStyle}>
+                    <option value="">— Not specified —</option>
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+              </div>
+              {form.category === 'private' && (
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 9, border: `1.5px solid ${form.requires_thank_you_letter ? '#86efac' : '#e5e7eb'}`, background: form.requires_thank_you_letter ? '#f0fdf4' : '#fafafa', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={form.requires_thank_you_letter} onChange={e => setField('requires_thank_you_letter', e.target.checked)} style={{ marginTop: 1, accentColor: '#059669', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: form.requires_thank_you_letter ? '#059669' : '#374151' }}>Requires Thank You Letter</div>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2, lineHeight: 1.4 }}>Scholars must submit a physical thank you letter to OSFA after each semester benefit is released.</div>
+                  </div>
+                </label>
+              )}
+
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <label style={{ ...labelStyle, marginBottom: 0 }}>Eligible Colleges / Departments</label>
@@ -744,6 +828,39 @@ export default function Page() {
                 </div>
               </div>
             </div>
+
+            {/* Compliance document types — shown only when editing an existing scholarship */}
+            {editingId && complianceScholarId === editingId && (
+              <div style={{ padding: '20px 28px', borderTop: '1px solid #e5e7eb', background: '#fafbff' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Compliance Document Types</div>
+                <p style={{ margin: '0 0 12px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                  Documents students must submit once their application reaches the Completion stage.
+                </p>
+                {complianceDocs.length === 0 ? (
+                  <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 12px' }}>No compliance documents configured yet.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                    {complianceDocs.map(doc => (
+                      <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 20, background: doc.is_required ? '#fff5f5' : '#f3f4f6', color: doc.is_required ? TEAL : '#6b7280' }}>{doc.is_required ? 'Required' : 'Optional'}</span>
+                        <span style={{ flex: 1, fontSize: 13, color: '#374151' }}>{doc.name}</span>
+                        <button onClick={() => handleDeleteComplianceDoc(doc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: 11, fontWeight: 600 }}>Remove</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input type="text" value={complianceNewName} onChange={e => setComplianceNewName(e.target.value)} placeholder="Document name (e.g. Scholarship Agreement)" style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 11px', fontSize: 13, outline: 'none', minWidth: 180 }} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <input type="checkbox" checked={complianceNewReq} onChange={e => setComplianceNewReq(e.target.checked)} style={{ accentColor: TEAL }} /> Required
+                  </label>
+                  <button onClick={handleAddComplianceDoc} disabled={complianceSaving || !complianceNewName.trim()}
+                    style={{ padding: '8px 16px', background: complianceNewName.trim() ? TEAL : '#9ca3af', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: complianceNewName.trim() ? 'pointer' : 'not-allowed' }}>
+                    + Add
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div style={{ padding: '18px 28px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 10, background: '#fafafa', flexWrap: 'wrap' }}>
               <button onClick={() => setShowForm(false)} style={{ padding: '10px 22px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
