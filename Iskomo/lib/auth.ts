@@ -1,4 +1,4 @@
-import { apiFetch, setAccessToken, clearAccessToken } from './api';
+import { apiFetch, setAccessToken, clearAccessToken, setCsrfToken, clearCsrfToken } from './api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -71,8 +71,9 @@ export async function login(email: string, password: string, rememberMe = false)
     throw new Error(msg || 'Invalid email or password');
   }
 
-  const { access_token } = await res.json();
-  setAccessToken(access_token);
+  const data = await res.json();
+  if (data.csrf_token) setCsrfToken(data.csrf_token);
+  setAccessToken(data.access_token);
 
   const user = await getMe();
   const secure = location.protocol === 'https:' ? '; Secure' : '';
@@ -88,6 +89,7 @@ export async function logout(): Promise<void> {
     method: 'POST',
     credentials: 'include',
   }).catch(() => {});
+  clearCsrfToken();
   clearAccessToken();
   document.cookie = 'role=; path=/; max-age=0';
   document.cookie = 'department=; path=/; max-age=0';

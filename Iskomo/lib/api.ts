@@ -91,8 +91,15 @@ function clearAccessToken() {
 
 function getCsrfToken(): string | null {
   if (typeof window === 'undefined') return null;
-  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
+  return localStorage.getItem('csrf_token');
+}
+
+function setCsrfToken(token: string) {
+  if (typeof window !== 'undefined') localStorage.setItem('csrf_token', token);
+}
+
+function clearCsrfToken() {
+  if (typeof window !== 'undefined') localStorage.removeItem('csrf_token');
 }
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -104,6 +111,7 @@ async function refreshAccessToken(): Promise<string | null> {
   });
   if (!res.ok) return null;
   const data = await res.json();
+  if (data.csrf_token) setCsrfToken(data.csrf_token);
   setAccessToken(data.access_token);
   return data.access_token;
 }
@@ -172,4 +180,4 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   return res.json();
 }
 
-export { getAccessToken, setAccessToken, clearAccessToken, BASE_URL };
+export { getAccessToken, setAccessToken, clearAccessToken, setCsrfToken, clearCsrfToken, BASE_URL };
