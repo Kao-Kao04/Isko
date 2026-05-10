@@ -73,10 +73,7 @@ export default function Page() {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px' }}>
-      <style>{`
-        @media (max-width: 600px) { .profile-grid { grid-template-columns: 1fr !important; } }
-        .gwa-input:focus { border-color: ${M} !important; box-shadow: 0 0 0 3px ${M}18 !important; }
-      `}</style>
+      <style>{`.gwa-input:focus { border-color: ${M} !important; box-shadow: 0 0 0 3px ${M}18 !important; }`}</style>
 
       {/* Avatar card */}
       <div style={{ background: `linear-gradient(135deg, ${M} 0%, ${MD} 60%, #C9A027 100%)`, borderRadius: 18, padding: '28px 28px 24px', marginBottom: 20, position: 'relative', overflow: 'hidden' }}>

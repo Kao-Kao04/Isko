@@ -97,11 +97,6 @@ export default function ApplicationsPage() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
       <style>{`
-        @media (max-width: 768px) {
-          .apps-grid { grid-template-columns: 1fr !important; }
-          .apps-sidebar { display: none !important; }
-          .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
         .app-card-action:hover { opacity: 0.85; }
         .app-card-row:hover { background: #fafafa !important; }
       `}</style>
@@ -207,7 +202,7 @@ export default function ApplicationsPage() {
                             </p>
                           )}
                         </div>
-                        <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'flex-start' }}>
+                        <div className="app-actions" style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'flex-start' }}>
                           {['pending', 'incomplete'].includes(app.status) && (
                             <button onClick={() => setWithdrawTarget(app.id)} className="app-card-action" style={{ background: 'none', border: '1px solid #fca5a5', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#dc2626', transition: 'opacity 0.15s' }}>
                               Withdraw
