@@ -660,8 +660,10 @@ export const workflowApi = {
     }),
   openScheduling: (id: number) =>
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/open-scheduling`, { method: 'POST' }),
-  completeInterview: (id: number) =>
-    apiFetch<WorkflowResponse>(`/api/workflow/${id}/complete-interview`, { method: 'POST' }),
+  completeInterview: (id: number, notes?: string) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/complete-interview`, {
+      method: 'POST', body: JSON.stringify({ notes }),
+    }),
   evaluate: (id: number, data: { score?: number; notes?: string }) =>
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/evaluate`, {
       method: 'POST', body: JSON.stringify(data),
