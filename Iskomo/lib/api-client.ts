@@ -327,6 +327,7 @@ export interface ScholarResponse {
     gwa: string | null;
     is_enrolled: boolean;
     notes: string | null;
+    has_grade_below_2_5: boolean;
     created_at: string;
   }>;
   status_logs: ScholarStatusLog[];
@@ -351,13 +352,15 @@ export const scholarApi = {
       }),
     }),
 
-  addSemesterRecord: (scholarId: number, data: { semester: string; academic_year: string; gwa?: string; is_enrolled?: boolean; notes?: string }) =>
+  get: (id: number) => apiFetch<ScholarResponse>(`/api/scholars/${id}`),
+
+  addSemesterRecord: (scholarId: number, data: { semester: string; academic_year: string; gwa?: string; is_enrolled?: boolean; notes?: string; has_grade_below_2_5?: boolean }) =>
     apiFetch<ScholarResponse['semester_records'][0]>(`/api/scholars/${scholarId}/semester-records`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  updateSemesterRecord: (scholarId: number, recordId: number, data: { gwa?: string; is_enrolled?: boolean; notes?: string }) =>
+  updateSemesterRecord: (scholarId: number, recordId: number, data: { gwa?: string; is_enrolled?: boolean; notes?: string; has_grade_below_2_5?: boolean }) =>
     apiFetch<ScholarResponse['semester_records'][0]>(`/api/scholars/${scholarId}/semester-records/${recordId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -503,7 +506,7 @@ export interface ScholarshipBreakdown {
   slots: number | null;
   total_applications: number;
   approved: number;
-  pending: number;
+  in_progress: number;
   rejected: number;
 }
 

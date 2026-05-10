@@ -27,7 +27,7 @@ interface AdminStats {
   students:     { total: number; pending_verification: number; verified: number; rejected: number; unregistered: number };
   staff:        { total: number; active: number };
   scholarships: { total: number; active: number; draft: number; archived: number };
-  applications: { total: number; pending: number; approved: number; rejected: number; withdrawn: number };
+  applications: { total: number; in_progress: number; approved: number; rejected: number; withdrawn: number };
 }
 
 interface AdminStudent {
@@ -409,7 +409,7 @@ export default function AdminPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {[
                     { label: 'Total',    value: stats.applications.total,    color: '#374151' },
-                    { label: 'Pending',  value: stats.applications.pending,  color: '#d97706' },
+                    { label: 'In Progress', value: stats.applications.in_progress, color: '#d97706' },
                     { label: 'Approved', value: stats.applications.approved, color: '#059669' },
                     { label: 'Rejected', value: stats.applications.rejected, color: '#dc2626' },
                   ].map(s => (
