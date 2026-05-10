@@ -245,6 +245,13 @@ export default function Page() {
                       </span>
                     </div>
                   </div>
+                  {/* Email confirmation notice for rejected / incomplete applications */}
+                  {(latestApp.status === 'rejected' || latestApp.status === 'incomplete') && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '7px 10px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      <span style={{ fontSize: 11, color: '#64748b' }}>A confirmation email has been sent to your registered email address.</span>
+                    </div>
+                  )}
                   {applications.filter(a => a.status !== 'withdrawn').length > 1 && (
                     <div style={{ fontSize: 11, color: '#6b7280', textAlign: 'center', padding: '4px 0' }}>
                       +{applications.filter(a => a.status !== 'withdrawn').length - 1} more application{applications.filter(a => a.status !== 'withdrawn').length > 2 ? 's' : ''}

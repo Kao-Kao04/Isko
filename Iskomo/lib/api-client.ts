@@ -293,7 +293,23 @@ export const applicationApi = {
 
 // ─── Scholar API ──────────────────────────────────────────────────────────────
 
-export type ScholarStatus = 'active' | 'probationary' | 'terminated' | 'graduated';
+export type ScholarStatus =
+  | 'active'
+  | 'probationary'
+  | 'under_review'
+  | 'on_leave'
+  | 'suspended'
+  | 'terminated'
+  | 'graduated';
+
+export interface ScholarStatusLog {
+  id: number;
+  from_status: string | null;
+  to_status: string;
+  actor_id: number | null;
+  reason: string | null;
+  created_at: string;
+}
 
 export interface ScholarResponse {
   id: number;
@@ -313,6 +329,7 @@ export interface ScholarResponse {
     notes: string | null;
     created_at: string;
   }>;
+  status_logs: ScholarStatusLog[];
 }
 
 export const scholarApi = {
@@ -323,10 +340,15 @@ export const scholarApi = {
       `/api/scholars?page=${page}&page_size=${pageSize}`
     ),
 
-  updateStatus: (id: number, status: ScholarStatus, isGraduating?: boolean, expectedGraduation?: string) =>
+  updateStatus: (id: number, status: ScholarStatus, options?: { reason?: string; isGraduating?: boolean; expectedGraduation?: string }) =>
     apiFetch<ScholarResponse>(`/api/scholars/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status, is_graduating: isGraduating, expected_graduation: expectedGraduation }),
+      body: JSON.stringify({
+        status,
+        reason:             options?.reason,
+        is_graduating:      options?.isGraduating,
+        expected_graduation: options?.expectedGraduation,
+      }),
     }),
 
   addSemesterRecord: (scholarId: number, data: { semester: string; academic_year: string; gwa?: string; is_enrolled?: boolean; notes?: string }) =>

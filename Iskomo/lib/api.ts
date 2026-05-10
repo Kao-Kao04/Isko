@@ -151,7 +151,19 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       throw new Error('Too many requests. Please wait a minute before trying again.');
     }
 
+    // 5xx — don't try to parse body, show a generic server-error message
+    if (res.status >= 500) {
+      throw new Error('Something went wrong on our end. Please try again shortly.');
+    }
+
     const body = await res.json().catch(() => ({} as Record<string, unknown>));
+
+    // 403 CSRF_INVALID — session has expired, redirect immediately
+    if (res.status === 403 && (body as Record<string, unknown>).code === 'CSRF_INVALID') {
+      if (typeof window !== 'undefined') window.location.href = '/login?reason=session_expired';
+      throw new Error('Your session expired. Please log in again.');
+    }
+
     const raw  = parseErrorBody(body as Record<string, unknown>, res.status);
     throw new Error(mapError(raw));
   }
