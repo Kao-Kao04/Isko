@@ -81,6 +81,14 @@ function clearAccessToken() {
   document.cookie = 'access_token=; path=/; max-age=0; SameSite=Strict';
 }
 
+function getCsrfToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+const CSRF_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
+
 async function refreshAccessToken(): Promise<string | null> {
   const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
     method: 'POST',
@@ -102,6 +110,12 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
+  const method = (options.method ?? 'GET').toUpperCase();
+  if (CSRF_METHODS.has(method)) {
+    const csrf = getCsrfToken();
+    if (csrf) headers['X-CSRF-Token'] = csrf;
+  }
+
   let res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
 
   // ── 401: try refresh, then retry once ──────────────────────────────────────
@@ -109,6 +123,11 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
+      // Re-read CSRF token in case it rotated alongside the access token
+      if (CSRF_METHODS.has(method)) {
+        const csrf = getCsrfToken();
+        if (csrf) headers['X-CSRF-Token'] = csrf;
+      }
       res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
     } else {
       clearAccessToken();
