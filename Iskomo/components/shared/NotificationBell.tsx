@@ -7,7 +7,9 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getAccessToken } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
 
-const WS_BASE = 'wss://web-production-c85b3c.up.railway.app/ws/notifications';
+// Derive WS URL from the same env var the rest of the app uses
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const WS_BASE  = API_BASE.replace(/^http/, 'ws') + '/ws/notifications';
 
 const MAROON = COLORS.maroon;
 
@@ -55,15 +57,27 @@ export default function NotificationBell() {
 
   // WebSocket for real-time notifications
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) return;
-
     let dead = false;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let consecutiveFails = 0;
+    let connectTime = 0;
+
+    const MAX_CONSECUTIVE_FAILS = 5;
+    // Immediate close (<500ms after connecting) = server rejection (403/401) — stop retrying
+    const IMMEDIATE_CLOSE_MS = 500;
 
     function connect() {
+      // Always grab the freshest token on each attempt
+      const token = getAccessToken();
+      if (!token || dead) return;
+
+      connectTime = Date.now();
       const ws = new WebSocket(`${WS_BASE}?token=${token}`);
       wsRef.current = ws;
+
+      ws.onopen = () => {
+        consecutiveFails = 0; // reset backoff counter on success
+      };
 
       ws.onmessage = (e) => {
         try {
@@ -75,7 +89,18 @@ export default function NotificationBell() {
       };
 
       ws.onclose = () => {
-        if (!dead) retryTimer = setTimeout(connect, 5000);
+        if (dead) return;
+
+        const elapsed = Date.now() - connectTime;
+        consecutiveFails++;
+
+        // Stop retrying on permanent rejection (immediate close = 403/401/blacklisted)
+        // or after too many consecutive failures
+        if (elapsed < IMMEDIATE_CLOSE_MS || consecutiveFails >= MAX_CONSECUTIVE_FAILS) return;
+
+        // Exponential backoff: 5s → 10s → 20s → 40s → 40s
+        const delay = Math.min(5000 * Math.pow(2, consecutiveFails - 1), 40_000);
+        retryTimer = setTimeout(connect, delay);
       };
 
       ws.onerror = () => ws.close();
