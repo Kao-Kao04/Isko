@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { applicationApi, scholarshipApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type ScholarshipResponse, type DocumentResponse, type WorkflowResponse } from '@/lib/api-client';
+import { applicationApi, scholarshipApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type ScholarshipResponse, type DocumentResponse, type WorkflowResponse, type ComplianceSubmission, type ComplianceDocType } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
 import { MAIN_STAGES, STAGE_LABEL, SUB_STATUS_LABEL, stageIndex, isTerminal, formatInterviewDt } from '@/lib/workflow';
@@ -100,6 +100,9 @@ export default function ApplicantProfilePage() {
   const [appealSaving, setAppealSaving] = useState(false);
   const [documents,    setDocuments]    = useState<DocumentResponse[]>([]);
   const [docsLoading,  setDocsLoading]  = useState(false);
+  const [compliance,   setCompliance]   = useState<ComplianceSubmission[]>([]);
+  const [complianceDocTypes, setComplianceDocTypes] = useState<ComplianceDocType[]>([]);
+  const [complianceVerifying, setComplianceVerifying] = useState<number | null>(null);
 
   async function handleReviewAppeal(approved: boolean) {
     if (!app) return;
@@ -186,6 +189,11 @@ export default function ApplicantProfilePage() {
       ]);
       setAudit(aud);
       setScholarship(sch);
+      // Load compliance data at completion stage
+      if (wf?.main_status === 'COMPLETION') {
+        applicationApi.getCompliance(numId).then(setCompliance).catch(() => {});
+        scholarshipApi.listComplianceDocs(a.scholarship_id).then(setComplianceDocTypes).catch(() => {});
+      }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
@@ -775,6 +783,110 @@ export default function ApplicantProfilePage() {
               </div>
             )}
           </div>
+
+          {/* Compliance Documents — visible when at COMPLETION stage */}
+          {workflow?.main_status === 'COMPLETION' && (() => {
+            const requiredTypes = complianceDocTypes.filter(d => d.is_required);
+            const allVerified = requiredTypes.length > 0 && requiredTypes.every(d =>
+              compliance.some(c => c.requirement_type === d.name && c.is_verified)
+            );
+            return (
+              <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${allVerified ? '#86efac' : '#bfdbfe'}`, padding: '24px 28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <h3 style={{ ...sectionTitle, margin: 0 }}>Compliance Documents</h3>
+                  <span style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 700, padding: '3px 12px', borderRadius: 20, background: allVerified ? '#dcfce7' : '#eff6ff', color: allVerified ? '#15803d' : '#1d4ed8' }}>
+                    {compliance.filter(c => c.is_verified).length} / {requiredTypes.length} verified
+                  </span>
+                </div>
+
+                {complianceDocTypes.length === 0 ? (
+                  <p style={{ fontSize: 13, color: '#9ca3af' }}>No compliance document types configured for this scholarship.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {complianceDocTypes.map(docType => {
+                      const submitted = compliance.find(c => c.requirement_type === docType.name);
+                      const isVerified = submitted?.is_verified;
+                      return (
+                        <div key={docType.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, background: isVerified ? '#f0fdf4' : submitted ? '#eff6ff' : '#f9fafb', border: `1px solid ${isVerified ? '#86efac' : submitted ? '#bfdbfe' : '#f3f4f6'}` }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: isVerified ? '#dcfce7' : submitted ? '#dbeafe' : '#e5e7eb' }}>
+                            {isVerified
+                              ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                              : submitted
+                              ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+                              {docType.name}
+                              <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: docType.is_required ? '#dc2626' : '#9ca3af' }}>{docType.is_required ? 'Required' : 'Optional'}</span>
+                            </div>
+                            {submitted && (
+                              <div style={{ fontSize: 11, color: isVerified ? '#15803d' : '#1d4ed8', marginTop: 2 }}>
+                                {isVerified
+                                  ? `Verified${submitted.verified_at ? ` · ${new Date(submitted.verified_at).toLocaleDateString()}` : ''}`
+                                  : `Submitted · awaiting verification`}
+                              </div>
+                            )}
+                          </div>
+                          {submitted && !isVerified && !wrongDept && (
+                            <button
+                              disabled={complianceVerifying === submitted.id}
+                              onClick={async () => {
+                                setComplianceVerifying(submitted.id);
+                                try {
+                                  const updated = await applicationApi.verifyCompliance(app.id, submitted.id);
+                                  setCompliance(prev => prev.map(c => c.id === updated.id ? updated : c));
+                                  addToast('success', `"${docType.name}" verified.`);
+                                } catch (err) {
+                                  addToast('error', err instanceof Error ? err.message : 'Failed to verify.');
+                                } finally {
+                                  setComplianceVerifying(null);
+                                }
+                              }}
+                              style={{ padding: '6px 14px', border: 'none', borderRadius: 8, background: complianceVerifying === submitted.id ? '#9ca3af' : '#059669', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                              {complianceVerifying === submitted.id ? 'Verifying…' : 'Verify ✓'}
+                            </button>
+                          )}
+                          {isVerified && (
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#15803d', padding: '3px 10px', borderRadius: 20, background: '#dcfce7', flexShrink: 0 }}>Verified</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {allVerified && !wrongDept && (
+                  <div style={{ marginTop: 16, padding: '14px 18px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ fontSize: 13, color: '#166534', fontWeight: 600 }}>All required documents verified — ready to finalize.</div>
+                    <button onClick={() => doWorkflowAction(() => workflowApi.finalize(Number(id)), 'Application finalized.')}
+                      style={{ padding: '8px 20px', background: '#059669', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                      Finalize Application
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Generate Documents */}
+          {workflow?.main_status === 'COMPLETION' && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 24px' }}>
+              <h3 style={{ ...sectionTitle, marginBottom: 12 }}>Generate Documents</h3>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <a href={applicationApi.documentUrl(app.id, 'confirmation-letter')} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Confirmation Letter
+                </a>
+                <a href={applicationApi.documentUrl(app.id, 'terms')} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Terms & Conditions
+                </a>
+              </div>
+            </div>
+          )}
 
           {/* Requirements checklist */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px' }}>

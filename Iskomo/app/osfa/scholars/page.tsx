@@ -297,8 +297,56 @@ export default function Page() {
                         </div>
                         {r.has_grade_below_2_5 && (
                           <div style={{ display: 'inline-block', marginTop: 3, padding: '1px 7px', borderRadius: 20, background: '#fef2f2', color: '#dc2626', fontSize: 10, fontWeight: 700, border: '1px solid #fecaca' }}>
-                            Has Low Grade
+                            ⚠ Low Grade
                           </div>
+                        )}
+                        {/* Benefit status */}
+                        {r.benefit_released ? (
+                          <div style={{ fontSize: 10, color: '#059669', fontWeight: 700, marginTop: 2 }}>
+                            Benefit Released {r.benefit_released_at ? `· ${new Date(r.benefit_released_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+                          </div>
+                        ) : (
+                          ['active', 'probationary'].includes(scholar.status) && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const updated = await scholarApi.releaseBenefit(scholar.id, r.id);
+                                  setScholars(prev => prev.map(s => s.id === scholar.id
+                                    ? { ...s, semester_records: s.semester_records.map(sr => sr.id === updated.id ? updated : sr) }
+                                    : s
+                                  ));
+                                  addToast('success', `Benefit released for ${r.semester} ${r.academic_year}.`);
+                                } catch (err) {
+                                  addToast('error', err instanceof Error ? err.message : 'Failed to release benefit.');
+                                }
+                              }}
+                              style={{ marginTop: 4, padding: '2px 8px', border: '1px solid #86efac', borderRadius: 6, background: '#f0fdf4', color: '#15803d', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
+                              Release Benefit
+                            </button>
+                          )
+                        )}
+                        {/* Thank-you letter status — only if scholarship requires it */}
+                        {r.thank_you_submitted ? (
+                          <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>
+                            Thank you letter confirmed {r.thank_you_submitted_at ? `· ${new Date(r.thank_you_submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+                          </div>
+                        ) : r.benefit_released && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const updated = await scholarApi.confirmThankYou(scholar.id, r.id);
+                                setScholars(prev => prev.map(s => s.id === scholar.id
+                                  ? { ...s, semester_records: s.semester_records.map(sr => sr.id === updated.id ? updated : sr) }
+                                  : s
+                                ));
+                                addToast('success', 'Thank you letter confirmed.');
+                              } catch (err) {
+                                addToast('error', err instanceof Error ? err.message : 'Failed to confirm letter.');
+                              }
+                            }}
+                            style={{ marginTop: 4, padding: '2px 8px', border: '1px solid #d8b4fe', borderRadius: 6, background: '#faf5ff', color: '#7c3aed', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
+                            Confirm Physical Letter
+                          </button>
                         )}
                         {r.notes && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{r.notes}</div>}
                       </div>
