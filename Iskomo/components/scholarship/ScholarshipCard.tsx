@@ -190,7 +190,7 @@ export default function ScholarshipCard({
         )}
 
         {/* Deadline */}
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 10 }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600,
             background: s.urgency === 'critical' ? '#fef2f2' : s.urgency === 'warning' ? '#fffbeb' : '#f0fdf4',
@@ -202,6 +202,26 @@ export default function ScholarshipCard({
             Deadline: {s.deadline}
           </span>
         </div>
+
+        {/* Max semesters + thank-you letter */}
+        {(s.maxSemesters || s.requiresThankYouLetter) && (
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 12 }}>
+            {s.maxSemesters ? (
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#0369a1', background: '#e0f2fe', padding: '2px 8px', borderRadius: 20, border: '1px solid #bae6fd' }}>
+                Valid for {s.maxSemesters} semester{s.maxSemesters !== 1 ? 's' : ''}
+              </span>
+            ) : (
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', background: '#f3f4f6', padding: '2px 8px', borderRadius: 20 }}>
+                No semester limit
+              </span>
+            )}
+            {s.requiresThankYouLetter && (
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#7c3aed', background: '#f5f3ff', padding: '2px 8px', borderRadius: 20, border: '1px solid #ddd6fe' }}>
+                Requires Thank You Letter
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Action footer */}

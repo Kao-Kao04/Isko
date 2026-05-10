@@ -37,7 +37,9 @@ export function mapScholarship(s: ScholarshipResponse): Scholarship {
     yearLevels:  s.eligible_year_levels ?? [],
     minGwa:      s.min_gwa ?? undefined,
     coverImage:  s.cover_image_url ?? undefined,
-    category:    (s.category ?? 'public') as 'public' | 'private',
+    category:               (s.category ?? 'public') as 'public' | 'private',
+    maxSemesters:           s.max_semesters ?? null,
+    requiresThankYouLetter: s.requires_thank_you_letter,
     requirements: s.requirements.map(r => ({
       id:       String(r.id),
       label:    r.name,

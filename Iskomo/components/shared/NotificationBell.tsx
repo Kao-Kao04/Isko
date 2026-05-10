@@ -88,14 +88,22 @@ export default function NotificationBell() {
         } catch { /* ignore malformed frames */ }
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         if (dead) return;
+
+        // 4003 = server-sent Forbidden (revoked token, blacklisted, no permission)
+        // Clear auth and redirect to login immediately — retrying won't help
+        if (event.code === 4003) {
+          dead = true;
+          window.location.href = '/login?reason=session_expired';
+          return;
+        }
 
         const elapsed = Date.now() - connectTime;
         consecutiveFails++;
 
         // Stop retrying on permanent rejection (immediate close = 403/401/blacklisted)
-        // or after too many consecutive failures
+        // or after too many consecutive failures — fall back to HTTP polling silently
         if (elapsed < IMMEDIATE_CLOSE_MS || consecutiveFails >= MAX_CONSECUTIVE_FAILS) return;
 
         // Exponential backoff: 5s → 10s → 20s → 40s → 40s
