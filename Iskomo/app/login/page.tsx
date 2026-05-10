@@ -156,7 +156,7 @@ function LoginPageInner() {
     // Domain check
     const domain = signupEmail.split('@')[1]?.toLowerCase();
     if (!domain || !ALLOWED_DOMAINS.includes(domain)) {
-      setSignupError('Only @iskolarngbayan.pup.edu.ph and @gmail.com email addresses are accepted.');
+      setSignupError('Only @iskolarngbayan.pup.edu.ph and @gmail.com email addresses are allowed.');
       return;
     }
 
@@ -417,38 +417,42 @@ function LoginPageInner() {
                         </button>
                       </div>
 
-                      {/* ── Password strength ── */}
-                      {signupPassword.length > 0 && (() => {
+                      {/* ── Password requirements (always visible) ── */}
+                      {(() => {
                         const hasLen     = signupPassword.length >= 8;
                         const hasUpper   = /[A-Z]/.test(signupPassword);
                         const hasSpecial = /[^a-zA-Z0-9]/.test(signupPassword);
                         const score      = [hasLen, hasUpper, hasSpecial].filter(Boolean).length;
-                        const strength   = score <= 1
+                        const strength   = score === 0
+                          ? { label: '',       color: '#e5e7eb' }
+                          : score <= 1
                           ? { label: 'Weak',   color: '#ef4444' }
                           : score === 2
                           ? { label: 'Fair',   color: '#f59e0b' }
                           : { label: 'Strong', color: '#16a34a' };
                         return (
                           <div style={{ marginTop: 10 }}>
-                            {/* Bar */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                              {[1, 2, 3].map(i => (
-                                <div key={i} style={{ flex: 1, height: 4, borderRadius: 4, background: score >= i ? strength.color : '#e5e7eb', transition: 'background 0.2s' }} />
-                              ))}
-                              <span style={{ fontSize: 11, fontWeight: 700, color: strength.color, minWidth: 38, textAlign: 'right' }}>{strength.label}</span>
-                            </div>
-                            {/* Requirements */}
+                            {/* Strength bar — only render when user has started typing */}
+                            {signupPassword.length > 0 && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                                {[1, 2, 3].map(i => (
+                                  <div key={i} style={{ flex: 1, height: 4, borderRadius: 4, background: score >= i ? strength.color : '#e5e7eb', transition: 'background 0.2s' }} />
+                                ))}
+                                <span style={{ fontSize: 11, fontWeight: 700, color: strength.color, minWidth: 38, textAlign: 'right' }}>{strength.label}</span>
+                              </div>
+                            )}
+                            {/* Requirements checklist — always shown */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                               {[
                                 { met: hasLen,     label: 'At least 8 characters' },
                                 { met: hasUpper,   label: 'One uppercase letter (A–Z)' },
-                                { met: hasSpecial, label: 'One special character (!@#$…)' },
+                                { met: hasSpecial, label: 'One special character (!@#$%^&*)' },
                               ].map(({ met, label }) => (
                                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: met ? '#16a34a' : '#9ca3af' }}>
                                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                     {met
                                       ? <polyline points="20 6 9 17 4 12"/>
-                                      : <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>}
+                                      : <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>}
                                   </svg>
                                   {label}
                                 </div>

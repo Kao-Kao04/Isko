@@ -66,6 +66,9 @@ export default function ApplicationDetailPage() {
   const [resubmitError, setResubmitError] = useState('');
   const [newFiles,      setNewFiles]      = useState<Record<string, File>>({});
   const [newFileNames,  setNewFileNames]  = useState<Record<string, string>>({});
+  const [docCount,      setDocCount]      = useState(0);
+
+  const DOC_LIMIT = 20;
 
   useEffect(() => {
     const numId = Number(id);
@@ -73,10 +76,12 @@ export default function ApplicationDetailPage() {
       applicationApi.get(numId),
       workflowApi.get(numId).catch(() => null),
       applicationApi.getAudit(numId).catch(() => [] as AuditEntryResponse[]),
-    ]).then(([a, wf, aud]) => {
+      documentApi.list(numId).catch(() => [] as { id: number }[]),
+    ]).then(([a, wf, aud, docs]) => {
       setApp(a);
       if (wf) setWorkflow(wf);
       setAudit(aud);
+      setDocCount(docs.length);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
@@ -450,9 +455,17 @@ export default function ApplicationDetailPage() {
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                   </div>
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Action Required — Upload Missing Documents</div>
                     <div style={{ fontSize: 12, color: '#6b7280' }}>Upload the files below, then click Resubmit.</div>
+                  </div>
+                  <div style={{
+                    fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 20,
+                    background: docCount >= DOC_LIMIT ? '#fef2f2' : '#f3f4f6',
+                    color: docCount >= DOC_LIMIT ? '#dc2626' : '#6b7280',
+                    flexShrink: 0,
+                  }}>
+                    {docCount} / {DOC_LIMIT} docs
                   </div>
                 </div>
 
@@ -472,12 +485,27 @@ export default function ApplicationDetailPage() {
                           <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 5 }}>
                             {req.name} {req.is_required && <span style={{ color: '#dc2626' }}>*</span>}
                           </label>
-                          <label htmlFor={`doc-${req.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: `2px dashed ${hasFile ? '#ea580c' : '#d1d5db'}`, borderRadius: 9, background: hasFile ? '#fff7ed' : '#fafafa', cursor: 'pointer' }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={hasFile ? '#ea580c' : '#9ca3af'} strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            <span style={{ fontSize: 13, color: hasFile ? '#ea580c' : '#6b7280', fontWeight: hasFile ? 600 : 400 }}>
-                              {hasFile ? `✓ ${newFileNames[req.name]}` : 'Click to upload (PDF, JPG, PNG — max 5MB)'}
+                          <label
+                            htmlFor={`doc-${req.id}`}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                              border: `2px dashed ${hasFile ? '#ea580c' : docCount >= DOC_LIMIT ? '#fca5a5' : '#d1d5db'}`,
+                              borderRadius: 9,
+                              background: hasFile ? '#fff7ed' : docCount >= DOC_LIMIT ? '#fef2f2' : '#fafafa',
+                              cursor: docCount >= DOC_LIMIT ? 'not-allowed' : 'pointer',
+                              opacity: docCount >= DOC_LIMIT && !hasFile ? 0.6 : 1,
+                            }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={hasFile ? '#ea580c' : docCount >= DOC_LIMIT ? '#dc2626' : '#9ca3af'} strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span style={{ fontSize: 13, color: hasFile ? '#ea580c' : docCount >= DOC_LIMIT ? '#dc2626' : '#6b7280', fontWeight: hasFile ? 600 : 400 }}>
+                              {hasFile
+                                ? `✓ ${newFileNames[req.name]}`
+                                : docCount >= DOC_LIMIT
+                                ? 'Upload limit reached (20 documents max)'
+                                : 'Click to upload (PDF, JPG, PNG — max 5MB)'}
                             </span>
-                            <input id={`doc-${req.id}`} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
+                            <input id={`doc-${req.id}`} type="file" accept=".pdf,.jpg,.jpeg,.png"
+                              disabled={docCount >= DOC_LIMIT}
+                              style={{ display: 'none' }}
                               onChange={e => {
                                 const f = e.target.files?.[0];
                                 if (f) {
@@ -504,10 +532,22 @@ export default function ApplicationDetailPage() {
                     setResubmitError('');
                     try {
                       // Upload any new files first
-                      const uploadPromises = Object.entries(newFiles).map(([reqName, file]) =>
-                        documentApi.upload(Number(id), reqName, file)
+                      const uploadEntries = Object.entries(newFiles);
+                      const uploadResults = await Promise.allSettled(
+                        uploadEntries.map(([reqName, file]) => documentApi.upload(Number(id), reqName, file))
                       );
-                      await Promise.allSettled(uploadPromises);
+                      const successCount = uploadResults.filter(r => r.status === 'fulfilled').length;
+                      setDocCount(c => c + successCount);
+                      const limitHit = uploadResults.find(r =>
+                        r.status === 'rejected' &&
+                        r.reason instanceof Error &&
+                        r.reason.message.toLowerCase().includes('maximum 20')
+                      );
+                      if (limitHit) {
+                        setResubmitError('Document limit reached: maximum 20 documents per application. Remove some before uploading more.');
+                        setResubmitting(false);
+                        return;
+                      }
                       // Then resubmit
                       await handleResubmit();
                     } catch (err: unknown) {

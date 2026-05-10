@@ -7,6 +7,7 @@ import { applicationApi, scholarshipApi, documentApi, workflowApi, type Applicat
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
 import { MAIN_STAGES, STAGE_LABEL, SUB_STATUS_LABEL, stageIndex, isTerminal, formatInterviewDt } from '@/lib/workflow';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const TEAL       = COLORS.maroon;
 const TEAL_DARK  = COLORS.maroonD;
@@ -68,6 +69,7 @@ function formatAction(action: string): { label: string; color: string } {
 export default function ApplicantProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { toasts, addToast, removeToast } = useToast();
+  const { user: currentUser } = useCurrentUser();
 
   const [app,         setApp]         = useState<ApplicationResponse | null>(null);
   const [audit,       setAudit]       = useState<AuditEntryResponse[]>([]);
@@ -79,6 +81,7 @@ export default function ApplicantProfilePage() {
   const [actionLoading,        setActionLoading]        = useState(false);
   const [activeDialog,         setActiveDialog]         = useState<string | null>(null);
   const [scheduleForm,         setScheduleForm]         = useState({ datetime: '', location: '', note: '' });
+  const [dateError,            setDateError]            = useState('');
   const [evalForm,             setEvalForm]             = useState({ score: '', notes: '' });
   const [decideForm,           setDecideForm]           = useState({ decision: 'approved', remarks: '' });
   const [revisionNote,         setRevisionNote]         = useState('');
@@ -144,11 +147,21 @@ export default function ApplicantProfilePage() {
       addToast('success', msg);
       setActiveDialog(null);
     } catch (err) {
-      addToast('error', err instanceof Error ? err.message : 'Something went wrong.');
+      const message = err instanceof Error ? err.message : 'Something went wrong.';
+      const isDeptError = message.toLowerCase().includes('department');
+      addToast('error', isDeptError
+        ? "You don't have permission to manage this application"
+        : message);
     } finally {
       setActionLoading(false);
     }
   }
+
+  // Department isolation: super_admin can see all; staff only manage their department's applications
+  // scholarship.category ('public'|'private') maps to the same values as user.department
+  const staffDept = currentUser?.department;
+  const appDept   = scholarship?.category ?? null;
+  const wrongDept = currentUser?.role === 'osfa_staff' && staffDept && appDept && staffDept !== appDept;
 
   useEffect(() => {
     const numId = Number(id);
@@ -469,6 +482,12 @@ export default function ApplicantProfilePage() {
                 actions.push(<button key="finalize" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.finalize(Number(id)), 'Application finalized.')}>Finalize Application</button>);
 
               if (!actions.length) return null;
+              if (wrongDept) return (
+                <div style={{ background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span style={{ fontSize: 13, color: '#92400e', fontWeight: 600 }}>You don&apos;t have permission to manage this application — it belongs to a different department.</span>
+                </div>
+              );
               return (
                 <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px' }}>
                   <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Actions</h3>
@@ -506,7 +525,18 @@ export default function ApplicantProfilePage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Date & Time</label>
-                    <input type="datetime-local" value={scheduleForm.datetime} onChange={e => setScheduleForm(f => ({ ...f, datetime: e.target.value }))} style={inp} />
+                    <input
+                      type="datetime-local"
+                      value={scheduleForm.datetime}
+                      min={new Date().toISOString().slice(0, 16)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setScheduleForm(f => ({ ...f, datetime: val }));
+                        setDateError(val && new Date(val) <= new Date() ? 'Interview date must be in the future.' : '');
+                      }}
+                      style={{ ...inp, borderColor: dateError ? '#fca5a5' : undefined }}
+                    />
+                    {dateError && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{dateError}</p>}
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Location</label>
@@ -520,6 +550,11 @@ export default function ApplicantProfilePage() {
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button style={btn('#fff', TEAL)} onClick={() => {
                     if (!scheduleForm.datetime || !scheduleForm.location) return;
+                    if (new Date(scheduleForm.datetime) <= new Date()) {
+                      setDateError('Interview date must be in the future.');
+                      return;
+                    }
+                    setDateError('');
                     const data = { interview_datetime: new Date(scheduleForm.datetime).toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) };
                     const fn = activeDialog === 'reschedule' ? workflowApi.rescheduleInterview : workflowApi.scheduleInterview;
                     doWorkflowAction(() => fn(Number(id), data), `Interview ${activeDialog === 'reschedule' ? 'rescheduled' : 'scheduled'}.`);

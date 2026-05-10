@@ -12,6 +12,8 @@ const ERROR_MAP: Array<[string, string]> = [
   ['Application is already in a terminal state', 'No further actions available for this application'],
   ['Cannot transition scholarship status',       'This status change is not allowed'],
   ['At least one completion requirement',        'Please add at least one requirement'],
+  ["You can only manage applications for your department", 'Access denied: you can only manage applications for your department'],
+  ['Maximum 20 documents per application',        'Document limit reached: maximum 20 documents per application'],
 ];
 
 function mapError(msg: string): string {
@@ -28,6 +30,12 @@ function mapError(msg: string): string {
 function parseErrorBody(body: Record<string, unknown>, status: number): string {
   // 429 always gets a fixed message regardless of body
   if (status === 429) return 'Too many requests. Please wait a minute before trying again.';
+
+  // 403 — surface the backend message directly so department errors are shown clearly
+  if (status === 403) {
+    if (typeof body.message === 'string' && body.message) return body.message;
+    if (typeof body.detail  === 'string' && body.detail)  return body.detail;
+  }
 
   // New shape: { code, message }
   if (typeof body.code === 'string') {
