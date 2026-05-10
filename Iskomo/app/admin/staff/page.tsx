@@ -161,16 +161,20 @@ export default function AdminPage() {
   }, []);
 
   // ── Audit ──
-  const [auditLogs, setAuditLogs]     = useState<AuditLog[]>([]);
-  const [auditPage, setAuditPage]     = useState(1);
-  const [auditTotal, setAuditTotal]   = useState(0);
+  const [auditLogs, setAuditLogs]       = useState<AuditLog[]>([]);
+  const [auditPage, setAuditPage]       = useState(1);
+  const [auditTotal, setAuditTotal]     = useState(0);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditFetched, setAuditFetched] = useState(false);
+  const [auditFilter, setAuditFilter]   = useState('');
+
+  // TODO: add /api/admin/system-audit tab (for staff/scholarship/broadcast events) in a future sprint
+  const PAGE_SIZE = 50;
 
   const fetchAudit = useCallback(async (page = 1) => {
     setAuditLoading(true);
     try {
-      const res = await apiFetch<{ total: number; page: number; items: AuditLog[] }>(`/api/admin/audit?page=${page}&page_size=20`);
+      const res = await apiFetch<{ total: number; page: number; items: AuditLog[] }>(`/api/admin/audit?page=${page}&page_size=${PAGE_SIZE}`);
       setAuditLogs(res.items);
       setAuditTotal(res.total);
       setAuditFetched(true);
@@ -526,12 +530,31 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── AUDIT LOGS ── */}
+      {/* ── AUDIT LOGS (Application Audit Log — /api/admin/audit) ── */}
       {activeTab === 'audit' && (
         <div>
+          {/* Action filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '9px 14px' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              type="text"
+              value={auditFilter}
+              onChange={e => setAuditFilter(e.target.value)}
+              placeholder="Filter by action type (e.g. approved, rejected, submitted)…"
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#111827', background: 'transparent' }}
+            />
+            {auditFilter && (
+              <button onClick={() => setAuditFilter('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>Clear</button>
+            )}
+          </div>
           {auditLoading ? <Spin /> : auditLogs.length === 0 ? (
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '48px 24px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No audit logs yet.</div>
           ) : (
+            (() => {
+              const displayed = auditFilter
+                ? auditLogs.filter(l => l.action.toLowerCase().includes(auditFilter.toLowerCase()))
+                : auditLogs;
+              return (
             <>
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px 1fr 130px 1fr', padding: '10px 24px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
@@ -539,8 +562,10 @@ export default function AdminPage() {
                     <div key={h} style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</div>
                   ))}
                 </div>
-                {auditLogs.map((log, i) => (
-                  <div key={log.id} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px 1fr 130px 1fr', padding: '11px 24px', borderBottom: i < auditLogs.length - 1 ? '1px solid #f3f4f6' : 'none', alignItems: 'start', fontSize: 12 }}>
+                {displayed.length === 0 ? (
+                  <div style={{ padding: '32px 24px', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>No logs match &ldquo;{auditFilter}&rdquo;.</div>
+                ) : displayed.map((log, i) => (
+                  <div key={log.id} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px 1fr 130px 1fr', padding: '11px 24px', borderBottom: i < displayed.length - 1 ? '1px solid #f3f4f6' : 'none', alignItems: 'start', fontSize: 12 }}>
                     <div style={{ color: '#9ca3af', fontSize: 11 }}>{fmtDt(log.created_at)}</div>
                     <div style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.actor_email}</div>
                     <div style={{ color: log.application_id ? MAROON : '#9ca3af', fontWeight: log.application_id ? 600 : 400 }}>{log.application_id ?? '—'}</div>
@@ -555,14 +580,16 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
-              {auditTotal > 20 && (
+              {auditTotal > PAGE_SIZE && (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
                   <button disabled={auditPage <= 1} onClick={() => { const p = auditPage - 1; setAuditPage(p); fetchAudit(p); }} style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: auditPage <= 1 ? '#f9fafb' : '#fff', color: auditPage <= 1 ? '#9ca3af' : '#374151', fontSize: 13, cursor: auditPage <= 1 ? 'default' : 'pointer' }}>← Prev</button>
-                  <span style={{ fontSize: 12, color: '#6b7280' }}>Page {auditPage} of {Math.ceil(auditTotal / 20)}</span>
-                  <button disabled={auditPage >= Math.ceil(auditTotal / 20)} onClick={() => { const p = auditPage + 1; setAuditPage(p); fetchAudit(p); }} style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: auditPage >= Math.ceil(auditTotal / 20) ? '#f9fafb' : '#fff', color: auditPage >= Math.ceil(auditTotal / 20) ? '#9ca3af' : '#374151', fontSize: 13, cursor: auditPage >= Math.ceil(auditTotal / 20) ? 'default' : 'pointer' }}>Next →</button>
+                  <span style={{ fontSize: 12, color: '#6b7280' }}>Page {auditPage} of {Math.ceil(auditTotal / PAGE_SIZE)}</span>
+                  <button disabled={auditPage >= Math.ceil(auditTotal / PAGE_SIZE)} onClick={() => { const p = auditPage + 1; setAuditPage(p); fetchAudit(p); }} style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: auditPage >= Math.ceil(auditTotal / PAGE_SIZE) ? '#f9fafb' : '#fff', color: auditPage >= Math.ceil(auditTotal / PAGE_SIZE) ? '#9ca3af' : '#374151', fontSize: 13, cursor: auditPage >= Math.ceil(auditTotal / PAGE_SIZE) ? 'default' : 'pointer' }}>Next →</button>
                 </div>
               )}
             </>
+              );
+            })()
           )}
         </div>
       )}

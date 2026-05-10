@@ -6,34 +6,45 @@ import { scholarApi, type ScholarResponse, type ScholarStatus } from '@/lib/api-
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
 
-const TEAL = COLORS.maroon;
+const TEAL      = COLORS.maroon;
 const TEAL_DARK = COLORS.maroonD;
 
 const STATUS_CFG: Record<ScholarStatus, { bg: string; color: string; dot: string; label: string }> = {
-  active:       { bg: '#f0fdf4', color: '#059669', dot: '#10b981', label: 'Scholar' },
+  active:       { bg: '#f0fdf4', color: '#059669', dot: '#10b981', label: 'Active'       },
   probationary: { bg: '#fffbeb', color: '#d97706', dot: '#f59e0b', label: 'Probationary' },
-  terminated:   { bg: '#fef2f2', color: '#dc2626', dot: '#dc2626', label: 'Terminated' },
-  graduated:    { bg: '#f5f3ff', color: '#7c3aed', dot: '#8b5cf6', label: 'Graduated' },
+  under_review: { bg: '#fff7ed', color: '#ea580c', dot: '#f97316', label: 'Under Review' },
+  on_leave:     { bg: '#eff6ff', color: '#2563eb', dot: '#3b82f6', label: 'On Leave'     },
+  suspended:    { bg: '#fef2f2', color: '#b91c1c', dot: '#ef4444', label: 'Suspended'    },
+  terminated:   { bg: '#fef2f2', color: '#dc2626', dot: '#dc2626', label: 'Terminated'   },
+  graduated:    { bg: '#f5f3ff', color: '#7c3aed', dot: '#8b5cf6', label: 'Graduated'    },
 };
 
-const TAB_KEYS: ScholarStatus[] = ['active', 'probationary', 'terminated', 'graduated'];
+const ALL_STATUSES: ScholarStatus[] = ['active', 'probationary', 'under_review', 'on_leave', 'suspended', 'terminated', 'graduated'];
+const REASON_REQUIRED: ScholarStatus[] = ['terminated', 'suspended'];
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 export default function Page() {
   const { toasts, addToast, removeToast } = useToast();
-  const [scholars, setScholars]     = useState<ScholarResponse[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [activeTab, setActiveTab]   = useState<ScholarStatus>('active');
+  const [scholars, setScholars]       = useState<ScholarResponse[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [activeTab, setActiveTab]     = useState<ScholarStatus>('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedHistory, setExpandedHistory] = useState<Set<number>>(new Set());
 
   // Status update modal
-  const [statusModal, setStatusModal] = useState<ScholarResponse | null>(null);
-  const [newStatus, setNewStatus]     = useState<ScholarStatus>('active');
+  const [statusModal, setStatusModal]   = useState<ScholarResponse | null>(null);
+  const [newStatus, setNewStatus]       = useState<ScholarStatus>('active');
+  const [statusReason, setStatusReason] = useState('');
   const [statusSaving, setStatusSaving] = useState(false);
+  const [statusError, setStatusError]   = useState('');
 
   // Semester record modal
-  const [semModal, setSemModal]       = useState<ScholarResponse | null>(null);
-  const [semForm, setSemForm]         = useState({ semester: '1st Semester', academic_year: '2025-2026', gwa: '', notes: '' });
-  const [semSaving, setSemSaving]     = useState(false);
+  const [semModal, setSemModal] = useState<ScholarResponse | null>(null);
+  const [semForm, setSemForm]   = useState({ semester: '1st Semester', academic_year: '2025-2026', gwa: '', notes: '' });
+  const [semSaving, setSemSaving] = useState(false);
 
   const fetchScholars = useCallback(async () => {
     setLoading(true);
@@ -57,23 +68,42 @@ export default function Page() {
 
   useEffect(() => { fetchScholars(); }, [fetchScholars]);
 
-  const counts = TAB_KEYS.reduce((acc, k) => {
-    acc[k] = scholars.filter(s => (s.status as ScholarStatus) === k).length;
+  const counts = ALL_STATUSES.reduce((acc, k) => {
+    acc[k] = scholars.filter(s => s.status === k).length;
     return acc;
   }, {} as Record<ScholarStatus, number>);
 
-  const filtered = scholars.filter(s => (s.status as ScholarStatus) === activeTab);
+  const filtered = scholars.filter(s => {
+    if (s.status !== activeTab) return false;
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return s.scholarship_id.toString().includes(q) || s.student_id.toString().includes(q);
+  });
 
   async function handleStatusUpdate() {
     if (!statusModal) return;
+    if (REASON_REQUIRED.includes(newStatus) && !statusReason.trim()) {
+      setStatusError(`A reason is required when setting status to "${STATUS_CFG[newStatus].label}".`);
+      return;
+    }
     setStatusSaving(true);
+    setStatusError('');
     try {
-      const updated = await scholarApi.updateStatus(statusModal.id, newStatus);
+      const updated = await scholarApi.updateStatus(statusModal.id, newStatus, {
+        reason: statusReason.trim() || undefined,
+      });
       setScholars(prev => prev.map(s => s.id === updated.id ? updated : s));
-      addToast('success', `Scholar status updated to ${STATUS_CFG[newStatus].label}.`);
+      const isTermination = newStatus === 'terminated';
+      addToast('success', isTermination
+        ? 'Scholar status updated. A termination notice has been emailed to the student.'
+        : `Scholar status updated to ${STATUS_CFG[newStatus].label}.`
+      );
       setStatusModal(null);
+      setStatusReason('');
     } catch (err) {
-      addToast('error', err instanceof Error ? err.message : 'Failed to update status.');
+      const msg = err instanceof Error ? err.message : 'Failed to update status.';
+      // Surface state-machine errors directly (e.g. "Cannot transition from X to Y")
+      setStatusError(msg);
     } finally {
       setStatusSaving(false);
     }
@@ -104,8 +134,22 @@ export default function Page() {
     }
   }
 
-  const inp: React.CSSProperties = { width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box' };
-  const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 };
+  function toggleHistory(id: number) {
+    setExpandedHistory(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb',
+    borderRadius: 8, fontSize: 13, color: '#111827', background: '#fff',
+    outline: 'none', boxSizing: 'border-box',
+  };
+  const labelStyle: React.CSSProperties = {
+    display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6,
+  };
 
   if (loading) return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '80px 24px', display: 'flex', justifyContent: 'center' }}>
@@ -130,15 +174,21 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Status tabs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 22 }}>
-        {TAB_KEYS.map(key => {
+      {/* Status tabs — scrollable row for 7 statuses */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 22, overflowX: 'auto', paddingBottom: 4 }}>
+        {ALL_STATUSES.map(key => {
           const cfg = STATUS_CFG[key];
           const active = activeTab === key;
           return (
-            <div key={key} onClick={() => setActiveTab(key)} style={{ background: active ? cfg.bg : '#fff', border: `1px solid ${active ? cfg.dot + '66' : '#e5e7eb'}`, borderRadius: 12, padding: '14px 18px', cursor: 'pointer', transition: 'all 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: active ? cfg.color : '#111827' }}>{counts[key]}</div>
-              <div style={{ fontSize: 12, color: active ? cfg.color : '#6b7280', fontWeight: 600, marginTop: 2 }}>{cfg.label}</div>
+            <div key={key} onClick={() => setActiveTab(key)} style={{
+              background: active ? cfg.bg : '#fff',
+              border: `1px solid ${active ? cfg.dot + '88' : '#e5e7eb'}`,
+              borderRadius: 12, padding: '12px 16px', cursor: 'pointer',
+              transition: 'all 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              flexShrink: 0, minWidth: 100, textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: active ? cfg.color : '#111827' }}>{counts[key]}</div>
+              <div style={{ fontSize: 11, color: active ? cfg.color : '#6b7280', fontWeight: 600, marginTop: 2 }}>{cfg.label}</div>
             </div>
           );
         })}
@@ -147,9 +197,9 @@ export default function Page() {
       {/* Search */}
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'center' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search scholars..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+        <input type="text" placeholder="Search by student or scholarship ID..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
           style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#111827', background: 'transparent' }} />
-        <span style={{ fontSize: 12, color: '#9ca3af' }}>{filtered.filter(s => !searchQuery || s.scholarship_id.toString().includes(searchQuery) || s.student_id.toString().includes(searchQuery)).length} scholars</span>
+        <span style={{ fontSize: 12, color: '#9ca3af' }}>{filtered.length} scholar{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Scholar list */}
@@ -162,8 +212,10 @@ export default function Page() {
             </div>
           </div>
         ) : filtered.map(scholar => {
-          const cfg = STATUS_CFG[scholar.status as ScholarStatus];
+          const cfg = STATUS_CFG[scholar.status];
           const latestRecord = scholar.semester_records.at(-1);
+          const logs = scholar.status_logs ?? [];
+          const historyOpen = expandedHistory.has(scholar.id);
           return (
             <div key={scholar.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
@@ -193,13 +245,17 @@ export default function Page() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => { setSemModal(scholar); }}
+                  {logs.length > 0 && (
+                    <button onClick={() => toggleHistory(scholar.id)}
+                      style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: historyOpen ? '#f3f4f6' : '#fafafa', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      {historyOpen ? 'Hide History' : `History (${logs.length})`}
+                    </button>
+                  )}
+                  <button onClick={() => { setSemModal(scholar); }}
                     style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     + Sem Record
                   </button>
-                  <button
-                    onClick={() => { setStatusModal(scholar); setNewStatus(scholar.status as ScholarStatus); }}
+                  <button onClick={() => { setStatusModal(scholar); setNewStatus(scholar.status); setStatusReason(''); setStatusError(''); }}
                     style={{ padding: '7px 14px', border: `1px solid ${TEAL}33`, borderRadius: 8, background: '#fff5f5', color: TEAL, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     Update Status
                   </button>
@@ -209,7 +265,7 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* Semester records mini-table */}
+              {/* Semester records */}
               {scholar.semester_records.length > 0 && (
                 <div style={{ borderTop: '1px solid #f3f4f6', padding: '10px 20px', background: '#fafafa' }}>
                   <div style={{ display: 'flex', gap: 0, flexWrap: 'wrap' }}>
@@ -225,6 +281,45 @@ export default function Page() {
                   </div>
                 </div>
               )}
+
+              {/* Status History timeline */}
+              {historyOpen && logs.length > 0 && (
+                <div style={{ borderTop: '1px solid #f3f4f6', padding: '14px 20px', background: '#fafbff' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Status History</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {[...logs].reverse().map((log, i) => {
+                      const toCfg  = STATUS_CFG[log.to_status as ScholarStatus] ?? { color: '#374151', label: log.to_status };
+                      const fromCfg = log.from_status
+                        ? (STATUS_CFG[log.from_status as ScholarStatus] ?? { color: '#9ca3af', label: log.from_status })
+                        : null;
+                      return (
+                        <div key={log.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', paddingBottom: i < logs.length - 1 ? 14 : 0, position: 'relative' }}>
+                          {/* Timeline dot + line */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: toCfg.color, border: '2px solid #fff', boxShadow: `0 0 0 1px ${toCfg.color}`, marginTop: 3 }} />
+                            {i < logs.length - 1 && <div style={{ width: 1, flex: 1, background: '#e5e7eb', minHeight: 18, marginTop: 3 }} />}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: log.reason ? 3 : 0 }}>
+                              {fromCfg && (
+                                <>
+                                  <span style={{ fontSize: 12, fontWeight: 600, color: fromCfg.color }}>{fromCfg.label}</span>
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                </>
+                              )}
+                              <span style={{ fontSize: 12, fontWeight: 700, color: toCfg.color }}>{toCfg.label}</span>
+                              <span style={{ fontSize: 11, color: '#9ca3af', marginLeft: 'auto' }}>{fmtDate(log.created_at)}</span>
+                            </div>
+                            {log.reason && (
+                              <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>&ldquo;{log.reason}&rdquo;</div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -232,27 +327,59 @@ export default function Page() {
 
       {/* ── Status Update Modal ── */}
       {statusModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setStatusModal(null)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => { setStatusModal(null); setStatusError(''); }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 440, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
             <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Update Scholar Status</h2>
             <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>Scholar #{statusModal.id} · Student #{statusModal.student_id}</p>
 
             <label style={labelStyle}>New Status</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
-              {TAB_KEYS.map(key => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 20 }}>
+              {ALL_STATUSES.map(key => {
                 const cfg = STATUS_CFG[key];
                 return (
-                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 9, border: `1.5px solid ${newStatus === key ? cfg.dot : '#e5e7eb'}`, background: newStatus === key ? cfg.bg : '#fff', cursor: 'pointer' }}>
-                    <input type="radio" name="status" value={key} checked={newStatus === key} onChange={() => setNewStatus(key)} style={{ accentColor: cfg.color }} />
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 13px', borderRadius: 9, border: `1.5px solid ${newStatus === key ? cfg.dot : '#e5e7eb'}`, background: newStatus === key ? cfg.bg : '#fff', cursor: 'pointer' }}>
+                    <input type="radio" name="status" value={key} checked={newStatus === key} onChange={() => { setNewStatus(key); setStatusError(''); }} style={{ accentColor: cfg.color }} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: cfg.color }}>{cfg.label}</span>
+                    {REASON_REQUIRED.includes(key) && (
+                      <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase' }}>reason required</span>
+                    )}
                   </label>
                 );
               })}
             </div>
 
+            {/* Reason textarea */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>
+                Reason
+                {REASON_REQUIRED.includes(newStatus)
+                  ? <span style={{ color: '#dc2626' }}> *</span>
+                  : <span style={{ color: '#9ca3af', fontWeight: 400 }}> (optional)</span>}
+              </label>
+              <textarea
+                value={statusReason}
+                onChange={e => { setStatusReason(e.target.value); setStatusError(''); }}
+                rows={3}
+                placeholder={REASON_REQUIRED.includes(newStatus) ? 'Provide a reason for this status change…' : 'Optional — add context for the status change'}
+                style={{ ...inp, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }}
+              />
+            </div>
+
+            {statusError && (
+              <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626', marginBottom: 16 }}>
+                {statusError}
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setStatusModal(null)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
-              <button onClick={handleStatusUpdate} disabled={statusSaving} style={{ flex: 1, padding: 10, background: statusSaving ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: statusSaving ? 'not-allowed' : 'pointer', color: '#fff' }}>
+              <button onClick={() => { setStatusModal(null); setStatusError(''); setStatusReason(''); }}
+                style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>
+                Cancel
+              </button>
+              <button onClick={handleStatusUpdate} disabled={statusSaving}
+                style={{ flex: 1, padding: 10, background: statusSaving ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: statusSaving ? 'not-allowed' : 'pointer', color: '#fff' }}>
                 {statusSaving ? 'Saving…' : 'Update Status'}
               </button>
             </div>
@@ -293,8 +420,12 @@ export default function Page() {
             </div>
 
             <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-              <button onClick={() => setSemModal(null)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
-              <button onClick={handleAddSemRecord} disabled={semSaving} style={{ flex: 1, padding: 10, background: semSaving ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: semSaving ? 'not-allowed' : 'pointer', color: '#fff' }}>
+              <button onClick={() => setSemModal(null)}
+                style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>
+                Cancel
+              </button>
+              <button onClick={handleAddSemRecord} disabled={semSaving}
+                style={{ flex: 1, padding: 10, background: semSaving ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: semSaving ? 'not-allowed' : 'pointer', color: '#fff' }}>
                 {semSaving ? 'Saving…' : 'Add Record'}
               </button>
             </div>
