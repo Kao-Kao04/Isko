@@ -71,6 +71,7 @@ const selectStyle: React.CSSProperties = {
 
 export default function IskolarshipsPage() {
   const { user } = useCurrentUser();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const isPending     = user?.account_status === 'pending_verification';
   const userCollege   = user?.student_profile?.college    ?? null;
   const userProgram   = user?.student_profile?.program    ?? null;
@@ -145,14 +146,9 @@ export default function IskolarshipsPage() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
       <style>{`
-        @media (max-width: 768px) {
-          .iskol-layout { flex-direction: column !important; }
-          .iskol-sidebar { width: 100% !important; position: static !important; }
-          .iskol-sidebar-inner { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
-          .iskol-sidebar-inner > div { flex: 1; min-width: 140px; }
-        }
         .filter-select:focus { border-color: ${M} !important; outline: none; }
-        .filter-input:focus { border-color: ${M} !important; outline: none; box-shadow: 0 0 0 3px ${M}18 !important; }
+        .filter-input:focus  { border-color: ${M} !important; outline: none; box-shadow: 0 0 0 3px ${M}18 !important; }
+        .iskol-filter-toggle { display: none; }
       `}</style>
 
       <div className="iskol-layout" style={{ display: 'flex', gap: 24 }}>
@@ -170,8 +166,19 @@ export default function IskolarshipsPage() {
                   Clear
                 </button>
               )}
+              {/* Mobile toggle — shown via global CSS on ≤768px */}
+              <button
+                className="iskol-filter-toggle"
+                onClick={() => setFiltersOpen(v => !v)}
+                aria-expanded={filtersOpen}
+                style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: M, background: '#fff5f5', border: `1px solid ${M}30`, borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+              >
+                {filtersOpen ? 'Hide' : `Show${hasFilters ? ` (${[search, filterType !== 'all', filterCollege !== 'all', eligibleOnly].filter(Boolean).length})` : ''}`}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
             </div>
 
+            <div className={`iskol-sidebar-body${filtersOpen ? ' iskol-filters-open' : ''}`}>
             <div className="iskol-sidebar-inner">
               {/* Search */}
               <div style={{ marginBottom: 14 }}>
@@ -220,7 +227,7 @@ export default function IskolarshipsPage() {
               </div>
 
               {/* Eligible only toggle */}
-              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
+              <div className="iskol-filter-full" style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
                 <button
                   onClick={() => setEligibleOnly(v => !v)}
                   style={{
@@ -244,6 +251,7 @@ export default function IskolarshipsPage() {
                 </p>
               </div>
             </div>
+            </div>{/* iskol-sidebar-body */}
           </div>
         </aside>
 

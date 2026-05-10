@@ -420,11 +420,85 @@ a {
   .responsive-grid-3 {
     grid-template-columns: 1fr 1fr !important;
   }
+
+  /* Dashboard — stack to single column */
+  .dash-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dash-right {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+  .dash-right > div {
+    flex: 1 1 280px !important;
+  }
 }
 
 /* ── Login / landing ───────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .login-card-left { display: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   STUDENT MOBILE — page-level responsive overrides
+   (global CSS beats inline style; <style> tags inside JSX can lose on prod)
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Dashboard ─────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Hero banner — tighter on small phones */
+  .dash-hero { padding: 20px 18px !important; }
+
+  /* Hero stat box — full width row below the welcome text */
+  .dash-hero-stat {
+    width: 100% !important;
+    min-width: unset !important;
+    text-align: left !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    padding: 12px 16px !important;
+  }
+  .dash-hero-stat-num { font-size: 28px !important; }
+
+  /* Chips — wrap freely */
+  .dash-hero-chips { flex-wrap: wrap !important; }
+}
+
+/* ── Iskolarships ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .iskol-layout    { flex-direction: column !important; }
+  .iskol-sidebar   { width: 100% !important; position: static !important; }
+  /* Collapsed by default on mobile — toggled via .iskol-filters-open */
+  .iskol-sidebar-body { display: none; }
+  .iskol-sidebar-body.iskol-filters-open { display: block; }
+  .iskol-filter-toggle { display: flex !important; }
+
+  /* Filter fields flow in two columns when open */
+  .iskol-sidebar-inner {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .iskol-sidebar-inner .iskol-filter-full { grid-column: 1 / -1; }
+}
+
+/* ── Applications ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .apps-grid    { grid-template-columns: 1fr !important; }
+  .apps-sidebar { display: none !important; }
+  .stat-grid    { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Action buttons — stack on very narrow screens */
+  .app-actions  { flex-direction: column !important; gap: 6px !important; }
+  .app-actions a,
+  .app-actions button { width: 100% !important; justify-content: center !important; text-align: center !important; }
+}
+
+/* ── Profile ───────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .profile-grid { grid-template-columns: 1fr !important; }
+  .profile-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
 }
 
 /* ── Reduced motion ────────────────────────────────────────────────────────── */

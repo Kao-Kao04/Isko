@@ -95,17 +95,8 @@ export default function Page() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin  { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
-        @media (max-width: 900px) {
-          .dash-grid { grid-template-columns: 1fr !important; }
-          .dash-right { flex-direction: row !important; flex-wrap: wrap !important; }
-          .dash-right > div { flex: 1 1 280px !important; }
-        }
-        @media (max-width: 600px) {
-          .dash-hero-chips { flex-wrap: wrap !important; }
-          .dash-hero-stat { min-width: unset !important; }
-        }
         .notif-row:hover { background: #f8fafc !important; }
       `}</style>
 
@@ -150,7 +141,7 @@ export default function Page() {
       )}
 
       {/* Hero Banner */}
-      <div style={{ background: `linear-gradient(135deg, ${M} 0%, ${MD} 60%, #C9A027 100%)`, borderRadius: 20, padding: '28px 32px', marginBottom: 24, position: 'relative', overflow: 'hidden' }}>
+      <div className="dash-hero" style={{ background: `linear-gradient(135deg, ${M} 0%, ${MD} 60%, #C9A027 100%)`, borderRadius: 20, padding: '28px 32px', marginBottom: 24, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
         <div style={{ position: 'absolute', bottom: -70, right: 100, width: 260, height: 260, borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 80px)' }} />
@@ -176,8 +167,8 @@ export default function Page() {
               </div>
             </div>
             <div className="dash-hero-stat" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', borderRadius: 14, padding: '14px 20px', border: '1px solid rgba(255,255,255,0.18)', minWidth: 150, textAlign: 'center', flexShrink: 0 }}>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Applications</div>
-              <div style={{ fontSize: 36, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{applications.filter(a => a.status !== 'withdrawn').length}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>My Applications</div>
+              <div className="dash-hero-stat-num" style={{ fontSize: 36, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{applications.filter(a => a.status !== 'withdrawn').length}</div>
               <div style={{ fontSize: 12, color: '#F5D060', marginTop: 6, fontWeight: 600 }}>{approvedCount} approved</div>
             </div>
           </div>
