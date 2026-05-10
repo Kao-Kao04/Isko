@@ -7,12 +7,46 @@ import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
 
+// ── Status colour map — includes both old and new keys for safety ─────────────
 const STATUS_COLOR: Record<string, string> = {
-  pending:    '#d97706',
-  approved:   '#059669',
-  rejected:   '#dc2626',
-  incomplete: '#ea580c',
-  withdrawn:  '#6b7280',
+  in_progress: '#d97706',
+  pending:     '#d97706', // backward-compat
+  approved:    '#059669',
+  rejected:    '#dc2626',
+  incomplete:  '#ea580c',
+  withdrawn:   '#6b7280',
+  waitlisted:  '#6366f1',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  in_progress: 'In Progress',
+  pending:     'In Progress',
+  approved:    'Approved',
+  rejected:    'Rejected',
+  incomplete:  'Incomplete',
+  withdrawn:   'Withdrawn',
+  waitlisted:  'Waitlisted',
+};
+
+// ── Trends — main_status values from backend ──────────────────────────────────
+const TREND_LABEL: Record<string, string> = {
+  APPLICATION:  'Submitted',
+  VERIFICATION: 'Under Verification',
+  INTERVIEW:    'Interview',
+  DECISION:     'Decision',
+  COMPLETION:   'Approved',
+  REJECTED:     'Rejected',
+  WITHDRAWN:    'Withdrawn',
+};
+
+const TREND_COLOR: Record<string, string> = {
+  APPLICATION:  '#6366f1',
+  VERIFICATION: '#2563eb',
+  INTERVIEW:    '#7c3aed',
+  DECISION:     '#d97706',
+  COMPLETION:   '#059669',
+  REJECTED:     '#dc2626',
+  WITHDRAWN:    '#6b7280',
 };
 
 function StatCard({ label, value, sub, color = '#111827' }: { label: string; value: string | number; sub?: string; color?: string }) {
@@ -58,17 +92,18 @@ export default function ReportsPage() {
     ? Object.values(overview.applications_by_status).reduce((a, b) => a + b, 0)
     : 0;
 
+  // Trends — group by date, pivot by main_status
   const trendDates = [...new Set(trends.map(t => t.date?.slice(0, 10)))].sort().slice(-14);
+  const trendStatuses = [...new Set(trends.map(t => t.status))].filter(s => TREND_LABEL[s]);
   const trendByDate = trendDates.map(date => {
     const rows = trends.filter(t => t.date?.startsWith(date));
-    return {
-      date,
-      pending:  rows.find(r => r.status === 'pending')?.count  ?? 0,
-      approved: rows.find(r => r.status === 'approved')?.count ?? 0,
-      rejected: rows.find(r => r.status === 'rejected')?.count ?? 0,
-    };
+    const counts: Record<string, number> = {};
+    trendStatuses.forEach(s => {
+      counts[s] = rows.find(r => r.status === s)?.count ?? 0;
+    });
+    return { date, counts, total: Object.values(counts).reduce((a, b) => a + b, 0) };
   });
-  const maxTrendCount = Math.max(...trendByDate.map(d => d.pending + d.approved + d.rejected), 1);
+  const maxTrendCount = Math.max(...trendByDate.map(d => d.total), 1);
 
   if (loading) return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '80px 24px', display: 'flex', justifyContent: 'center' }}>
@@ -125,15 +160,19 @@ export default function ReportsPage() {
               color="#059669"
               sub={totalApps ? `${Math.round(((overview.applications_by_status['approved'] ?? 0) / totalApps) * 100)}% approval rate` : undefined}
             />
-            <StatCard label="Pending"  value={overview.applications_by_status['pending']  ?? 0} color="#d97706" />
-            <StatCard label="Rejected" value={overview.applications_by_status['rejected'] ?? 0} color="#dc2626" />
+            <StatCard label="In Progress" value={overview.applications_by_status['in_progress'] ?? 0} color="#d97706" />
+            <StatCard label="Rejected"    value={overview.applications_by_status['rejected']    ?? 0} color="#dc2626" />
+            {(overview.applications_by_status['waitlisted'] ?? 0) > 0 && (
+              <StatCard label="Waitlisted" value={overview.applications_by_status['waitlisted']} color="#6366f1" />
+            )}
           </div>
 
+          {/* Status distribution bar */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Application Status Distribution</h3>
             <div style={{ display: 'flex', height: 32, borderRadius: 8, overflow: 'hidden', gap: 2 }}>
               {Object.entries(overview.applications_by_status).filter(([, v]) => v > 0).map(([status, count]) => (
-                <div key={status} title={`${status}: ${count}`}
+                <div key={status} title={`${STATUS_LABEL[status] ?? status}: ${count}`}
                   style={{ flex: count, background: STATUS_COLOR[status] ?? '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 24 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{count}</span>
                 </div>
@@ -143,7 +182,7 @@ export default function ReportsPage() {
               {Object.entries(overview.applications_by_status).map(([status, count]) => (
                 <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 10, height: 10, borderRadius: '50%', background: STATUS_COLOR[status] ?? '#94a3b8', flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, color: '#374151', fontWeight: 600, textTransform: 'capitalize' }}>{status}</span>
+                  <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{STATUS_LABEL[status] ?? status}</span>
                   <span style={{ fontSize: 12, color: '#9ca3af' }}>{count}</span>
                 </div>
               ))}
@@ -166,7 +205,7 @@ export default function ReportsPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
-                    {['Scholarship', 'Slots', 'Total', 'Approved', 'Pending', 'Rejected', 'Fill Rate'].map(h => (
+                    {['Scholarship', 'Slots', 'Total', 'Approved', 'In Progress', 'Rejected', 'Fill Rate'].map(h => (
                       <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 700, color: '#374151', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -182,7 +221,7 @@ export default function ReportsPage() {
                         <td style={{ padding: '12px 16px', color: '#374151' }}>{row.slots ?? '—'}</td>
                         <td style={{ padding: '12px 16px', fontWeight: 700, color: '#111827' }}>{row.total_applications}</td>
                         <td style={{ padding: '12px 16px', color: '#059669', fontWeight: 700 }}>{row.approved}</td>
-                        <td style={{ padding: '12px 16px', color: '#d97706', fontWeight: 700 }}>{row.pending}</td>
+                        <td style={{ padding: '12px 16px', color: '#d97706', fontWeight: 700 }}>{row.in_progress}</td>
                         <td style={{ padding: '12px 16px', color: '#dc2626', fontWeight: 700 }}>{row.rejected}</td>
                         <td style={{ padding: '12px 16px' }}>
                           {fillPct !== null ? (
@@ -208,33 +247,36 @@ export default function ReportsPage() {
       {activeTab === 'trends' && (
         <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Application Trends (Last 14 Days)</h3>
-          <p style={{ margin: '0 0 28px', fontSize: 12, color: '#6b7280' }}>Daily submission counts by status</p>
+          <p style={{ margin: '0 0 28px', fontSize: 12, color: '#6b7280' }}>Daily submission counts by workflow stage</p>
           {trendByDate.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>No trend data available yet.</div>
           ) : (
             <>
               <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 200 }}>
-                {trendByDate.map(day => {
-                  const pxH = (v: number) => `${Math.round((v / maxTrendCount) * 180)}px`;
-                  return (
-                    <div key={day.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                      <div style={{ display: 'flex', flexDirection: 'column-reverse', width: '100%', gap: 1 }}>
-                        {day.approved > 0 && <div style={{ height: pxH(day.approved), background: '#10b981', borderRadius: '3px 3px 0 0', minHeight: 3 }} title={`Approved: ${day.approved}`} />}
-                        {day.pending  > 0 && <div style={{ height: pxH(day.pending),  background: '#f59e0b', minHeight: 3 }} title={`Pending: ${day.pending}`} />}
-                        {day.rejected > 0 && <div style={{ height: pxH(day.rejected), background: '#ef4444', borderRadius: '0 0 3px 3px', minHeight: 3 }} title={`Rejected: ${day.rejected}`} />}
-                      </div>
-                      <span style={{ fontSize: 9, color: '#9ca3af', writingMode: 'vertical-rl', transform: 'rotate(180deg)', marginTop: 4, whiteSpace: 'nowrap' }}>
-                        {day.date?.slice(5)}
-                      </span>
+                {trendByDate.map(day => (
+                  <div key={day.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column-reverse', width: '100%', gap: 1 }}>
+                      {trendStatuses.map(s => {
+                        const v = day.counts[s] ?? 0;
+                        if (!v) return null;
+                        const h = `${Math.round((v / maxTrendCount) * 180)}px`;
+                        return (
+                          <div key={s} style={{ height: h, background: TREND_COLOR[s] ?? '#94a3b8', minHeight: 3, borderRadius: 2 }}
+                            title={`${TREND_LABEL[s] ?? s}: ${v}`} />
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                    <span style={{ fontSize: 9, color: '#9ca3af', writingMode: 'vertical-rl', transform: 'rotate(180deg)', marginTop: 4, whiteSpace: 'nowrap' }}>
+                      {day.date?.slice(5)}
+                    </span>
+                  </div>
+                ))}
               </div>
               <div style={{ display: 'flex', gap: 16, marginTop: 24, flexWrap: 'wrap' }}>
-                {[{ label: 'Approved', color: '#10b981' }, { label: 'Pending', color: '#f59e0b' }, { label: 'Rejected', color: '#ef4444' }].map(l => (
-                  <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 2, background: l.color }} />
-                    <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{l.label}</span>
+                {trendStatuses.map(s => (
+                  <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 2, background: TREND_COLOR[s] ?? '#94a3b8' }} />
+                    <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{TREND_LABEL[s] ?? s}</span>
                   </div>
                 ))}
               </div>

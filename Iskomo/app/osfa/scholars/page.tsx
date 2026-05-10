@@ -43,7 +43,7 @@ export default function Page() {
 
   // Semester record modal
   const [semModal, setSemModal] = useState<ScholarResponse | null>(null);
-  const [semForm, setSemForm]   = useState({ semester: '1st Semester', academic_year: '2025-2026', gwa: '', notes: '' });
+  const [semForm, setSemForm]   = useState({ semester: '1st Semester', academic_year: '2025-2026', gwa: '', notes: '', has_grade_below_2_5: false });
   const [semSaving, setSemSaving] = useState(false);
 
   const fetchScholars = useCallback(async () => {
@@ -112,21 +112,41 @@ export default function Page() {
   async function handleAddSemRecord() {
     if (!semModal) return;
     setSemSaving(true);
+    const prevStatus = semModal.status;
     try {
       const record = await scholarApi.addSemesterRecord(semModal.id, {
-        semester:      semForm.semester,
-        academic_year: semForm.academic_year,
-        gwa:           semForm.gwa || undefined,
-        notes:         semForm.notes || undefined,
-        is_enrolled:   true,
+        semester:             semForm.semester,
+        academic_year:        semForm.academic_year,
+        gwa:                  semForm.gwa || undefined,
+        notes:                semForm.notes || undefined,
+        is_enrolled:          true,
+        has_grade_below_2_5:  semForm.has_grade_below_2_5,
       });
-      setScholars(prev => prev.map(s => s.id === semModal.id
-        ? { ...s, semester_records: [...s.semester_records, record] }
-        : s
-      ));
+
+      // Re-fetch scholar to detect any auto-evaluation status change
+      let updatedScholar: typeof semModal | null = null;
+      try { updatedScholar = await scholarApi.get(semModal.id); } catch { /* silent */ }
+
+      setScholars(prev => prev.map(s => {
+        if (s.id !== semModal.id) return s;
+        const base = updatedScholar ?? s;
+        return { ...base, semester_records: [...base.semester_records.filter(r => r.id !== record.id), record] };
+      }));
+
       addToast('success', 'Semester record added.');
+
+      // Auto-evaluation toast
+      const newStatus = updatedScholar?.status ?? prevStatus;
+      if (newStatus !== prevStatus) {
+        if (newStatus === 'probationary') {
+          addToast('warning', 'Scholar placed on probation automatically based on submitted grades.');
+        } else if (newStatus === 'active' && prevStatus === 'probationary') {
+          addToast('success', "Scholar's probation lifted — grades meet retention requirements.");
+        }
+      }
+
       setSemModal(null);
-      setSemForm({ semester: '1st Semester', academic_year: '2025-2026', gwa: '', notes: '' });
+      setSemForm({ semester: '1st Semester', academic_year: '2025-2026', gwa: '', notes: '', has_grade_below_2_5: false });
     } catch (err) {
       addToast('error', err instanceof Error ? err.message : 'Failed to add record.');
     } finally {
@@ -275,6 +295,11 @@ export default function Page() {
                         <div style={{ fontSize: 13, fontWeight: 700, color: r.gwa ? (parseFloat(r.gwa) <= 2.0 ? '#059669' : parseFloat(r.gwa) <= 2.75 ? '#d97706' : '#dc2626') : '#111827' }}>
                           GWA: {r.gwa ?? '—'}
                         </div>
+                        {r.has_grade_below_2_5 && (
+                          <div style={{ display: 'inline-block', marginTop: 3, padding: '1px 7px', borderRadius: 20, background: '#fef2f2', color: '#dc2626', fontSize: 10, fontWeight: 700, border: '1px solid #fecaca' }}>
+                            Has Low Grade
+                          </div>
+                        )}
                         {r.notes && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{r.notes}</div>}
                       </div>
                     ))}
@@ -417,6 +442,23 @@ export default function Page() {
                 <label style={labelStyle}>Notes <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
                 <textarea value={semForm.notes} onChange={e => setSemForm(p => ({ ...p, notes: e.target.value }))} rows={3} placeholder="Any remarks for this semester..." style={{ ...inp, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
               </div>
+              {/* Grade flag */}
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 9, border: `1.5px solid ${semForm.has_grade_below_2_5 ? '#fca5a5' : '#e5e7eb'}`, background: semForm.has_grade_below_2_5 ? '#fef2f2' : '#fafafa', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={semForm.has_grade_below_2_5}
+                  onChange={e => setSemForm(p => ({ ...p, has_grade_below_2_5: e.target.checked }))}
+                  style={{ marginTop: 1, accentColor: '#dc2626', flexShrink: 0 }}
+                />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: semForm.has_grade_below_2_5 ? '#dc2626' : '#374151' }}>
+                    Student has a subject grade below 2.5
+                  </div>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2, lineHeight: 1.4 }}>
+                    Tick this when the grade slip shows any individual subject grade of 3.0 or lower
+                  </div>
+                </div>
+              </label>
             </div>
 
             <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
