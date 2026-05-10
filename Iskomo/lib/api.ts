@@ -95,7 +95,7 @@ function getCsrfToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-const CSRF_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 async function refreshAccessToken(): Promise<string | null> {
   const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
@@ -119,7 +119,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const method = (options.method ?? 'GET').toUpperCase();
-  if (CSRF_METHODS.has(method)) {
+  if (!SAFE_METHODS.has(method)) {
     const csrf = getCsrfToken();
     if (csrf) headers['X-CSRF-Token'] = csrf;
   }
@@ -132,7 +132,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
       // Re-read CSRF token in case it rotated alongside the access token
-      if (CSRF_METHODS.has(method)) {
+      if (!SAFE_METHODS.has(method)) {
         const csrf = getCsrfToken();
         if (csrf) headers['X-CSRF-Token'] = csrf;
       }
