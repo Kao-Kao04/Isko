@@ -674,8 +674,10 @@ export const workflowApi = {
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/decide`, {
       method: 'POST', body: JSON.stringify({ decision, ...(remarks ? { remarks } : {}) }),
     }),
-  finalize: (id: number) =>
-    apiFetch<WorkflowResponse>(`/api/workflow/${id}/finalize`, { method: 'POST' }),
+  finalize: (id: number, note?: string) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/finalize`, {
+      method: 'POST', body: JSON.stringify({ note }),
+    }),
 
   // Available to both OSFA and student
   scheduleInterview: (id: number, data: { interview_datetime: string; location: string; note?: string }) =>
