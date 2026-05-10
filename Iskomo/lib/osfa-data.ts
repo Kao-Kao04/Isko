@@ -88,6 +88,8 @@ export interface Scholarship {
   minGwa?: string;
   coverImage?: string;
   requirements?: Requirement[];
+  maxSemesters?: number | null;
+  requiresThankYouLetter?: boolean;
 }
 
 export const initialApplicants: Applicant[] = [];

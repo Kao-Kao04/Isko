@@ -618,6 +618,22 @@ export default function Page() {
                   )}
                 </div>
 
+                {/* Max semesters + thank-you letter badges */}
+                {(s.max_semesters || s.requires_thank_you_letter) && (
+                  <div style={{ padding: '0 18px 10px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {s.max_semesters && (
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#0369a1', background: '#e0f2fe', padding: '2px 8px', borderRadius: 20, border: '1px solid #bae6fd' }}>
+                        Valid for {s.max_semesters} semester{s.max_semesters !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {s.requires_thank_you_letter && (
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#7c3aed', background: '#f5f3ff', padding: '2px 8px', borderRadius: 20, border: '1px solid #ddd6fe' }}>
+                        Requires Thank You Letter
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {/* Card footer */}
                 <div style={{ padding: '12px 18px', borderTop: '1px solid #f3f4f6', display: 'flex', gap: 8 }}>
                   <Link
