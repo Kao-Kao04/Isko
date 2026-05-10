@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { scholarshipApi, type ScholarshipResponse, type ScholarshipStatus, type ComplianceDocType } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const TEAL = COLORS.maroon;
 const TEAL_DARK = COLORS.maroonD;
@@ -105,6 +106,8 @@ function capitalize(s: string) {
 
 export default function Page() {
   const { toasts, addToast, removeToast } = useToast();
+  const { user } = useCurrentUser();
+  const isOsfaStaff = user?.role === 'osfa_staff';
   const [scholarships, setScholarships]   = useState<ScholarshipResponse[]>([]);
   const [loading, setLoading]             = useState(true);
   const [filterStatus, setFilterStatus]   = useState<'All' | ScholarshipStatus>('All');
@@ -116,6 +119,8 @@ export default function Page() {
   const [showForm, setShowForm]                       = useState(false);
   const [editingId, setEditingId]                     = useState<number | null>(null);
   const [form, setForm]                               = useState(EMPTY_FORM);
+  // OSFA staff category is locked to their department; super_admin can pick freely via dropdown
+  const effectiveCategory = (isOsfaStaff ? (user?.department ?? '') : form.category) as 'public' | 'private' | '';
   const [confirmArchive, setConfirmArchive]           = useState<ScholarshipResponse | null>(null);
   const [confirmClose, setConfirmClose]               = useState<ScholarshipResponse | null>(null);
   const [confirmPublish, setConfirmPublish]           = useState<ScholarshipResponse | null>(null);
@@ -161,7 +166,11 @@ export default function Page() {
 
   function openCreate() {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setForm({
+      ...EMPTY_FORM,
+      // For OSFA staff, pre-fill category from their department
+      category: isOsfaStaff ? (user?.department ?? '') as '' | 'public' | 'private' : '',
+    });
     setShowForm(true);
   }
 
@@ -216,7 +225,8 @@ export default function Page() {
         cover_image_url:           form.cover_image_url || undefined,
         requirements:              form.requirements.map(r => ({ name: r.name, description: r.description, is_required: r.is_required })),
         max_semesters:             form.max_semesters ? parseInt(form.max_semesters) : null,
-        requires_thank_you_letter: form.requires_thank_you_letter,
+        requires_thank_you_letter: effectiveCategory === 'private' ? form.requires_thank_you_letter : false,
+        category:                  effectiveCategory || undefined,
       };
 
       if (editingId) {
@@ -692,23 +702,35 @@ export default function Page() {
                 <input type="text" value={form.eligibility_text} onChange={e => setField('eligibility_text', e.target.value)} placeholder="e.g., GWA of 1.75 or better, full-time enrollment" style={inputStyle} />
               </div>
 
-              {/* Max semesters + requires thank-you letter */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {/* Max semesters + category (category hidden for OSFA staff) */}
+              <div style={{ display: 'grid', gridTemplateColumns: isOsfaStaff ? '1fr' : '1fr 1fr', gap: 16 }}>
                 <div>
                   <label style={labelStyle}>Max Semesters</label>
-                  <input type="number" min="1" value={form.max_semesters} onChange={e => setField('max_semesters', e.target.value)} placeholder="Leave blank for no limit" style={inputStyle} />
+                  <input type="number" min="1" step="1" value={form.max_semesters} onChange={e => setField('max_semesters', e.target.value)} placeholder="Leave blank for no limit" style={inputStyle} />
                   <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Maximum number of semesters this scholarship is valid. Leave blank for no limit.</div>
                 </div>
-                <div>
-                  <label style={labelStyle}>Category</label>
-                  <select value={form.category} onChange={e => setField('category', e.target.value)} style={inputStyle}>
-                    <option value="">— Not specified —</option>
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                  </select>
-                </div>
+                {/* Category — super_admin only; OSFA staff are locked to their department */}
+                {!isOsfaStaff && (
+                  <div>
+                    <label style={labelStyle}>Category</label>
+                    <select value={form.category} onChange={e => {
+                      const val = e.target.value as '' | 'public' | 'private';
+                      setForm(prev => ({
+                        ...prev,
+                        category: val,
+                        // Reset thank-you letter flag when leaving private
+                        requires_thank_you_letter: val === 'private' ? prev.requires_thank_you_letter : false,
+                      }));
+                    }} style={inputStyle}>
+                      <option value="">— Not specified —</option>
+                      <option value="public">Public</option>
+                      <option value="private">Private</option>
+                    </select>
+                  </div>
+                )}
               </div>
-              {form.category === 'private' && (
+              {/* Requires Thank You Letter — only for private scholarships */}
+              {effectiveCategory === 'private' && (
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 9, border: `1.5px solid ${form.requires_thank_you_letter ? '#86efac' : '#e5e7eb'}`, background: form.requires_thank_you_letter ? '#f0fdf4' : '#fafafa', cursor: 'pointer' }}>
                   <input type="checkbox" checked={form.requires_thank_you_letter} onChange={e => setField('requires_thank_you_letter', e.target.checked)} style={{ marginTop: 1, accentColor: '#059669', flexShrink: 0 }} />
                   <div>
