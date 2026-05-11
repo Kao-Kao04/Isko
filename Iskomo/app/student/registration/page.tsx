@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { registrationApi } from '@/lib/api-client';
 import { PUP_COLLEGE_PROGRAMS } from '@/lib/data/mock-user';
 import { COLORS } from '@/lib/theme';
 
@@ -141,19 +142,7 @@ export default function RegistrationPage() {
       fd.append('school_id',      schoolIdFile);
       fd.append('cor',            corFile);
 
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const base  = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
-      const res   = await fetch(`${base}/api/registration/submit`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: fd,
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Submission failed. Please try again.');
-      }
-
+      await registrationApi.submit(fd);
       setSubmitted(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
