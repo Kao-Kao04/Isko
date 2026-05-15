@@ -10,7 +10,7 @@ import { MAIN_STAGES, STAGE_LABEL, STUDENT_SUB_STATUS_LABEL, stageIndex, isTermi
 const STATUS_BADGE: Record<string, { bg: string; color: string; label: string }> = {
   pending:    { bg: '#fef3c7', color: '#92400e', label: 'Pending' },
   approved:   { bg: '#dcfce7', color: '#15803d', label: 'Approved' },
-  rejected:   { bg: '#fee2e2', color: '#dc2626', label: 'Rejected' },
+  rejected:   { bg: '#fee2e2', color: '#dc2626', label: 'Not Selected' },
   incomplete: { bg: '#fef9c3', color: '#713f12', label: 'Incomplete' },
   withdrawn:  { bg: '#f3f4f6', color: '#374151', label: 'Withdrawn' },
 };
@@ -24,7 +24,7 @@ const ACTION_LABEL: Record<string, { label: string; color: string }> = {
   resubmitted:     { label: 'Application Resubmitted',         color: '#2563eb' },
   withdrawn:       { label: 'Application Withdrawn',           color: '#6b7280' },
   approved:        { label: 'Application Approved',            color: '#059669' },
-  rejected:        { label: 'Application Rejected',            color: '#dc2626' },
+  rejected:        { label: 'Not Selected',                    color: '#dc2626' },
   incomplete:      { label: 'Marked as Incomplete',            color: '#ea580c' },
   appeal_approved: { label: 'Appeal Approved — Under Review',  color: '#059669' },
   appeal_denied:   { label: 'Appeal Rejected',                 color: '#dc2626' },
@@ -258,7 +258,7 @@ export default function ApplicationDetailPage() {
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 20, background: terminal ? '#fef2f2' : `${MAROON}10`, border: `1.5px solid ${terminal ? '#fca5a5' : `${MAROON}40`}` }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: terminal ? '#dc2626' : MAROON }} />
                     <span style={{ fontSize: 12, fontWeight: 600, color: terminal ? '#dc2626' : MAROON }}>
-                      {terminal && ms === 'rejected' ? 'Application Rejected' : terminal && ms === 'withdrawn' ? 'Application Withdrawn' : (STUDENT_SUB_STATUS_LABEL[ss] ?? ss)}
+                      {terminal && ms === 'rejected' ? 'Not Selected' : terminal && ms === 'withdrawn' ? 'Application Withdrawn' : (STUDENT_SUB_STATUS_LABEL[ss] ?? ss)}
                     </span>
                   </div>
 
@@ -278,7 +278,7 @@ export default function ApplicationDetailPage() {
                   {ms === 'decision' && (
                     <div style={{ marginTop: 18, padding: '14px 16px', background: ss === 'approved' ? '#f0fdf4' : ss === 'rejected' ? '#fef2f2' : '#fffbeb', borderRadius: 10, border: `1px solid ${ss === 'approved' ? '#86efac' : ss === 'rejected' ? '#fca5a5' : '#fde68a'}` }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: ss === 'approved' ? '#15803d' : ss === 'rejected' ? '#dc2626' : '#92400e', marginBottom: workflow.decision_remarks ? 6 : 0 }}>
-                        {ss === 'approved' ? '🎉 Congratulations! Your application has been approved.' : ss === 'rejected' ? 'Your application has been rejected.' : ss === 'waitlisted' ? 'You are on the waitlist. Check back for updates.' : 'Your application is under review.'}
+                        {ss === 'approved' ? '🎉 Congratulations! Your application has been approved.' : ss === 'rejected' ? 'Thank you for applying. After careful review, you were not selected as a recipient for this scholarship cycle. We appreciate your effort and encourage you to apply again in the future.' : ss === 'waitlisted' ? 'You are on the waitlist. Check back for updates.' : 'Your application is under review.'}
                       </div>
                       {workflow.decision_remarks && <div style={{ fontSize: 13, color: '#374151' }}>{workflow.decision_remarks}</div>}
                     </div>
