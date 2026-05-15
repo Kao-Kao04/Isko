@@ -388,6 +388,8 @@ export interface ScholarResponse {
   application_id: number;
   student_id: number;
   scholarship_id: number;
+  student_name: string | null;
+  scholarship_name: string | null;
   status: ScholarStatus;
   is_graduating: boolean;
   expected_graduation: string | null;

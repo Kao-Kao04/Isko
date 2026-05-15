@@ -77,7 +77,12 @@ export default function Page() {
     if (s.status !== activeTab) return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    return s.scholarship_id.toString().includes(q) || s.student_id.toString().includes(q);
+    return (
+      s.scholarship_id.toString().includes(q) ||
+      s.student_id.toString().includes(q) ||
+      (s.student_name ?? '').toLowerCase().includes(q) ||
+      (s.scholarship_name ?? '').toLowerCase().includes(q)
+    );
   });
 
   async function handleStatusUpdate() {
@@ -217,7 +222,7 @@ export default function Page() {
       {/* Search */}
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'center' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search by student or scholarship ID..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+        <input type="text" placeholder="Search by student name or scholarship name..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
           style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#111827', background: 'transparent' }} />
         <span style={{ fontSize: 12, color: '#9ca3af' }}>{filtered.length} scholar{filtered.length !== 1 ? 's' : ''}</span>
       </div>
@@ -242,20 +247,22 @@ export default function Page() {
 
                 {/* Avatar */}
                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
-                  {scholar.student_id.toString().slice(-2)}
+                  {scholar.student_name ? scholar.student_name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : scholar.student_id.toString().slice(-2)}
                 </div>
 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Scholar #{scholar.id} · Student #{scholar.student_id}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
+                      {scholar.student_name ?? `Student #${scholar.student_id}`}
+                    </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 20, background: cfg.bg, color: cfg.color, fontSize: 11, fontWeight: 700 }}>
                       <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.dot }} />
                       {cfg.label}
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 12, color: '#6b7280' }}>Scholarship #{scholar.scholarship_id}</span>
+                    <span style={{ fontSize: 12, color: '#6b7280' }}>{scholar.scholarship_name ?? `Scholarship #${scholar.scholarship_id}`}</span>
                     {latestRecord && (
                       <span style={{ fontSize: 12, color: '#6b7280' }}>Latest: {latestRecord.semester} {latestRecord.academic_year} · GWA: {latestRecord.gwa ?? '—'}</span>
                     )}
