@@ -6,6 +6,7 @@ import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import SignOutButton from '@/components/shared/SignOutButton';
 import NotificationBell from '@/components/shared/NotificationBell';
 import AccountStatusGuard from '@/components/shared/AccountStatusGuard';
+import PhClock from '@/components/shared/PhClock';
 import Image from 'next/image';
 import Link from 'next/link';
 import { COLORS } from '@/lib/theme';
@@ -74,8 +75,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             <StudentNav />
           </div>
 
-          {/* Right: Bell + Sign Out */}
+          {/* Right: Clock + Bell + Sign Out */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <PhClock />
+            <div style={{ width: 1, height: 20, background: '#e5e7eb' }} />
             <NotificationBell />
             <div style={{ width: 1, height: 20, background: '#e5e7eb' }} />
             <SignOutButton />
