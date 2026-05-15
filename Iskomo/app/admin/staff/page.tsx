@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { adminApi, type StaffResponse } from '@/lib/api-client';
 import { apiFetch, getAccessToken } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
@@ -34,6 +35,7 @@ interface AdminStudent {
   id: number;
   email: string;
   account_status: string;
+  is_active: boolean;
   created_at: string;
   student_profile: { first_name: string; last_name: string; student_number: string; college: string; program: string } | null;
 }
@@ -75,17 +77,12 @@ function Spin() {
   );
 }
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'staff',     label: 'Staff Management' },
-  { key: 'students',  label: 'Students' },
-  { key: 'audit',     label: 'Audit Logs' },
-  { key: 'broadcast', label: 'Broadcast' },
-  { key: 'reports',   label: 'Reports' },
-];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeTab = (searchParams.get('tab') as TabKey) ?? 'dashboard';
+  function setActiveTab(tab: TabKey) { router.push(`/admin/staff?tab=${tab}`); }
   const { toasts, addToast, removeToast } = useToast();
 
   function showToast(type: 'success' | 'error', msg: string) {
@@ -148,6 +145,11 @@ export default function AdminPage() {
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [rejecting, setRejecting]       = useState(false);
 
+  const [toggleStudentTarget,  setToggleStudentTarget]  = useState<AdminStudent | null>(null);
+  const [togglingStudent,      setTogglingStudent]      = useState(false);
+  const [deleteStudentTarget,  setDeleteStudentTarget]  = useState<AdminStudent | null>(null);
+  const [deletingStudent,      setDeletingStudent]      = useState(false);
+
   const fetchStudents = useCallback(async (page = 1, filter = 'all') => {
     setStudentsLoading(true);
     try {
@@ -193,11 +195,11 @@ export default function AdminPage() {
   // Initial load
   useEffect(() => { fetchStats(); fetchStaff(); }, [fetchStats, fetchStaff]);
 
-  // Lazy load on first tab visit
+  // Lazy load on first visit to each tab
   useEffect(() => {
     if (activeTab === 'students' && !studentsFetched) fetchStudents(1, studentFilter);
     if (activeTab === 'audit'    && !auditFetched)    fetchAudit(1);
-  }, [activeTab, studentsFetched, auditFetched, fetchStudents, fetchAudit, studentFilter]);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ──
   async function handleCreate(e: React.FormEvent) {
@@ -285,6 +287,32 @@ export default function AdminPage() {
     finally { setRejecting(false); }
   }
 
+  async function handleToggleStudent() {
+    if (!toggleStudentTarget) return;
+    setTogglingStudent(true);
+    try {
+      const res = await apiFetch<{ id: number; is_active: boolean; message: string }>(
+        `/api/admin/students/${toggleStudentTarget.id}/toggle-active`, { method: 'PATCH' }
+      );
+      setStudents(prev => prev.map(s => s.id === res.id ? { ...s, is_active: res.is_active } : s));
+      showToast('success', res.message);
+      setToggleStudentTarget(null);
+    } catch (err) { showToast('error', err instanceof Error ? err.message : 'Failed to update.'); }
+    finally { setTogglingStudent(false); }
+  }
+
+  async function handleDeleteStudent() {
+    if (!deleteStudentTarget) return;
+    setDeletingStudent(true);
+    try {
+      await apiFetch(`/api/admin/students/${deleteStudentTarget.id}`, { method: 'DELETE' });
+      setStudents(prev => prev.filter(s => s.id !== deleteStudentTarget.id));
+      showToast('success', 'Student account permanently deleted.');
+      setDeleteStudentTarget(null);
+    } catch (err) { showToast('error', err instanceof Error ? err.message : 'Failed to delete.'); }
+    finally { setDeletingStudent(false); }
+  }
+
   async function handleBroadcast(e: React.FormEvent) {
     e.preventDefault();
     if (!bcastTitle.trim() || !bcastBody.trim()) return;
@@ -342,14 +370,6 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '2px solid #f3f4f6', marginBottom: 28, overflowX: 'auto' }}>
-        {TABS.map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ padding: '10px 22px', background: 'none', border: 'none', borderBottom: activeTab === tab.key ? `2px solid ${MAROON}` : '2px solid transparent', marginBottom: -2, fontSize: 13, fontWeight: activeTab === tab.key ? 700 : 500, color: activeTab === tab.key ? MAROON : '#6b7280', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       {/* ── DASHBOARD ── */}
       {activeTab === 'dashboard' && (
@@ -488,23 +508,30 @@ export default function AdminPage() {
           ) : (
             <>
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 1fr 90px 120px 130px', padding: '10px 24px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                  {['Name', 'Student No.', 'Email', 'College', 'Status', 'Actions'].map(h => (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 1fr 80px 110px 60px 1fr', padding: '10px 24px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                  {['Name', 'Student No.', 'Email', 'College', 'Account Status', 'Active', 'Actions'].map(h => (
                     <div key={h} style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</div>
                   ))}
                 </div>
                 {students.map((s, i) => {
-                  const badge    = ACCT_BADGE[s.account_status] ?? ACCT_BADGE.unregistered;
-                  const name     = s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}`.trim() : '—';
+                  const badge     = ACCT_BADGE[s.account_status] ?? ACCT_BADGE.unregistered;
+                  const name      = s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}`.trim() : '—';
                   const isPending = s.account_status === 'pending_verification';
+                  const isActive  = s.is_active !== false;
                   return (
-                    <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '1fr 130px 1fr 90px 120px 130px', padding: '12px 24px', borderBottom: i < students.length - 1 ? '1px solid #f3f4f6' : 'none', alignItems: 'center' }}>
+                    <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '1fr 130px 1fr 80px 110px 60px 1fr', padding: '12px 24px', borderBottom: i < students.length - 1 ? '1px solid #f3f4f6' : 'none', alignItems: 'center', opacity: isActive ? 1 : 0.6 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{name}</div>
                       <div style={{ fontSize: 12, color: '#374151', fontFamily: 'monospace' }}>{s.student_profile?.student_number ?? '—'}</div>
                       <div style={{ fontSize: 12, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</div>
                       <div style={{ fontSize: 12, color: '#374151' }}>{s.student_profile?.college ?? '—'}</div>
                       <div><span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, background: badge.bg, color: badge.color, fontSize: 11, fontWeight: 700 }}>{badge.label}</span></div>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <div>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 20, background: isActive ? '#f0fdf4' : '#f3f4f6', color: isActive ? '#059669' : '#9ca3af', fontSize: 11, fontWeight: 600 }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: isActive ? '#10b981' : '#d1d5db' }} />
+                          {isActive ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                         {isPending && (
                           <>
                             <button disabled={approvingId === s.id} onClick={() => handleApprove(s)} style={{ padding: '5px 10px', border: '1px solid #bbf7d0', borderRadius: 6, background: '#f0fdf4', color: '#059669', fontSize: 11, fontWeight: 600, cursor: approvingId === s.id ? 'not-allowed' : 'pointer', opacity: approvingId === s.id ? 0.7 : 1 }}>
@@ -513,6 +540,10 @@ export default function AdminPage() {
                             <button onClick={() => { setRejectTarget(s); setRejectRemarks(''); }} style={{ padding: '5px 10px', border: '1px solid #fecaca', borderRadius: 6, background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Reject</button>
                           </>
                         )}
+                        <button onClick={() => setToggleStudentTarget(s)} style={{ padding: '5px 10px', border: `1px solid ${isActive ? '#fecaca' : '#bbf7d0'}`, borderRadius: 6, background: isActive ? '#fef2f2' : '#f0fdf4', color: isActive ? '#dc2626' : '#059669', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                          {isActive ? 'Deactivate' : 'Reactivate'}
+                        </button>
+                        <button onClick={() => setDeleteStudentTarget(s)} style={{ padding: '5px 10px', border: '1px solid #fecaca', borderRadius: 6, background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </div>
                     </div>
                   );
@@ -803,6 +834,68 @@ export default function AdminPage() {
               <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: 10, border: '1px solid #e5e7eb', borderRadius: 9, background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={handleDeleteStaff} disabled={deleting} style={{ flex: 1, padding: 10, border: 'none', borderRadius: 9, background: deleting ? '#9ca3af' : '#dc2626', color: '#fff', fontSize: 14, fontWeight: 600, cursor: deleting ? 'not-allowed' : 'pointer' }}>
                 {deleting ? 'Deleting…' : 'Delete Permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toggle Student Active */}
+      {toggleStudentTarget && (
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setToggleStudentTarget(null)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 400, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: toggleStudentTarget.is_active !== false ? '#fef2f2' : '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={toggleStudentTarget.is_active !== false ? '#dc2626' : '#059669'} strokeWidth="2.5">
+                {toggleStudentTarget.is_active !== false
+                  ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
+                  : <polyline points="20 6 9 17 4 12"/>}
+              </svg>
+            </div>
+            <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>
+              {toggleStudentTarget.is_active !== false ? 'Deactivate' : 'Reactivate'} Student Account
+            </h2>
+            <p style={{ margin: '0 0 6px', fontSize: 14, color: '#374151', fontWeight: 600 }}>
+              {toggleStudentTarget.student_profile
+                ? `${toggleStudentTarget.student_profile.first_name} ${toggleStudentTarget.student_profile.last_name}`
+                : toggleStudentTarget.email}
+            </p>
+            <p style={{ margin: '0 0 22px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+              {toggleStudentTarget.is_active !== false
+                ? 'This student will lose access immediately and cannot log in until reactivated.'
+                : 'This student will regain full access to the system.'}
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setToggleStudentTarget(null)} style={{ flex: 1, padding: 10, border: '1px solid #e5e7eb', borderRadius: 9, background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleToggleStudent} disabled={togglingStudent} style={{ flex: 1, padding: 10, border: 'none', borderRadius: 9, background: togglingStudent ? '#9ca3af' : (toggleStudentTarget.is_active !== false ? '#dc2626' : '#059669'), color: '#fff', fontSize: 14, fontWeight: 600, cursor: togglingStudent ? 'not-allowed' : 'pointer' }}>
+                {togglingStudent ? 'Processing…' : (toggleStudentTarget.is_active !== false ? 'Deactivate' : 'Reactivate')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Student */}
+      {deleteStudentTarget && (
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setDeleteStudentTarget(null)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </div>
+            <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Delete Student Account</h2>
+            <p style={{ margin: '0 0 6px', fontSize: 14, color: '#374151', fontWeight: 600 }}>
+              {deleteStudentTarget.student_profile
+                ? `${deleteStudentTarget.student_profile.first_name} ${deleteStudentTarget.student_profile.last_name}`
+                : deleteStudentTarget.email}
+            </p>
+            <p style={{ margin: '0 0 6px', fontSize: 13, color: '#6b7280' }}>{deleteStudentTarget.email}</p>
+            <div style={{ margin: '12px 0 20px', padding: '10px 14px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', marginBottom: 2 }}>Warning</div>
+              <div style={{ fontSize: 12, color: '#7c2d12', lineHeight: 1.5 }}>This permanently deletes the account and all associated data. Students with active applications cannot be deleted — deactivate them instead.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setDeleteStudentTarget(null)} style={{ flex: 1, padding: 10, border: '1px solid #e5e7eb', borderRadius: 9, background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleDeleteStudent} disabled={deletingStudent} style={{ flex: 1, padding: 10, border: 'none', borderRadius: 9, background: deletingStudent ? '#9ca3af' : '#dc2626', color: '#fff', fontSize: 14, fontWeight: 600, cursor: deletingStudent ? 'not-allowed' : 'pointer' }}>
+                {deletingStudent ? 'Deleting…' : 'Delete Permanently'}
               </button>
             </div>
           </div>
