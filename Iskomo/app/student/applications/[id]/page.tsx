@@ -86,7 +86,7 @@ export default function ApplicationDetailPage() {
       setAudit(aud);
       setDocCount(docs.length);
       // Load compliance if at completion stage
-      if (wf?.main_status === 'COMPLETION') {
+      if (wf?.main_status === 'completion') {
         applicationApi.getCompliance(numId).then(setCompliance).catch(() => {});
         if (a.scholarship_id) {
           import('@/lib/api-client').then(({ scholarshipApi }) =>
@@ -221,14 +221,21 @@ export default function ApplicationDetailPage() {
             {workflow ? (() => {
               const ms = workflow.main_status ?? '';
               const ss = workflow.sub_status  ?? '';
-              const idx = stageIndex(ms);
-              const terminal = isTerminal(ms);
+              const terminal = isTerminal(ms, ss);
+              // For terminal states (rejected/withdrawn), stageIndex returns -1.
+              // Find the last stage before termination from the audit logs.
+              const lastNonTerminalLog = [...(workflow.logs ?? [])].reverse()
+                .find(l => l.to_main !== 'rejected' && l.to_main !== 'withdrawn');
+              const displayMs = (ms === 'rejected' || ms === 'withdrawn')
+                ? (lastNonTerminalLog?.from_main ?? lastNonTerminalLog?.to_main ?? 'application')
+                : ms;
+              const idx = stageIndex(displayMs);
               const MAROON = COLORS.maroon;
               return (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
                     {MAIN_STAGES.map((stage, i) => {
-                      const done   = !terminal && i < idx;
+                      const done   = i < idx;
                       const active = i === idx && !terminal;
                       const fail   = terminal && i === idx;
                       const color  = done ? MAROON : active ? MAROON : fail ? '#dc2626' : '#9ca3af';
@@ -248,9 +255,11 @@ export default function ApplicationDetailPage() {
                       );
                     })}
                   </div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 20, background: terminal ? '#fef2f2' : '#fff5f5', border: `1px solid ${terminal ? '#fca5a5' : '#fca5a5'}` }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 20, background: terminal ? '#fef2f2' : `${MAROON}10`, border: `1.5px solid ${terminal ? '#fca5a5' : `${MAROON}40`}` }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: terminal ? '#dc2626' : MAROON }} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: terminal ? '#dc2626' : MAROON }}>{STUDENT_SUB_STATUS_LABEL[ss] ?? ss}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: terminal ? '#dc2626' : MAROON }}>
+                      {terminal && ms === 'rejected' ? 'Application Rejected' : terminal && ms === 'withdrawn' ? 'Application Withdrawn' : (STUDENT_SUB_STATUS_LABEL[ss] ?? ss)}
+                    </span>
                   </div>
 
                   {/* Interview card */}
@@ -577,7 +586,7 @@ export default function ApplicationDetailPage() {
           })()}
 
           {/* Generate Documents — available at COMPLETION stage */}
-          {workflow?.main_status === 'COMPLETION' && (
+          {workflow?.main_status === 'completion' && (
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
               <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate Documents</h3>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -596,7 +605,7 @@ export default function ApplicationDetailPage() {
           )}
 
           {/* Compliance Checklist — COMPLETION + PENDING_REQUIREMENTS */}
-          {workflow?.main_status === 'COMPLETION' && workflow?.sub_status === 'PENDING_REQUIREMENTS' && (() => {
+          {workflow?.main_status === 'completion' && workflow?.sub_status === 'PENDING_REQUIREMENTS' && (() => {
             const requiredDocs = complianceDocs.filter(d => d.is_required);
             const verifiedCount = compliance.filter(c => c.is_verified).length;
             const totalRequired = requiredDocs.length;
