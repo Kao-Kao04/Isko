@@ -105,15 +105,19 @@ function clearCsrfToken() {
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 async function refreshAccessToken(): Promise<string | null> {
-  const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  if (data.csrf_token) setCsrfToken(data.csrf_token);
-  setAccessToken(data.access_token);
-  return data.access_token;
+  try {
+    const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.csrf_token) setCsrfToken(data.csrf_token);
+    setAccessToken(data.access_token);
+    return data.access_token;
+  } catch {
+    return null;
+  }
 }
 
 // ── Core fetch wrapper ────────────────────────────────────────────────────────

@@ -251,7 +251,8 @@ export default function Page() {
       setShowForm(false);
       setEditingId(null);
     } catch (err) {
-      addToast('error', err instanceof Error ? err.message : 'Failed to save scholarship.');
+      const msg = err instanceof Error ? err.message : '';
+      addToast('error', msg && msg !== 'Failed to fetch' ? msg : 'Unable to save — please check your connection and try again.');
     } finally {
       setFormLoading(false);
     }
