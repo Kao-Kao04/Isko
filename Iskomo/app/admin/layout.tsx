@@ -6,8 +6,6 @@ import Link from 'next/link';
 import SignOutButton from '@/components/shared/SignOutButton';
 import { COLORS } from '@/lib/theme';
 
-export const metadata = undefined;
-
 const MAROON = COLORS.maroon;
 
 const NAV_ITEMS = [
