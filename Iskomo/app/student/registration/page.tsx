@@ -188,7 +188,6 @@ export default function RegistrationPage() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 40, height: 40, border: `3px solid #f3f4f6`, borderTop: `3px solid ${TEAL}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -223,7 +222,6 @@ export default function RegistrationPage() {
           <div style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 6 }}>Creating your account…</div>
           <div style={{ fontSize: 13, color: '#6b7280' }}>Uploading documents and saving your information. Please wait.</div>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }

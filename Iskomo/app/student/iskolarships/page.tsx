@@ -151,6 +151,40 @@ export default function IskolarshipsPage() {
         .iskol-filter-toggle { display: none; }
       `}</style>
 
+      {/* Page header */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${M}, #5C0000)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+          </div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#111827' }}>Iskolarships</h1>
+            <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Browse and apply for OSFA-managed scholarships.</p>
+          </div>
+        </div>
+        {/* Stat pills — only when loaded */}
+        {!loading && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 14px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 99, fontSize: 12, fontWeight: 600, color: '#374151', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+              {active.length} active scholarship{active.length !== 1 ? 's' : ''}
+            </div>
+            {eligibleCount > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 14px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 99, fontSize: 12, fontWeight: 700, color: '#15803d' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                {eligibleCount} eligible for you
+              </div>
+            )}
+            {appliedIds.size > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 99, fontSize: 12, fontWeight: 600, color: '#1d4ed8' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                {appliedIds.size} already applied
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="iskol-layout" style={{ display: 'flex', gap: 24 }}>
 
         {/* Sidebar filters */}
@@ -268,26 +302,21 @@ export default function IskolarshipsPage() {
             </div>
           )}
 
-          {/* Results header */}
-          <div style={{ marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-            <div>
-              <h2 style={{ margin: '0 0 2px', fontSize: 20, fontWeight: 800, color: '#111827' }}>Available Iskolarships</h2>
-              {!loading && (
-                <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
-                  {filtered.length} found
-                  {!eligibleOnly && eligibleCount > 0 && ` · `}
-                  {!eligibleOnly && eligibleCount > 0 && <span style={{ color: '#15803d', fontWeight: 600 }}>{eligibleCount} eligible for you</span>}
-                </p>
-              )}
+          {/* Results count */}
+          {!loading && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
+                <span style={{ fontWeight: 700, color: '#111827' }}>{filtered.length}</span> result{filtered.length !== 1 ? 's' : ''}
+                {hasFilters && <span style={{ color: M, fontWeight: 600, marginLeft: 6 }}>· filtered</span>}
+              </p>
             </div>
-          </div>
+          )}
 
           {loading ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
               {[1, 2, 3].map(i => (
                 <div key={i} style={{ background: '#f9fafb', borderRadius: 14, height: 200, border: '1px solid #e5e7eb', animation: 'pulse 1.5s ease-in-out infinite' }} />
               ))}
-              <style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }`}</style>
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>

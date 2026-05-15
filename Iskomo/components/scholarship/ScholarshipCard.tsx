@@ -91,7 +91,12 @@ export default function ScholarshipCard({
         )}
 
         {/* CTA */}
-        {!eligible ? (
+        {ineligibleReason === 'Already applied' ? (
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 10, background: '#f0fdf4', border: '1.5px solid #86efac' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#15803d', whiteSpace: 'nowrap' }}>Applied</span>
+          </div>
+        ) : !eligible ? (
           <div title={ineligibleReason} style={{ flexShrink: 0, textAlign: 'center', padding: '8px 14px', borderRadius: 10, background: '#f3f4f6', border: '1px solid #e5e7eb' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af' }}>Not Eligible</div>
             {ineligibleReason && <div style={{ fontSize: 10, color: '#b0b5bf', marginTop: 1 }}>{ineligibleReason}</div>}
@@ -236,7 +241,12 @@ export default function ScholarshipCard({
           style={{ flex: 1, padding: '9px 0', border: `1.5px solid ${M}`, borderRadius: 9, background: '#fff', color: M, fontWeight: 600, fontSize: 12, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
           Details
         </Link>
-        {!eligible ? (
+        {ineligibleReason === 'Already applied' ? (
+          <div style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: '#f0fdf4', border: '1.5px solid #86efac', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#15803d' }}>Applied</span>
+          </div>
+        ) : !eligible ? (
           <div title={ineligibleReason} style={{ flex: 1, padding: '9px 0', borderRadius: 9, background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.3 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>Not Eligible</span>
             {ineligibleReason && <span style={{ fontSize: 10, color: '#b0b5bf', marginTop: 2 }}>{ineligibleReason}</span>}
