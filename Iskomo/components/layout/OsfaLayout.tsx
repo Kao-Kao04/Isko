@@ -48,7 +48,7 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
               boxShadow: `0 2px 10px ${TEAL}45`, flexShrink: 0,
             }}>
               <Image
-                src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
+                src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png"
                 alt="IskoMo" width={20} height={20}
                 style={{ filter: 'brightness(0) invert(1)' }}
               />

@@ -43,7 +43,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               boxShadow: `0 2px 8px ${TEAL}40`, flexShrink: 0,
             }}>
               <Image
-                src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
+                src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png"
                 alt="IskoMo"
                 width={22} height={22}
                 style={{ filter: 'brightness(0) invert(1)' }}

@@ -68,7 +68,7 @@ export default function LoadingScreen({ label = 'Loading…', variant = 'logo' }
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
       <div className="_ls-wrap">
         <div className="_ls-logo-ring">
-          <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo" />
+          <img src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png" alt="IskoMo" />
         </div>
         <div className="_ls-name">IskoMo</div>
         <div className="_ls-tagline">PUP Main · OSFA Portal</div>

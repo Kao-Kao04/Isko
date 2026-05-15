@@ -12,7 +12,7 @@ export default function Navbar() {
       <div className="navbar-container">
         <Link href="/#hero" className="navbar-logo" id="logoLink" aria-label="Scroll to top">
           <Image
-            src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
+            src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png"
             alt="IskoMo Logo"
             width={40}
             height={40}

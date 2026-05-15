@@ -602,7 +602,7 @@ export default function Home() {
                 aria-label="Back to top"
               >
                 <div style={{ width:36, height:36, borderRadius:10, background:`linear-gradient(135deg, ${MAROON}, ${GOLD})`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <img src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png" alt="IskoMo" style={{ width:20, height:20, filter:'brightness(0) invert(1)' }} />
+                  <img src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png" alt="IskoMo" style={{ width:20, height:20, filter:'brightness(0) invert(1)' }} />
                 </div>
                 <span style={{ fontSize:18, fontWeight:800, color:'#fff' }}>IskoMo</span>
               </button>

@@ -238,7 +238,7 @@ function LoginPageInner() {
           <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
             <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', border: '2px solid rgba(255,255,255,0.3)' }}>
               <Image
-                src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
+                src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png"
                 alt="IskoMo"
                 width={44}
                 height={44}

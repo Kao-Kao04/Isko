@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <Image
-                src="/assets/Gemini_Generated_Image_b3g7t6b3g7t6b3g7-removebg-preview.png"
+                src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png"
                 alt="IskoMo" width={18} height={18}
                 style={{ filter: 'brightness(0) invert(1)' }}
               />
