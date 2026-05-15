@@ -143,10 +143,17 @@ export default function ApplicantProfilePage() {
     try { setWorkflow(await workflowApi.get(Number(id))); } catch { /* silent */ }
   }, [id]);
 
+  function isSafeUrl(url: string): boolean {
+    try { return new URL(url).protocol === 'https:'; } catch { return false; }
+  }
+
   async function doWorkflowAction(fn: () => Promise<WorkflowResponse>, msg: string) {
     setActionLoading(true);
     try {
       setWorkflow(await fn());
+      // Re-fetch app so concurrent edits by other staff are reflected
+      const updated = await applicationApi.get(Number(id));
+      setApp(updated);
       addToast('success', msg);
       setActiveDialog(null);
     } catch (err) {
@@ -813,12 +820,12 @@ export default function ApplicantProfilePage() {
                       )}
                       {doc.file_url && (
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => window.open(doc.file_url, '_blank')}
+                          <button onClick={() => isSafeUrl(doc.file_url) && window.open(doc.file_url, '_blank')}
                             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, color: '#15803d', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             View
                           </button>
-                          <a href={doc.file_url} download target="_blank" rel="noopener noreferrer"
+                          <a href={isSafeUrl(doc.file_url) ? doc.file_url : '#'} download target="_blank" rel="noopener noreferrer"
                             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             Download
