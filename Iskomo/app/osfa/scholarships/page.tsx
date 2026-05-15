@@ -539,6 +539,7 @@ export default function Page() {
                           <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 180, overflow: 'hidden' }}>
                             {[
                               { label: 'Edit',                color: '#374151', show: !isArchived,           action: () => openEdit(s) },
+                              { label: 'Download Report',     color: '#2563eb', show: true,                  action: () => { setOpenMenuId(null); window.open(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'}/api/scholarships/${s.id}/report`, '_blank'); } },
                               { label: 'Duplicate',           color: '#374151', show: true,                  action: () => duplicateScholarship(s) },
                               { label: 'Publish',             color: TEAL,      show: s.status === 'draft',  action: () => { setOpenMenuId(null); setTimeout(() => setConfirmPublish(s), 50); } },
                               { label: 'Reopen Applications', color: '#2563eb', show: s.status === 'closed', action: () => { publishScholarship(s.id); setOpenMenuId(null); } },

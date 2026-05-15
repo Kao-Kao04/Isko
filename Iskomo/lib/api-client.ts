@@ -251,6 +251,9 @@ export const scholarshipApi = {
 
   deleteComplianceDoc: (docId: number) =>
     apiFetch<void>(`/api/scholarships/compliance-docs/${docId}`, { method: 'DELETE' }),
+
+  reportUrl: (id: number) =>
+    `${BASE_URL}/api/scholarships/${id}/report`,
 };
 
 // ─── Application API ──────────────────────────────────────────────────────────
