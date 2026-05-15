@@ -149,7 +149,7 @@ export default function Page() {
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
-              <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Student Dashboard</p>
+              <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.82)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Student Dashboard</p>
               <h1 style={{ margin: '0 0 18px', fontSize: 26, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
                 Welcome back, <span style={{ color: '#F5D060' }}>{userLoading ? '...' : firstName}!</span>
               </h1>
@@ -160,14 +160,14 @@ export default function Page() {
                   { label: 'Year Level',  value: yearLevel },
                 ].map(item => (
                   <div key={item.label} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', borderRadius: 30, padding: '5px 14px', border: '1px solid rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{item.label}</span>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.82)', fontWeight: 600 }}>{item.label}</span>
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{item.value}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="dash-hero-stat" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', borderRadius: 14, padding: '14px 20px', border: '1px solid rgba(255,255,255,0.18)', minWidth: 150, textAlign: 'center', flexShrink: 0 }}>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>My Applications</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.82)', marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>My Applications</div>
               <div className="dash-hero-stat-num" style={{ fontSize: 36, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{applications.filter(a => a.status !== 'withdrawn').length}</div>
               <div style={{ fontSize: 12, color: '#F5D060', marginTop: 6, fontWeight: 600 }}>{approvedCount} approved</div>
             </div>
@@ -285,12 +285,15 @@ export default function Page() {
               <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {myScholars.map(s => {
                   const cfg: Record<string, { bg: string; color: string; label: string }> = {
-                    active:       { bg: '#dcfce7', color: '#15803d', label: 'Scholar' },
+                    active:       { bg: '#dcfce7', color: '#15803d', label: 'Active Scholar' },
                     probationary: { bg: '#fef9c3', color: '#854d0e', label: 'Probationary' },
+                    under_review: { bg: '#e0f2fe', color: '#0369a1', label: 'Under Review' },
+                    on_leave:     { bg: '#f5f3ff', color: '#6d28d9', label: 'On Leave' },
+                    suspended:    { bg: '#fff7ed', color: '#c2410c', label: 'Suspended' },
                     terminated:   { bg: '#fee2e2', color: '#dc2626', label: 'Terminated' },
                     graduated:    { bg: '#eff6ff', color: '#1d4ed8', label: 'Graduated' },
                   };
-                  const c = cfg[s.status] ?? cfg.active;
+                  const c = cfg[s.status] ?? { bg: '#f3f4f6', color: '#374151', label: s.status };
                   return (
                     <div key={s.id} style={{ background: '#f9fafb', borderRadius: 10, padding: '10px 12px', border: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>

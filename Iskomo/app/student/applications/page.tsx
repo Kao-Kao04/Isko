@@ -19,7 +19,7 @@ const STATUS_BADGE: Record<string, { bg: string; color: string; border: string; 
   withdrawn:  { bg: '#f3f4f6', color: '#6b7280', border: '#e5e7eb', stripe: '#9ca3af' },
 };
 
-const FILTER_TABS = ['All', 'Pending', 'Approved', 'Rejected'];
+const FILTER_TABS = ['All', 'Pending', 'Incomplete', 'Approved', 'Rejected'];
 
 const StatIcon = ({ type }: { type: string }) => {
   if (type === 'Total') return (
@@ -57,18 +57,20 @@ export default function ApplicationsPage() {
   useEffect(() => { fetchApplications(); }, [fetchApplications]);
 
   const filtered = applications.filter(a => {
-    if (activeTab === 'All')      return a.status !== 'withdrawn';
-    if (activeTab === 'Pending')  return ['pending', 'incomplete'].includes(a.status);
-    if (activeTab === 'Approved') return a.status === 'approved';
-    if (activeTab === 'Rejected') return a.status === 'rejected';
+    if (activeTab === 'All')        return a.status !== 'withdrawn';
+    if (activeTab === 'Pending')    return a.status === 'pending';
+    if (activeTab === 'Incomplete') return a.status === 'incomplete';
+    if (activeTab === 'Approved')   return a.status === 'approved';
+    if (activeTab === 'Rejected')   return a.status === 'rejected';
     return true;
   });
 
   const stats = {
-    total:    applications.filter(a => a.status !== 'withdrawn').length,
-    approved: applications.filter(a => a.status === 'approved').length,
-    review:   applications.filter(a => a.eval_status === 'in_review').length,
-    pending:  applications.filter(a => ['pending', 'incomplete'].includes(a.status)).length,
+    total:      applications.filter(a => a.status !== 'withdrawn').length,
+    approved:   applications.filter(a => a.status === 'approved').length,
+    review:     applications.filter(a => a.eval_status === 'in_review').length,
+    pending:    applications.filter(a => a.status === 'pending').length,
+    incomplete: applications.filter(a => a.status === 'incomplete').length,
   };
 
   async function handleWithdraw(id: number) {
@@ -87,7 +89,6 @@ export default function ApplicationsPage() {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 36, height: 36, border: `3px solid #f3f4f6`, borderTop: `3px solid ${M}`, borderRadius: '50%', margin: '0 auto 12px', animation: 'spin 1s linear infinite' }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           <p style={{ color: '#6b7280', fontSize: 14 }}>Loading applications...</p>
         </div>
       </div>
@@ -147,9 +148,14 @@ export default function ApplicationsPage() {
                 transition: 'all 0.15s',
               }}>
                 {tab}
-                {tab !== 'All' && tab === 'Pending' && stats.pending > 0 && (
+                {tab === 'Pending' && stats.pending > 0 && (
                   <span style={{ marginLeft: 5, fontSize: 10, background: activeTab === tab ? M : '#d1d5db', color: activeTab === tab ? '#fff' : '#6b7280', padding: '1px 5px', borderRadius: 99, fontWeight: 800 }}>
                     {stats.pending}
+                  </span>
+                )}
+                {tab === 'Incomplete' && stats.incomplete > 0 && (
+                  <span style={{ marginLeft: 5, fontSize: 10, background: activeTab === tab ? '#ea580c' : '#d1d5db', color: activeTab === tab ? '#fff' : '#6b7280', padding: '1px 5px', borderRadius: 99, fontWeight: 800 }}>
+                    {stats.incomplete}
                   </span>
                 )}
               </button>

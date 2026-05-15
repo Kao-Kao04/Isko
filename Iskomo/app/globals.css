@@ -98,10 +98,6 @@ body {
   color: var(--gray-900);
 }
 
-/* ── Accessibility ─────────────────────────────────────────────────────────── */
-/* Never go below 11px for visible text */
-* { min-font-size: 11px; }
-
 /* ── Focus ─────────────────────────────────────────────────────────────────── */
 input:focus,
 select:focus,
@@ -117,6 +113,15 @@ a:focus-visible {
   outline: 2px solid var(--maroon);
   outline-offset: 2px;
   border-radius: var(--r-sm);
+}
+
+/* Restore visible focus ring in Windows High Contrast / Forced Colours mode */
+@media (forced-colors: active) {
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 2px solid ButtonText;
+  }
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
@@ -234,6 +239,7 @@ a {
 }
 
 /* ── Animations ────────────────────────────────────────────────────────────── */
+/* spin is used by loading spinners — defined once here, not duplicated per-page */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -493,6 +499,11 @@ a {
   .app-actions  { flex-direction: column !important; gap: 6px !important; }
   .app-actions a,
   .app-actions button { width: 100% !important; justify-content: center !important; text-align: center !important; }
+}
+
+/* Stat grid — single column on very small phones */
+@media (max-width: 380px) {
+  .stat-grid { grid-template-columns: 1fr !important; }
 }
 
 /* ── Profile ───────────────────────────────────────────────────────────────── */
