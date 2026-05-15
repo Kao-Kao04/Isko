@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -143,7 +144,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {/* Nav — hidden on narrow screens */}
           <div className="admin-desktop-nav" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <AdminNav />
+            <Suspense fallback={<div />}>
+              <AdminNav />
+            </Suspense>
           </div>
 
           {/* Right — identity badge + sign out */}

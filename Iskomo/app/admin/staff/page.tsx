@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { adminApi, type StaffResponse } from '@/lib/api-client';
 import { apiFetch, getAccessToken } from '@/lib/api';
@@ -78,7 +78,7 @@ function Spin() {
 }
 
 
-export default function AdminPage() {
+function AdminPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeTab = (searchParams.get('tab') as TabKey) ?? 'dashboard';
@@ -925,4 +925,8 @@ export default function AdminPage() {
       )}
     </div>
   );
+}
+
+export default function AdminPage() {
+  return <Suspense fallback={<div />}><AdminPageInner /></Suspense>;
 }
