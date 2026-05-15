@@ -260,6 +260,10 @@ export default function Page() {
                       <span style={{ fontSize: 12, color: '#6b7280' }}>Latest: {latestRecord.semester} {latestRecord.academic_year} · GWA: {latestRecord.gwa ?? '—'}</span>
                     )}
                     <span style={{ fontSize: 12, color: '#9ca3af' }}>{scholar.semester_records.length} semester record{scholar.semester_records.length !== 1 ? 's' : ''}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: scholar.allowance_status === 'released' ? '#15803d' : scholar.allowance_status === 'partial' ? '#d97706' : '#6b7280' }}>
+                      Allowance: {scholar.allowance_status === 'released' ? 'Released' : scholar.allowance_status === 'partial' ? 'Partial' : 'Pending'}
+                      {scholar.amount_released ? ` · ₱${scholar.amount_released.toLocaleString()}` : ''}
+                    </span>
                   </div>
                 </div>
 

@@ -378,6 +378,10 @@ export interface ScholarResponse {
   status: ScholarStatus;
   is_graduating: boolean;
   expected_graduation: string | null;
+  allowance_status: string;
+  amount_released: number | null;
+  last_release_date: string | null;
+  next_release_date: string | null;
   created_at: string;
   semester_records: Array<{
     id: number;
@@ -438,6 +442,12 @@ export const scholarApi = {
     apiFetch<ScholarResponse['semester_records'][0]>(`/api/scholars/${scholarId}/semester-records/${recordId}/thank-you`, {
       method: 'PATCH',
     }),
+
+  updateAllowance: (scholarId: number, data: { allowance_status?: string; amount_released?: number; next_release_date?: string }) =>
+    apiFetch<ScholarResponse>(`/api/scholars/${scholarId}/allowance`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
 };
 
 // ─── Document API ──────────────────────────────────────────────────────────────
@@ -493,14 +503,21 @@ export const notificationApi = {
 
   dismiss: (id: number) =>
     apiFetch<void>(`/api/notifications/${id}`, { method: 'DELETE' }),
+
+  announce: (data: { title: string; body: string; target?: string; scholarship_id?: number; status_filter?: string; student_ids?: number[] }) =>
+    apiFetch<{ message: string }>('/api/notifications/announce', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
 
 // ─── User API ─────────────────────────────────────────────────────────────────
 
 export const userApi = {
-  list: (page = 1, pageSize = 100, accountStatus?: string) => {
+  list: (page = 1, pageSize = 100, accountStatus?: string, filter?: string) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     if (accountStatus) params.set('account_status', accountStatus);
+    if (filter) params.set('filter', filter);
     return apiFetch<PaginatedResponse<StudentUserResponse>>(`/api/users?${params}`);
   },
 

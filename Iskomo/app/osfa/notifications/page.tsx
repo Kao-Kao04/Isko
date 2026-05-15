@@ -85,6 +85,9 @@ export default function Page() {
   const router = useRouter();
   const { user } = useCurrentUser();
   const isSuperAdmin = user?.role === 'super_admin';
+  const canAnnounce  = user?.role === 'super_admin' || user?.role === 'osfa_staff';
+  const [announceTarget, setAnnounceTarget] = useState<'all' | 'by_scholarship' | 'by_status'>('all');
+  const [announceScholarshipId, setAnnounceScholarshipId] = useState('');
   const [notifications, setNotifications] = useState<DisplayNotif[]>([]);
   const [loading, setLoading]             = useState(true);
   const [activeFilter, setActiveFilter]   = useState<NotifFilter>('All');
@@ -128,16 +131,20 @@ export default function Page() {
     setBroadcastErr('');
     setBroadcastOk('');
     try {
-      const res = await fetch('http://localhost:8000/api/notifications/broadcast', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
-        body: JSON.stringify({ title: broadcastTitle.trim(), body: broadcastBody.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed');
+      const { notificationApi } = await import('@/lib/api-client');
+      const payload: Parameters<typeof notificationApi.announce>[0] = {
+        title: broadcastTitle.trim(),
+        body:  broadcastBody.trim(),
+        target: announceTarget,
+        ...(announceTarget === 'by_scholarship' && announceScholarshipId
+          ? { scholarship_id: Number(announceScholarshipId) }
+          : {}),
+      };
+      const data = await notificationApi.announce(payload);
       setBroadcastOk(data.message);
       setBroadcastTitle('');
       setBroadcastBody('');
+      setAnnounceTarget('all');
       setTimeout(() => { setShowBroadcast(false); setBroadcastOk(''); }, 2000);
     } catch (err) {
       setBroadcastErr(err instanceof Error ? err.message : 'Failed to send.');
@@ -187,7 +194,7 @@ export default function Page() {
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Stay updated on application activity and system events</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          {isSuperAdmin && (
+          {canAnnounce && (
             <button onClick={() => setShowBroadcast(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: `linear-gradient(135deg, ${TEAL}, #5C0000)`, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3h20a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3zm-8 4H10"/></svg>
               Send Announcement
@@ -314,12 +321,28 @@ export default function Page() {
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowBroadcast(false)}>
         <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 500, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
           <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Send Announcement</h2>
-          <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>This will send a notification to all active students.</p>
+          <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>Send a notification to students based on your target selection.</p>
 
           {broadcastErr && <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626', marginBottom: 14 }}>{broadcastErr}</div>}
           {broadcastOk  && <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, color: '#15803d', marginBottom: 14 }}>{broadcastOk}</div>}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Target</label>
+              <select value={announceTarget} onChange={e => setAnnounceTarget(e.target.value as typeof announceTarget)}
+                style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
+                <option value="all">All Students</option>
+                <option value="by_scholarship">By Scholarship</option>
+                <option value="by_status">By Application Status</option>
+              </select>
+            </div>
+            {announceTarget === 'by_scholarship' && (
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Scholarship ID</label>
+                <input type="number" value={announceScholarshipId} onChange={e => setAnnounceScholarshipId(e.target.value)}
+                  placeholder="Enter scholarship ID" style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            )}
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Title <span style={{ color: '#dc2626' }}>*</span></label>
               <input type="text" value={broadcastTitle} onChange={e => setBroadcastTitle(e.target.value)} placeholder="e.g. OSFA Scholarship Announcement" style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
@@ -333,7 +356,7 @@ export default function Page() {
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
             <button onClick={() => setShowBroadcast(false)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
             <button onClick={sendBroadcast} disabled={broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()} style={{ flex: 1, padding: 10, background: (broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()) ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, #5C0000)`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: (broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()) ? 'not-allowed' : 'pointer', color: '#fff' }}>
-              {broadcasting ? 'Sending…' : 'Send to All Students'}
+              {broadcasting ? 'Sending…' : 'Send Announcement'}
             </button>
           </div>
         </div>

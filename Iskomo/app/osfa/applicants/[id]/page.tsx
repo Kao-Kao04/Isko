@@ -80,7 +80,7 @@ export default function ApplicantProfilePage() {
   const [workflow,             setWorkflow]             = useState<WorkflowResponse | null>(null);
   const [actionLoading,        setActionLoading]        = useState(false);
   const [activeDialog,         setActiveDialog]         = useState<string | null>(null);
-  const [scheduleForm,         setScheduleForm]         = useState({ datetime: '', location: '', note: '' });
+  const [scheduleForm,         setScheduleForm]         = useState({ date: '', time: '', location: '', note: '' });
   const [dateError,            setDateError]            = useState('');
   const [evalForm,             setEvalForm]             = useState({ score: '', notes: '' });
   const [decideForm,           setDecideForm]           = useState({ decision: 'approved', remarks: '' });
@@ -190,7 +190,7 @@ export default function ApplicantProfilePage() {
       setAudit(aud);
       setScholarship(sch);
       // Load compliance data at completion stage
-      if (wf?.main_status === 'COMPLETION') {
+      if (wf?.main_status === 'completion') {
         applicationApi.getCompliance(numId).then(setCompliance).catch(() => {});
         scholarshipApi.listComplianceDocs(a.scholarship_id).then(setComplianceDocTypes).catch(() => {});
       }
@@ -533,17 +533,20 @@ export default function ApplicantProfilePage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Date & Time</label>
-                    <input
-                      type="datetime-local"
-                      value={scheduleForm.datetime}
-                      min={new Date().toISOString().slice(0, 16)}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setScheduleForm(f => ({ ...f, datetime: val }));
-                        setDateError(val && new Date(val) <= new Date() ? 'Interview date must be in the future.' : '');
-                      }}
-                      style={{ ...inp, borderColor: dateError ? '#fca5a5' : undefined }}
-                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="date"
+                        value={scheduleForm.date}
+                        onChange={e => { setScheduleForm(f => ({ ...f, date: e.target.value })); setDateError(''); }}
+                        style={{ ...inp, flex: 1 }}
+                      />
+                      <input
+                        type="time"
+                        value={scheduleForm.time}
+                        onChange={e => { setScheduleForm(f => ({ ...f, time: e.target.value })); setDateError(''); }}
+                        style={{ ...inp, width: 120 }}
+                      />
+                    </div>
                     {dateError && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{dateError}</p>}
                   </div>
                   <div>
@@ -557,17 +560,18 @@ export default function ApplicantProfilePage() {
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button style={btn('#fff', TEAL)} onClick={() => {
-                    if (!scheduleForm.datetime || !scheduleForm.location) return;
-                    if (new Date(scheduleForm.datetime) <= new Date()) {
-                      setDateError('Interview date must be in the future.');
+                    if (!scheduleForm.date || !scheduleForm.time || !scheduleForm.location) {
+                      setDateError('Date, time, and location are required.');
                       return;
                     }
+                    const dt = new Date(`${scheduleForm.date}T${scheduleForm.time}`);
+                    if (dt <= new Date()) { setDateError('Interview date must be in the future.'); return; }
                     setDateError('');
-                    const data = { interview_datetime: new Date(scheduleForm.datetime).toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) };
-                    const fn = activeDialog === 'reschedule' ? workflowApi.rescheduleInterview : workflowApi.scheduleInterview;
-                    doWorkflowAction(() => fn(Number(id), data), `Interview ${activeDialog === 'reschedule' ? 'rescheduled' : 'scheduled'}.`);
+                    const data = { interview_datetime: dt.toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) };
+                    // OSFA always calls scheduleInterview (sets new datetime); student requests use rescheduleInterview
+                    doWorkflowAction(() => workflowApi.scheduleInterview(Number(id), data), `Interview ${activeDialog === 'reschedule' ? 'rescheduled' : 'scheduled'}.`);
                   }}>Confirm</button>
-                  <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setScheduleForm({ datetime: '', location: '', note: '' }); }}>Cancel</button>
+                  <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setScheduleForm({ date: '', time: '', location: '', note: '' }); }}>Cancel</button>
                 </div>
               </div>
             )}
@@ -771,11 +775,18 @@ export default function ApplicantProfilePage() {
                         <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626', padding: '3px 10px', borderRadius: 20, background: '#fef2f2', border: '1px solid #fca5a5' }}>FLAGGED</span>
                       )}
                       {doc.file_url && (
-                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                          Download
-                        </a>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => window.open(doc.file_url, '_blank')}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, color: '#15803d', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            View
+                          </button>
+                          <a href={doc.file_url} download target="_blank" rel="noopener noreferrer"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download
+                          </a>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -785,7 +796,7 @@ export default function ApplicantProfilePage() {
           </div>
 
           {/* Compliance Documents — visible when at COMPLETION stage */}
-          {workflow?.main_status === 'COMPLETION' && (() => {
+          {workflow?.main_status === 'completion' && (() => {
             const requiredTypes = complianceDocTypes.filter(d => d.is_required);
             const allVerified = requiredTypes.length > 0 && requiredTypes.every(d =>
               compliance.some(c => c.requirement_type === d.name && c.is_verified)
@@ -870,7 +881,7 @@ export default function ApplicantProfilePage() {
           })()}
 
           {/* Generate Documents */}
-          {workflow?.main_status === 'COMPLETION' && (
+          {workflow?.main_status === 'completion' && (
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 24px' }}>
               <h3 style={{ ...sectionTitle, marginBottom: 12 }}>Generate Documents</h3>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

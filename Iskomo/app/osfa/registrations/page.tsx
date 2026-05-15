@@ -29,6 +29,7 @@ export default function RegistrationsPage() {
   const [students,       setStudents]       = useState<Student[]>([]);
   const [loading,        setLoading]        = useState(true);
   const [filter,         setFilter]         = useState<'pending_verification' | 'verified' | 'rejected' | 'all'>('pending_verification');
+  const [appFilter,      setAppFilter]      = useState<'' | 'with_application' | 'no_application'>();
   const [selectedId,     setSelectedId]     = useState<number | null>(null);
   const [selectedDocs,   setSelectedDocs]   = useState<RegDoc[]>([]);
   const [docsLoading,    setDocsLoading]    = useState(false);
@@ -41,12 +42,12 @@ export default function RegistrationsPage() {
     setLoading(true);
     try {
       const statusParam = filter === 'all' ? undefined : filter;
-      const res = await userApi.list(1, 100, statusParam);
+      const res = await userApi.list(1, 100, statusParam, appFilter || undefined);
       setStudents(res.items as Student[]);
     } catch { /* silent */ } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, appFilter]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -106,7 +107,7 @@ export default function RegistrationsPage() {
       </div>
 
       {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
         {([
           ['pending_verification', 'Pending Review'],
           ['verified',             'Verified'],
@@ -115,6 +116,18 @@ export default function RegistrationsPage() {
         ] as const).map(([key, label]) => (
           <button key={key} onClick={() => { setFilter(key); setSelectedId(null); }}
             style={{ padding: '8px 18px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: filter === key ? TEAL : '#f3f4f6', color: filter === key ? '#fff' : '#374151', transition: 'all 0.15s' }}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        {([
+          [undefined, 'All Students'],
+          ['with_application', 'With Application'],
+          ['no_application',   'No Application'],
+        ] as const).map(([key, label]) => (
+          <button key={key ?? 'all'} onClick={() => { setAppFilter(key); setSelectedId(null); }}
+            style={{ padding: '6px 14px', borderRadius: 20, border: `1px solid ${(appFilter ?? undefined) === key ? TEAL : '#e5e7eb'}`, cursor: 'pointer', fontSize: 12, fontWeight: 600, background: (appFilter ?? undefined) === key ? TEAL_L : '#fff', color: (appFilter ?? undefined) === key ? TEAL : '#6b7280', transition: 'all 0.15s' }}>
             {label}
           </button>
         ))}

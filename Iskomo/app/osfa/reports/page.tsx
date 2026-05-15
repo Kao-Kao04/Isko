@@ -28,18 +28,33 @@ const STATUS_LABEL: Record<string, string> = {
   waitlisted:  'Waitlisted',
 };
 
-// ── Trends — main_status values from backend ──────────────────────────────────
+// ── Trends — main_status values from backend (lowercase after values_callable fix)
 const TREND_LABEL: Record<string, string> = {
+  application:  'Submitted',
+  verification: 'Under Verification',
+  interview:    'Interview',
+  decision:     'Decision',
+  completion:   'Completed',
+  rejected:     'Rejected',
+  withdrawn:    'Withdrawn',
+  // legacy uppercase keys (backward compat)
   APPLICATION:  'Submitted',
   VERIFICATION: 'Under Verification',
   INTERVIEW:    'Interview',
   DECISION:     'Decision',
-  COMPLETION:   'Approved',
+  COMPLETION:   'Completed',
   REJECTED:     'Rejected',
   WITHDRAWN:    'Withdrawn',
 };
 
 const TREND_COLOR: Record<string, string> = {
+  application:  '#6366f1',
+  verification: '#2563eb',
+  interview:    '#7c3aed',
+  decision:     '#d97706',
+  completion:   '#059669',
+  rejected:     '#dc2626',
+  withdrawn:    '#6b7280',
   APPLICATION:  '#6366f1',
   VERIFICATION: '#2563eb',
   INTERVIEW:    '#7c3aed',
