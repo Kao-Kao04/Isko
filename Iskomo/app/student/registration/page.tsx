@@ -213,6 +213,21 @@ export default function RegistrationPage() {
     );
   }
 
+  if (submitting) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', gap: 20 }}>
+        <div style={{ position: 'relative', width: 72, height: 72 }}>
+          <div style={{ width: 72, height: 72, border: `5px solid #f3f4f6`, borderTop: `5px solid ${TEAL}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 6 }}>Creating your account…</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>Uploading documents and saving your information. Please wait.</div>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '40px 24px' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>

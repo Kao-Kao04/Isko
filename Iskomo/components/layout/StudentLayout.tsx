@@ -1,3 +1,6 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
 import StudentNav from '@/components/shared/StudentNav';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import SignOutButton from '@/components/shared/SignOutButton';
@@ -10,6 +13,17 @@ import { COLORS } from '@/lib/theme';
 const TEAL = COLORS.maroon;
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const hideNav = pathname === '/student/registration';
+
+  if (hideNav) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f4f7fb 0%, #eef2f7 100%)' }}>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <>
       {/* ── Top Navigation Bar ── */}
