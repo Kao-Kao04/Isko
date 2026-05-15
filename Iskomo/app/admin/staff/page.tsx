@@ -54,6 +54,7 @@ interface AuditLog {
 interface Paginated<T> { items: T[]; total: number; page: number; }
 
 const PAGE_SIZE = 20;
+const AUDIT_PAGE_SIZE = 50;
 
 function fmt(d: string) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -170,13 +171,10 @@ function AdminPageInner() {
   const [auditFetched, setAuditFetched] = useState(false);
   const [auditFilter, setAuditFilter]   = useState('');
 
-  // TODO: add /api/admin/system-audit tab (for staff/scholarship/broadcast events) in a future sprint
-  const PAGE_SIZE = 50;
-
   const fetchAudit = useCallback(async (page = 1) => {
     setAuditLoading(true);
     try {
-      const res = await apiFetch<{ total: number; page: number; items: AuditLog[] }>(`/api/admin/audit?page=${page}&page_size=${PAGE_SIZE}`);
+      const res = await apiFetch<{ total: number; page: number; items: AuditLog[] }>(`/api/admin/audit?page=${page}&page_size=${AUDIT_PAGE_SIZE}`);
       setAuditLogs(res.items);
       setAuditTotal(res.total);
       setAuditFetched(true);
@@ -611,11 +609,11 @@ function AdminPageInner() {
                   </div>
                 ))}
               </div>
-              {auditTotal > PAGE_SIZE && (
+              {auditTotal > AUDIT_PAGE_SIZE && (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
                   <button disabled={auditPage <= 1} onClick={() => { const p = auditPage - 1; setAuditPage(p); fetchAudit(p); }} style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: auditPage <= 1 ? '#f9fafb' : '#fff', color: auditPage <= 1 ? '#9ca3af' : '#374151', fontSize: 13, cursor: auditPage <= 1 ? 'default' : 'pointer' }}>← Prev</button>
-                  <span style={{ fontSize: 12, color: '#6b7280' }}>Page {auditPage} of {Math.ceil(auditTotal / PAGE_SIZE)}</span>
-                  <button disabled={auditPage >= Math.ceil(auditTotal / PAGE_SIZE)} onClick={() => { const p = auditPage + 1; setAuditPage(p); fetchAudit(p); }} style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: auditPage >= Math.ceil(auditTotal / PAGE_SIZE) ? '#f9fafb' : '#fff', color: auditPage >= Math.ceil(auditTotal / PAGE_SIZE) ? '#9ca3af' : '#374151', fontSize: 13, cursor: auditPage >= Math.ceil(auditTotal / PAGE_SIZE) ? 'default' : 'pointer' }}>Next →</button>
+                  <span style={{ fontSize: 12, color: '#6b7280' }}>Page {auditPage} of {Math.ceil(auditTotal / AUDIT_PAGE_SIZE)}</span>
+                  <button disabled={auditPage >= Math.ceil(auditTotal / AUDIT_PAGE_SIZE)} onClick={() => { const p = auditPage + 1; setAuditPage(p); fetchAudit(p); }} style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: auditPage >= Math.ceil(auditTotal / AUDIT_PAGE_SIZE) ? '#f9fafb' : '#fff', color: auditPage >= Math.ceil(auditTotal / AUDIT_PAGE_SIZE) ? '#9ca3af' : '#374151', fontSize: 13, cursor: auditPage >= Math.ceil(auditTotal / AUDIT_PAGE_SIZE) ? 'default' : 'pointer' }}>Next →</button>
                 </div>
               )}
             </>
