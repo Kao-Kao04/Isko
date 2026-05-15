@@ -155,6 +155,8 @@ export default function ApplicantProfilePage() {
       addToast('error', isDeptError
         ? "You don't have permission to manage this application"
         : message);
+      // Re-fetch to sync UI with actual DB state (handles stale state from failed network responses)
+      await refreshWorkflow();
     } finally {
       setActionLoading(false);
     }
@@ -437,6 +439,18 @@ export default function ApplicantProfilePage() {
                   {ss === 'approved' ? '✓ Application Approved' : ss === 'rejected' ? '✗ Application Rejected' : ss === 'waitlisted' ? '⏳ Waitlisted' : '⏳ Under Review'}
                 </div>
                 {wf.decision_remarks && <div style={{ fontSize: 13, color: '#374151' }}>{wf.decision_remarks}</div>}
+              </div>
+            )}
+
+            {/* Completion stage banner */}
+            {ms === 'completion' && (
+              <div style={{ background: ss === 'completed' ? '#f0fdf4' : '#f0f9ff', border: `1.5px solid ${ss === 'completed' ? '#86efac' : '#bae6fd'}`, borderRadius: 14, padding: '18px 24px' }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: ss === 'completed' ? '#15803d' : '#0369a1', marginBottom: 6 }}>
+                  {ss === 'completed' ? '✓ Scholar Onboarded — Completed' : ss === 'requirements_submitted' ? 'Documents Submitted — Ready to Finalize' : '⏳ Awaiting Completion Documents from Scholar'}
+                </div>
+                <div style={{ fontSize: 13, color: '#374151' }}>
+                  {ss === 'completed' ? 'The scholar has been fully onboarded.' : ss === 'requirements_submitted' ? 'The scholar has submitted their completion documents. Review and finalize to complete onboarding.' : 'The applicant has been approved. Waiting for them to submit their completion documents before finalization.'}
+                </div>
               </div>
             )}
 
