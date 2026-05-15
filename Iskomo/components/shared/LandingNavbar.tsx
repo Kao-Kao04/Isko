@@ -48,11 +48,11 @@ export default function LandingNavbar() {
         opacity:    opacity,
         visibility: 'visible',
         transition: 'background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease',
-        background: scrolled ? 'rgba(255,255,255,0.96)' : 'rgba(0,0,0,0.15)',
-        backdropFilter: scrolled ? 'blur(14px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(14px)' : 'none',
-        borderBottom: scrolled ? `1px solid rgba(128,0,0,0.10)` : '1px solid rgba(255,255,255,0.08)',
-        boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.10)' : 'none',
+        background: (scrolled || menuOpen) ? 'rgba(255,255,255,0.96)' : 'rgba(0,0,0,0.15)',
+        backdropFilter: (scrolled || menuOpen) ? 'blur(14px)' : 'none',
+        WebkitBackdropFilter: (scrolled || menuOpen) ? 'blur(14px)' : 'none',
+        borderBottom: (scrolled || menuOpen) ? `1px solid rgba(128,0,0,0.10)` : '1px solid rgba(255,255,255,0.08)',
+        boxShadow: (scrolled || menuOpen) ? '0 2px 20px rgba(0,0,0,0.10)' : 'none',
       }}
     >
       {/* Top maroon accent bar */}
@@ -154,7 +154,7 @@ export default function LandingNavbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div style={{ borderTop: '1px solid #f3f4f6', padding: '12px 28px 20px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ borderTop: '1px solid #f3f4f6', padding: '12px 28px 20px', display: 'flex', flexDirection: 'column', gap: 4, background: 'rgba(255,255,255,0.98)' }}>
           {[
             { label: 'About',        href: '#about' },
             { label: 'How It Works', href: '#how-it-works' },
