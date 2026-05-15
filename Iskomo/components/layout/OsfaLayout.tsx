@@ -1,6 +1,7 @@
 import OsfaNav from '@/components/shared/OsfaNav';
 import NotificationBell from '@/components/shared/NotificationBell';
 import SignOutButton from '@/components/shared/SignOutButton';
+import PhClock from '@/components/shared/PhClock';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
@@ -79,6 +80,8 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
               </div>
             )}
 
+            <PhClock />
+            <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
             <NotificationBell />
             <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
             <SignOutButton />

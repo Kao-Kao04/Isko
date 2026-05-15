@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { reportsApi, type ReportsOverview, type ScholarshipBreakdown, type ApplicationTrend } from '@/lib/api-client';
+import { getAccessToken } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
@@ -144,10 +145,27 @@ export default function ReportsPage() {
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#111827' }}>Reports & Analytics</h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Scholarship program performance and application statistics</p>
         </div>
-        <button onClick={fetchAll} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 9, background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-1"/></svg>
-          Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a
+            href={reportsApi.exportApplicationsCsvUrl()}
+            download="applications.csv"
+            onClick={e => { const tok = getAccessToken(); if (tok) { /* token sent via cookie */ } }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid #bbf7d0', borderRadius: 9, background: '#f0fdf4', color: '#059669', fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Applications CSV
+          </a>
+          <a
+            href={reportsApi.exportScholarsCsvUrl()}
+            download="scholars.csv"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid #bfdbfe', borderRadius: 9, background: '#eff6ff', color: '#2563eb', fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Scholars CSV
+          </a>
+          <button onClick={fetchAll} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 9, background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-1"/></svg>
+            Refresh
+          </button>
+        </div>
       </div>
 
       {error && (

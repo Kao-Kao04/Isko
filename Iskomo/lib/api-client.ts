@@ -621,10 +621,21 @@ export interface ApplicationTrend {
   count: number;
 }
 
+export interface CalendarEvent {
+  application_id: number;
+  student_name: string;
+  scholarship_name: string;
+  interview_datetime: string;
+  interview_location: string | null;
+}
+
 export const reportsApi = {
-  overview: () => apiFetch<ReportsOverview>('/api/reports/overview'),
+  overview:     () => apiFetch<ReportsOverview>('/api/reports/overview'),
   scholarships: () => apiFetch<ScholarshipBreakdown[]>('/api/reports/scholarships'),
-  trends: () => apiFetch<ApplicationTrend[]>('/api/reports/applications'),
+  trends:       () => apiFetch<ApplicationTrend[]>('/api/reports/applications'),
+  calendar:     () => apiFetch<{ events: CalendarEvent[] }>('/api/reports/calendar'),
+  exportApplicationsCsvUrl: () => `${BASE_URL}/api/reports/export/applications`,
+  exportScholarsCsvUrl:     () => `${BASE_URL}/api/reports/export/scholars`,
 };
 
 // ─── Dashboard Stats API ──────────────────────────────────────────────────────
