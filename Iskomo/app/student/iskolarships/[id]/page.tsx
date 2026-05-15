@@ -171,7 +171,7 @@ export default function ScholarshipDetailPage() {
                   <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <span style={{ fontSize: 11, fontWeight: 800, color: COLORS.maroon }}>{(s.requirements?.length ?? 0) + 1}</span>
                   </div>
-                  <span style={{ fontSize: 13, color: '#374151', fontWeight: 500, flex: 1 }}>Motivation Letter / Essay</span>
+                  <span style={{ fontSize: 13, color: '#374151', fontWeight: 500, flex: 1 }}>Dahilan sa Pag-apply</span>
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626' }}>REQUIRED</span>
                 </div>
               )}

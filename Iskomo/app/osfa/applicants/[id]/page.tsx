@@ -682,6 +682,29 @@ export default function ApplicantProfilePage() {
             </div>
           </div>
 
+          {/* Address & Family Background — only shown when data exists */}
+          {(student?.street_barangay || student?.father_name || student?.income_source) && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px', gridColumn: '1 / -1' }}>
+              <h3 style={sectionTitle}>Address &amp; Family Background</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 18 }}>
+                {[
+                  { label: 'Street / Barangay',   value: student?.street_barangay   ?? '—' },
+                  { label: 'City / Municipality',  value: student?.city_municipality ?? '—' },
+                  { label: 'Province',             value: student?.province          ?? '—' },
+                  { label: 'Zip Code',             value: student?.zip_code          ?? '—' },
+                  { label: "Father's Name",        value: student?.father_name       ?? '—' },
+                  { label: "Father's Occupation",  value: student?.father_occupation ?? '—' },
+                  { label: "Mother's Name",        value: student?.mother_name       ?? '—' },
+                  { label: "Mother's Occupation",  value: student?.mother_occupation ?? '—' },
+                  { label: 'Income Source',        value: student?.income_source     ?? '—' },
+                  { label: 'Monthly Family Income',value: student?.monthly_income    ?? '—' },
+                ].map(f => (
+                  <div key={f.label}><div style={fieldLabel}>{f.label}</div><div style={fieldValue}>{f.value}</div></div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {app.appeal && (
             <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${app.appeal.status === 'pending' ? '#fcd34d' : app.appeal.status === 'approved' ? '#86efac' : '#fca5a5'}`, padding: '24px 28px', gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>

@@ -65,6 +65,19 @@ export default function RegistrationPage() {
   const [college,       setCollege]       = useState('');
   const [program,       setProgram]       = useState('');
   const [yearLevel,     setYearLevel]     = useState('');
+  // Address
+  const [streetBarangay,   setStreetBarangay]   = useState('');
+  const [cityMunicipality, setCityMunicipality] = useState('');
+  const [province,         setProvince]         = useState('');
+  const [zipCode,          setZipCode]          = useState('');
+  // Parents
+  const [fatherName,       setFatherName]       = useState('');
+  const [fatherOccupation, setFatherOccupation] = useState('');
+  const [motherName,       setMotherName]       = useState('');
+  const [motherOccupation, setMotherOccupation] = useState('');
+  // Family income
+  const [incomeSource,     setIncomeSource]     = useState('');
+  const [monthlyIncome,    setMonthlyIncome]    = useState('');
   const [schoolIdFile,  setSchoolIdFile]  = useState<File | null>(null);
   const [corFile,       setCorFile]       = useState<File | null>(null);
   const [submitting,    setSubmitting]    = useState(false);
@@ -111,6 +124,16 @@ export default function RegistrationPage() {
     setCollege(p.college ?? '');
     setProgram(p.program ?? '');
     setYearLevel(String(p.year_level ?? ''));
+    setStreetBarangay(p.street_barangay ?? '');
+    setCityMunicipality(p.city_municipality ?? '');
+    setProvince(p.province ?? '');
+    setZipCode(p.zip_code ?? '');
+    setFatherName(p.father_name ?? '');
+    setFatherOccupation(p.father_occupation ?? '');
+    setMotherName(p.mother_name ?? '');
+    setMotherOccupation(p.mother_occupation ?? '');
+    setIncomeSource(p.income_source ?? '');
+    setMonthlyIncome(p.monthly_income ?? '');
   }, [user]);
 
   // Redirect verified students away
@@ -132,15 +155,25 @@ export default function RegistrationPage() {
     setSubmitting(true);
     try {
       const fd = new FormData();
-      fd.append('first_name',     firstName);
-      fd.append('last_name',      lastName);
-      fd.append('middle_name',    middleName);
-      fd.append('student_number', studentNumber);
-      fd.append('college',        college);
-      fd.append('program',        program);
-      fd.append('year_level',     yearLevel);
-      fd.append('school_id',      schoolIdFile);
-      fd.append('cor',            corFile);
+      fd.append('first_name',       firstName);
+      fd.append('last_name',        lastName);
+      fd.append('middle_name',      middleName);
+      fd.append('student_number',   studentNumber);
+      fd.append('college',          college);
+      fd.append('program',          program);
+      fd.append('year_level',       yearLevel);
+      if (streetBarangay)   fd.append('street_barangay',   streetBarangay);
+      if (cityMunicipality) fd.append('city_municipality', cityMunicipality);
+      if (province)         fd.append('province',          province);
+      if (zipCode)          fd.append('zip_code',          zipCode);
+      if (fatherName)       fd.append('father_name',       fatherName);
+      if (fatherOccupation) fd.append('father_occupation', fatherOccupation);
+      if (motherName)       fd.append('mother_name',       motherName);
+      if (motherOccupation) fd.append('mother_occupation', motherOccupation);
+      if (incomeSource)     fd.append('income_source',     incomeSource);
+      if (monthlyIncome)    fd.append('monthly_income',    monthlyIncome);
+      fd.append('school_id', schoolIdFile);
+      fd.append('cor',       corFile);
 
       await registrationApi.submit(fd);
       setSubmitted(true);
@@ -317,6 +350,73 @@ export default function RegistrationPage() {
                 <select style={{ ...inp, color: program ? '#111827' : '#9ca3af' }} value={program} onChange={e => setProgram(e.target.value)} required disabled={!college}>
                   <option value="">{college ? 'Select program...' : 'Select a college first'}</option>
                   {programs.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Address */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Address</div>
+            <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={lbl}>Street and Barangay <span style={{ color: '#dc2626' }}>*</span></label>
+                <input style={inp} value={streetBarangay} onChange={e => setStreetBarangay(e.target.value)} placeholder="e.g. 123 Rizal St., Brgy. San Pedro" required />
+              </div>
+              <div>
+                <label style={lbl}>Town / City / Municipality <span style={{ color: '#dc2626' }}>*</span></label>
+                <input style={inp} value={cityMunicipality} onChange={e => setCityMunicipality(e.target.value)} placeholder="e.g. Manila" required />
+              </div>
+              <div>
+                <label style={lbl}>Province <span style={{ color: '#dc2626' }}>*</span></label>
+                <input style={inp} value={province} onChange={e => setProvince(e.target.value)} placeholder="e.g. Metro Manila" required />
+              </div>
+              <div>
+                <label style={lbl}>Zip Code <span style={{ color: '#dc2626' }}>*</span></label>
+                <input style={inp} value={zipCode} onChange={e => setZipCode(e.target.value.replace(/\D/g,'').slice(0,4))} placeholder="e.g. 1008" maxLength={4} required />
+              </div>
+            </div>
+          </div>
+
+          {/* Parents */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Parent / Guardian Information</div>
+            <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
+              <div>
+                <label style={lbl}>Father&apos;s Name <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>(Last, Given, M.I.)</span></label>
+                <input style={inp} value={fatherName} onChange={e => setFatherName(e.target.value)} placeholder="e.g. Dela Cruz, Juan B." />
+              </div>
+              <div>
+                <label style={lbl}>Father&apos;s Occupation</label>
+                <input style={inp} value={fatherOccupation} onChange={e => setFatherOccupation(e.target.value)} placeholder="e.g. Engineer" />
+              </div>
+              <div>
+                <label style={lbl}>Mother&apos;s Name <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>(Last, Given, M.I.)</span></label>
+                <input style={inp} value={motherName} onChange={e => setMotherName(e.target.value)} placeholder="e.g. Dela Cruz, Maria S." />
+              </div>
+              <div>
+                <label style={lbl}>Mother&apos;s Occupation</label>
+                <input style={inp} value={motherOccupation} onChange={e => setMotherOccupation(e.target.value)} placeholder="e.g. Teacher" />
+              </div>
+            </div>
+          </div>
+
+          {/* Family Income */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Family Income</div>
+            <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={lbl}>Source of Family Income <span style={{ color: '#dc2626' }}>*</span></label>
+                <input style={inp} value={incomeSource} onChange={e => setIncomeSource(e.target.value)} placeholder="e.g. Salary, Pension, Sari-Sari Store, Remittance from Relatives" required />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={lbl}>Estimated Monthly Family Income <span style={{ color: '#dc2626' }}>*</span></label>
+                <select style={{ ...inp, color: monthlyIncome ? '#111827' : '#9ca3af' }} value={monthlyIncome} onChange={e => setMonthlyIncome(e.target.value)} required>
+                  <option value="">Select range...</option>
+                  {['Below ₱5,000','₱5,000 – ₱9,999','₱10,000 – ₱14,999','₱15,000 – ₱19,999',
+                    '₱20,000 – ₱29,999','₱30,000 – ₱49,999','₱50,000 – ₱99,999','₱100,000 and above'].map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
                 </select>
               </div>
             </div>
