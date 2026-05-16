@@ -683,7 +683,7 @@ export default function ApplicantProfilePage() {
                 { label: 'Full Name',      value: name },
                 { label: 'Email',          value: student?.email ?? '—' },
                 { label: 'Student Number', value: student?.student_number ?? '—' },
-                { label: 'Year Level',     value: student?.year_level ? `${student.year_level}th Year` : '—' },
+                { label: 'Year Level',     value: student?.year_level ? (['1st','2nd','3rd'][student.year_level - 1] ?? `${student.year_level}th`) + ' Year' : '—' },
               ].map(f => (
                 <div key={f.label}><div style={fieldLabel}>{f.label}</div><div style={fieldValue}>{f.value}</div></div>
               ))}

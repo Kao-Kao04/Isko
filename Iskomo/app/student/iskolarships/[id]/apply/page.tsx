@@ -359,7 +359,7 @@ export default function ApplyPage() {
               { label: 'Student Number',   value: profile?.student_number ?? '—' },
               { label: 'College',          value: profile?.college ?? '—' },
               { label: 'Course / Program', value: profile?.program ?? '—' },
-              { label: 'Year Level',       value: profile?.year_level ? `${profile.year_level}th Year` : '—' },
+              { label: 'Year Level',       value: profile?.year_level ? (['1st','2nd','3rd'][profile.year_level - 1] ?? `${profile.year_level}th`) + ' Year' : '—' },
             ].map(f => (
               <div key={f.label}>
                 <label style={labelStyle}>{f.label}</label>

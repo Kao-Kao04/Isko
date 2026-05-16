@@ -738,7 +738,7 @@ export default function ApplicationDetailPage() {
             {[
               { label: 'Student',    value: studentName },
               { label: 'Program',    value: app.student?.program ?? '—' },
-              { label: 'Year Level', value: app.student?.year_level ? `${app.student.year_level}th Year` : '—' },
+              { label: 'Year Level', value: app.student?.year_level ? (['1st','2nd','3rd'][app.student.year_level - 1] ?? `${app.student.year_level}th`) + ' Year' : '—' },
               { label: 'College',    value: app.student?.college ?? '—' },
               { label: 'Evaluation', value: ({ not_started: 'Not Started', in_review: 'In Review', completed: 'Completed' } as Record<string,string>)[app.eval_status] ?? app.eval_status },
               { label: 'Submitted',  value: formatTime(app.submitted_at) },
