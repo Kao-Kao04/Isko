@@ -257,7 +257,7 @@ function LoginPageInner() {
         </div>
 
         {/* ── Right sliding panel ── */}
-        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative', minWidth: 0 }}>
           <div style={{
             display: 'flex',
             width: '200%',
