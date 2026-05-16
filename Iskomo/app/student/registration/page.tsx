@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { registrationApi } from '@/lib/api-client';
@@ -28,15 +28,21 @@ function FileInput({ id, label, file, onChange, accept = '.pdf,.jpg,.jpeg,.png' 
   onChange: (f: File | null) => void;
   accept?: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div>
       <label style={lbl}>{label} <span style={{ color: '#dc2626' }}>*</span></label>
-      <label htmlFor={id} style={{
-        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-        border: `2px dashed ${file ? TEAL : '#d1d5db'}`,
-        borderRadius: 10, background: file ? TEAL_L : '#fafafa',
-        cursor: 'pointer', transition: 'all 0.15s',
-      }}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+          border: `2px dashed ${file ? TEAL : '#d1d5db'}`,
+          borderRadius: 10, background: file ? TEAL_L : '#fafafa',
+          cursor: 'pointer', transition: 'all 0.15s',
+        }}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={file ? TEAL : '#9ca3af'} strokeWidth="2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
@@ -47,9 +53,15 @@ function FileInput({ id, label, file, onChange, accept = '.pdf,.jpg,.jpeg,.png' 
             : <span style={{ fontSize: 13, color: '#6b7280' }}>Click to upload — PDF, JPG, PNG (max 5 MB)</span>
           }
         </div>
-        <input id={id} type="file" accept={accept} style={{ display: 'none' }}
-          onChange={e => onChange(e.target.files?.[0] ?? null)} />
-      </label>
+        <input
+          ref={inputRef}
+          id={id}
+          type="file"
+          accept={accept}
+          style={{ position: 'absolute', width: 0, height: 0, opacity: 0, overflow: 'hidden' }}
+          onChange={e => onChange(e.target.files?.[0] ?? null)}
+        />
+      </div>
     </div>
   );
 }
