@@ -22,36 +22,70 @@ const lbl: React.CSSProperties = {
   color: '#374151', marginBottom: 6,
 };
 
+const MAX_FILE_MB = 5;
+
 function FileInput({ id, label, file, onChange, accept = '.pdf,.jpg,.jpeg,.png' }: {
   id: string; label: string;
   file: File | null;
   onChange: (f: File | null) => void;
   accept?: string;
 }) {
+  const [sizeErr, setSizeErr] = useState(false);
+  const isImage = file && file.type.startsWith('image/');
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file || !isImage) { setPreview(null); return; }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file, isImage]);
+
+  function handleChange(f: File | null) {
+    if (f && f.size > MAX_FILE_MB * 1024 * 1024) { setSizeErr(true); return; }
+    setSizeErr(false);
+    onChange(f);
+  }
+
+  const fileSizeStr = file ? (file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(0)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`) : null;
+
   return (
     <div>
       <label style={lbl}>{label} <span style={{ color: '#dc2626' }}>*</span></label>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-        border: `2px dashed ${file ? TEAL : '#d1d5db'}`,
-        borderRadius: 10, background: file ? TEAL_L : '#fafafa',
+        border: `2px dashed ${sizeErr ? '#dc2626' : file ? TEAL : '#d1d5db'}`,
+        borderRadius: 10, background: sizeErr ? '#fef2f2' : file ? TEAL_L : '#fafafa',
         cursor: 'pointer', transition: 'all 0.15s',
       }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={file ? TEAL : '#9ca3af'} strokeWidth="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <div>
-          {file
-            ? <span style={{ fontSize: 13, fontWeight: 600, color: TEAL }}>✓ {file.name}</span>
-            : <span style={{ fontSize: 13, color: '#6b7280' }}>Click to upload — PDF, JPG, PNG (max 5 MB)</span>
+        {preview ? (
+          <img src={preview} alt="preview" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={sizeErr ? '#dc2626' : file ? TEAL : '#9ca3af'} strokeWidth="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {sizeErr
+            ? <span style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>File too large — max {MAX_FILE_MB} MB</span>
+            : file
+              ? <>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: TEAL, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✓ {file.name}</span>
+                  <span style={{ fontSize: 11, color: '#6b7280' }}>{fileSizeStr}</span>
+                </>
+              : <span style={{ fontSize: 13, color: '#6b7280' }}>Click to upload — PDF, JPG, PNG (max {MAX_FILE_MB} MB)</span>
           }
         </div>
+        {file && (
+          <button type="button" onClick={e => { e.stopPropagation(); onChange(null); setSizeErr(false); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16, padding: '0 4px', flexShrink: 0, zIndex: 1 }}>✕</button>
+        )}
         <input
           id={id}
           type="file"
           accept={accept}
           style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
-          onChange={e => onChange(e.target.files?.[0] ?? null)}
+          onChange={e => handleChange(e.target.files?.[0] ?? null)}
         />
       </div>
     </div>
@@ -204,9 +238,25 @@ export default function RegistrationPage() {
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <h2 style={{ margin: '0 0 12px', fontSize: 22, fontWeight: 800, color: '#111827' }}>Documents Submitted!</h2>
-          <p style={{ margin: '0 0 28px', fontSize: 14, color: '#6b7280', lineHeight: 1.7 }}>
-            Your registration documents are now under OSFA review. You can access your dashboard and profile while you wait. We&apos;ll notify you once your account is approved.
+          <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6b7280', lineHeight: 1.7 }}>
+            Your registration documents are now under OSFA review. We&apos;ll notify you by email once your account is approved.
           </p>
+          <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 20px', marginBottom: 24, textAlign: 'left' }}>
+            <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em' }}>What happens next</p>
+            {[
+              { icon: '📋', text: 'OSFA reviews your School ID and COR', sub: 'Usually within 2–3 business days' },
+              { icon: '✅', text: 'You receive an email notification', sub: 'Approved or rejected with remarks' },
+              { icon: '🎓', text: 'Browse and apply for scholarships', sub: 'Full access once approved' },
+            ].map((step, i) => (
+              <div key={i} style={{ display: 'flex', gap: 12, marginBottom: i < 2 ? 12 : 0 }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{step.icon}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{step.text}</div>
+                  <div style={{ fontSize: 12, color: '#9ca3af' }}>{step.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
           <button onClick={() => router.push('/student/dashboard')}
             style={{ width: '100%', padding: '13px', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
             Go to Dashboard

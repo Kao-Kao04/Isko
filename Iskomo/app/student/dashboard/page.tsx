@@ -111,13 +111,28 @@ export default function Page() {
 
       {/* Pending banner */}
       {isPending && (
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: 14, padding: '16px 20px', marginBottom: 20 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div style={{ background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: 14, padding: '16px 20px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: '#92400e' }}>Account Pending OSFA Approval</p>
+              <p style={{ margin: 0, fontSize: 13, color: '#b45309', lineHeight: 1.5 }}>Your documents are under review. OSFA typically responds within <strong>2–3 business days</strong>. You&apos;ll get an email once approved.</p>
+            </div>
           </div>
-          <div>
-            <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: '#92400e' }}>Account Pending OSFA Approval</p>
-            <p style={{ margin: 0, fontSize: 13, color: '#b45309', lineHeight: 1.5 }}>Your registration is under review. You can browse scholarships but cannot apply until approved by OSFA.</p>
+          <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', border: '1px solid #fde68a' }}>
+            {[
+              { label: 'Documents Submitted', done: true },
+              { label: 'OSFA Reviewing', active: true },
+              { label: 'Approved & Full Access', done: false },
+            ].map((step, i) => (
+              <div key={i} style={{ flex: 1, padding: '8px 12px', background: step.done ? '#fef3c7' : step.active ? '#d97706' : '#fff8e6', textAlign: 'center', borderRight: i < 2 ? '1px solid #fde68a' : 'none' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: step.active ? '#fff' : step.done ? '#92400e' : '#d97706' }}>
+                  {step.done ? '✓ ' : step.active ? '⏳ ' : ''}{step.label}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

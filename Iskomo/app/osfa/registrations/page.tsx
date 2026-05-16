@@ -30,6 +30,7 @@ export default function RegistrationsPage() {
   const [loading,        setLoading]        = useState(true);
   const [filter,         setFilter]         = useState<'pending_verification' | 'verified' | 'rejected' | 'all'>('pending_verification');
   const [appFilter,      setAppFilter]      = useState<'' | 'with_application' | 'no_application'>();
+  const [search,         setSearch]         = useState('');
   const [selectedId,     setSelectedId]     = useState<number | null>(null);
   const [selectedDocs,   setSelectedDocs]   = useState<RegDoc[]>([]);
   const [docsLoading,    setDocsLoading]    = useState(false);
@@ -37,6 +38,8 @@ export default function RegistrationsPage() {
   const [showReject,     setShowReject]     = useState(false);
   const [actionStudent,  setActionStudent]  = useState<Student | null>(null);
   const [saving,         setSaving]         = useState(false);
+  const [checkedIds,     setCheckedIds]     = useState<Set<number>>(new Set());
+  const [bulkSaving,     setBulkSaving]     = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,7 +97,37 @@ export default function RegistrationsPage() {
   const studentName = (s: Student) =>
     s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}` : s.email;
 
-  const filtered = filter === 'all' ? students : students.filter(s => s.account_status === filter);
+  async function bulkApprove() {
+    if (!checkedIds.size) return;
+    setBulkSaving(true);
+    let ok = 0, fail = 0;
+    for (const id of checkedIds) {
+      try { await userApi.approveStudent(id); ok++; } catch { fail++; }
+    }
+    if (ok) addToast('success', `${ok} student${ok > 1 ? 's' : ''} approved.`);
+    if (fail) addToast('error', `${fail} failed.`);
+    setCheckedIds(new Set());
+    await load();
+    setSelectedId(null);
+    setBulkSaving(false);
+  }
+
+  function toggleCheck(id: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    setCheckedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  const baseFiltered = filter === 'all' ? students : students.filter(s => s.account_status === filter);
+  const filtered = search.trim()
+    ? baseFiltered.filter(s => {
+        const q = search.toLowerCase();
+        return studentName(s).toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.student_profile?.student_number ?? '').toLowerCase().includes(q);
+      })
+    : baseFiltered;
   const selected = students.find(s => s.id === selectedId) ?? null;
 
   return (
@@ -120,7 +153,7 @@ export default function RegistrationsPage() {
           </button>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         {([
           [undefined, 'All Students'],
           ['with_application', 'With Application'],
@@ -131,7 +164,31 @@ export default function RegistrationsPage() {
             {label}
           </button>
         ))}
+        <div style={{ marginLeft: 'auto', position: 'relative' }}>
+          <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search name, email, student no…"
+            style={{ paddingLeft: 32, paddingRight: 12, paddingTop: 7, paddingBottom: 7, border: '1px solid #e5e7eb', borderRadius: 20, fontSize: 12, outline: 'none', width: 220 }}
+          />
+        </div>
       </div>
+
+      {/* Bulk action bar */}
+      {checkedIds.size > 0 && filter === 'pending_verification' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, marginBottom: 14 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#1d4ed8' }}>{checkedIds.size} selected</span>
+          <button onClick={bulkApprove} disabled={bulkSaving}
+            style={{ padding: '6px 16px', background: '#059669', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: bulkSaving ? 'not-allowed' : 'pointer' }}>
+            {bulkSaving ? 'Approving…' : `✓ Approve ${checkedIds.size}`}
+          </button>
+          <button onClick={() => setCheckedIds(new Set())}
+            style={{ padding: '6px 12px', background: '#fff', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            Clear
+          </button>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: selectedId ? '1fr 1.4fr' : '1fr', gap: 20 }}>
 
@@ -145,26 +202,35 @@ export default function RegistrationsPage() {
             const cfg  = STATUS_CFG[s.account_status] ?? STATUS_CFG.pending_verification;
             const name = studentName(s);
             const isSelected = selectedId === s.id;
+            const isChecked  = checkedIds.has(s.id);
             return (
-              <button key={s.id} onClick={() => openDocs(s)}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12, border: `1.5px solid ${isSelected ? TEAL : '#e5e7eb'}`, background: isSelected ? TEAL_L : '#fff', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', boxShadow: isSelected ? `0 0 0 3px ${TEAL}20` : 'none' }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16, fontWeight: 800, flexShrink: 0 }}>
-                  {name[0]?.toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 1 }}>{s.email}</div>
-                  {s.student_profile && (
-                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
-                      {s.student_profile.college} · {s.student_profile.student_number}
-                    </div>
-                  )}
-                </div>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot }} />
-                  {cfg.label}
-                </span>
-              </button>
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {filter === 'pending_verification' && (
+                  <input type="checkbox" checked={isChecked}
+                    onChange={() => {}}
+                    onClick={e => toggleCheck(s.id, e as unknown as React.MouseEvent)}
+                    style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0, accentColor: TEAL }} />
+                )}
+                <button onClick={() => openDocs(s)}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12, border: `1.5px solid ${isSelected ? TEAL : '#e5e7eb'}`, background: isSelected ? TEAL_L : '#fff', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', boxShadow: isSelected ? `0 0 0 3px ${TEAL}20` : 'none' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16, fontWeight: 800, flexShrink: 0 }}>
+                    {name[0]?.toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280', marginTop: 1 }}>{s.email}</div>
+                    {s.student_profile && (
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                        {s.student_profile.college} · {s.student_profile.student_number}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot }} />
+                    {cfg.label}
+                  </span>
+                </button>
+              </div>
             );
           })}
         </div>
@@ -172,18 +238,28 @@ export default function RegistrationsPage() {
         {/* Document review panel */}
         {selected && (
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px 28px', height: 'fit-content', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
                 <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#111827' }}>{studentName(selected)}</h3>
                 <div style={{ fontSize: 13, color: '#6b7280' }}>{selected.email}</div>
-                {selected.student_profile && (
-                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
-                    {selected.student_profile.program} · Year {selected.student_profile.year_level}
-                  </div>
-                )}
               </div>
               <button onClick={() => setSelectedId(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#9ca3af', padding: 4 }}>✕</button>
             </div>
+            {selected.student_profile && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', padding: '12px 14px', background: '#f8fafc', borderRadius: 10, marginBottom: 16, fontSize: 12 }}>
+                {[
+                  ['Student No.', selected.student_profile.student_number],
+                  ['College', selected.student_profile.college],
+                  ['Program', selected.student_profile.program],
+                  ['Year Level', `Year ${selected.student_profile.year_level}`],
+                ].map(([k, v]) => (
+                  <div key={k}>
+                    <span style={{ color: '#9ca3af', fontWeight: 600 }}>{k}: </span>
+                    <span style={{ color: '#111827', fontWeight: 500 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Rejection remarks (if any) */}
             {selected.rejection_remarks && (
@@ -199,24 +275,34 @@ export default function RegistrationsPage() {
             ) : selectedDocs.length === 0 ? (
               <div style={{ padding: '20px 0', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No documents found.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-                {selectedDocs.map(doc => (
-                  <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #f3f4f6' }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
-                        {doc.doc_type === 'school_id' ? 'School ID' : 'Certificate of Registration (COR)'}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+                {selectedDocs.map(doc => {
+                  const isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.filename);
+                  return (
+                    <div key={doc.id} style={{ borderRadius: 10, background: '#f9fafb', border: '1px solid #f3f4f6', overflow: 'hidden' }}>
+                      {isImg && doc.url && (
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                          <img src={doc.url} alt={doc.doc_type} style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block', borderBottom: '1px solid #f3f4f6' }} />
+                        </a>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+                            {doc.doc_type === 'school_id' ? 'School ID' : 'Certificate of Registration (COR)'}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>{doc.filename}</div>
+                        </div>
+                        {doc.url && (
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            Open
+                          </a>
+                        )}
                       </div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{doc.filename}</div>
                     </div>
-                    {doc.url && (
-                      <a href={doc.url} target="_blank" rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        View
-                      </a>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
