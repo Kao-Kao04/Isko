@@ -381,7 +381,8 @@ export default function ApplyPage() {
                   <label style={labelStyle}>
                     {doc.label} {doc.required && <span style={{ color: '#dc2626' }}>*</span>}
                   </label>
-                  <label htmlFor={doc.id} style={{
+                  <div style={{
+                    position: 'relative',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
                     border: `2px dashed ${hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#d1d5db'}`,
                     borderRadius: 10, padding: '20px 16px', cursor: 'pointer',
@@ -396,8 +397,8 @@ export default function ApplyPage() {
                       {hasFile ? <><span style={{ color: '#15803d', marginRight: 4 }}>✓</span>{files[doc.id]}</> : 'Click to upload'}
                     </span>
                     <span style={{ fontSize: 11, color: '#9ca3af' }}>{doc.hint}</span>
-                    <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required && !hasFile} style={{ position: 'absolute', width: 0, height: 0, opacity: 0, overflow: 'hidden' }} onChange={e => handleFileChange(e, doc.id)} />
-                  </label>
+                    <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required && !hasFile} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} onChange={e => handleFileChange(e, doc.id)} />
+                  </div>
                   {hasError && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{fileErrors[doc.id]}</p>}
                 </div>
               );
