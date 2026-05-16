@@ -131,7 +131,24 @@ export default function NotificationBell() {
       setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
     } catch { /* ignore */ }
     setOpen(false);
-    if (n.route) router.push(roleBase + n.route);
+
+    // Compute destination client-side so routing is correct regardless of
+    // what the backend cached in the route field.
+    let dest: string;
+    if (n.application_id) {
+      dest = `${roleBase}/applications/${n.application_id}`;
+    } else {
+      const t = n.title.toLowerCase();
+      if (t.includes('deadline') || t.includes('scholarship')) {
+        dest = `${roleBase}/iskolarships`;
+      } else if (t.includes('registration')) {
+        dest = `${roleBase}/registrations`;
+      } else {
+        // General announcement — send to notifications page so student can read the body
+        dest = `${roleBase}/notifications`;
+      }
+    }
+    router.push(dest);
   }
 
   async function markAllRead() {
