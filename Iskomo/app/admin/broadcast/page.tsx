@@ -15,10 +15,19 @@ export default function AdminBroadcastPage() {
   const [body,    setBody]    = useState('');
   const [target,  setTarget]  = useState<'all' | 'students' | 'osfa_staff'>('all');
   const [sending, setSending] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const RECIPIENT_LABEL: Record<string, string> = {
+    all: 'all active users (students + OSFA staff)',
+    students: 'all active students',
+    osfa_staff: 'all active OSFA staff',
+  };
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !body.trim()) return;
+    if (!showConfirm) { setShowConfirm(true); return; }
+    setShowConfirm(false);
     setSending(true);
     try {
       const data = await apiFetch<{ message: string }>('/api/admin/broadcast', {
@@ -66,10 +75,30 @@ export default function AdminBroadcastPage() {
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>{body.length} / 2000 characters</div>
           </div>
 
-          <button type="submit" disabled={sending || !title.trim() || !body.trim()}
-            style={{ width: '100%', padding: '13px', background: (sending || !title.trim() || !body.trim()) ? '#9ca3af' : `linear-gradient(135deg, ${M}, #5C0000)`, color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: (sending || !title.trim() || !body.trim()) ? 'not-allowed' : 'pointer' }}>
-            {sending ? 'Sending…' : '📣 Send Broadcast'}
-          </button>
+          {showConfirm && (
+            <div style={{ padding: '14px 16px', background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: 10, fontSize: 13 }}>
+              <div style={{ fontWeight: 700, color: '#92400e', marginBottom: 6 }}>⚠️ Confirm Broadcast</div>
+              <div style={{ color: '#b45309', lineHeight: 1.6 }}>
+                This will send <strong>"{title}"</strong> to <strong>{RECIPIENT_LABEL[target]}</strong>. This cannot be undone.
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                <button type="submit" disabled={sending}
+                  style={{ flex: 1, padding: '10px', background: sending ? '#9ca3af' : `linear-gradient(135deg, ${M}, #5C0000)`, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer' }}>
+                  {sending ? 'Sending…' : '📣 Yes, Send Now'}
+                </button>
+                <button type="button" onClick={() => setShowConfirm(false)}
+                  style={{ flex: 1, padding: '10px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+          {!showConfirm && (
+            <button type="submit" disabled={sending || !title.trim() || !body.trim()}
+              style={{ width: '100%', padding: '13px', background: (sending || !title.trim() || !body.trim()) ? '#9ca3af' : `linear-gradient(135deg, ${M}, #5C0000)`, color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: (sending || !title.trim() || !body.trim()) ? 'not-allowed' : 'pointer' }}>
+              {sending ? 'Sending…' : '📣 Send Broadcast'}
+            </button>
+          )}
         </form>
       </div>
     </div>

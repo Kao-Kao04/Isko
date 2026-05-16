@@ -512,6 +512,30 @@ a {
   .profile-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
 }
 
+/* ── OSFA/Admin nav — show hamburger on mobile ──────────────────────────────── */
+@media (max-width: 860px) {
+  .osfa-hamburger { display: flex !important; }
+  .osfa-desktop-nav { display: none !important; }
+}
+
+/* ── Admin tables — horizontal scroll on mobile ─────────────────────────────── */
+@media (max-width: 768px) {
+  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-table-wrap table { min-width: 700px; }
+
+  /* Profile page — single col on small screens */
+  .prof-grid-2 { grid-template-columns: 1fr !important; }
+
+  /* Registrations two-col → single col */
+  .reg-split { grid-template-columns: 1fr !important; }
+
+  /* Admin broadcast confirm box */
+  .bcast-confirm-btns { flex-direction: column !important; }
+
+  /* Reduce padding on admin pages */
+  .admin-page-wrap { padding: 16px 12px !important; }
+}
+
 /* ── Reduced motion ────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,

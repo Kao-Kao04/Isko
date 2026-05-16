@@ -278,12 +278,16 @@ export default function RegistrationsPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
                 {selectedDocs.map(doc => {
                   const isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.filename);
+                  const isPdf = /\.pdf$/i.test(doc.filename);
                   return (
                     <div key={doc.id} style={{ borderRadius: 10, background: '#f9fafb', border: '1px solid #f3f4f6', overflow: 'hidden' }}>
                       {isImg && doc.url && (
                         <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                          <img src={doc.url} alt={doc.doc_type} style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block', borderBottom: '1px solid #f3f4f6' }} />
+                          <img src={doc.url} alt={doc.doc_type} style={{ width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block', borderBottom: '1px solid #f3f4f6' }} />
                         </a>
+                      )}
+                      {isPdf && doc.url && (
+                        <iframe src={doc.url} title={doc.doc_type} style={{ width: '100%', height: 280, border: 'none', borderBottom: '1px solid #f3f4f6', display: 'block' }} />
                       )}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
                         <div>

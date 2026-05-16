@@ -22,11 +22,13 @@ function fmtDt(d: string) {
 }
 
 export default function AdminAuditPage() {
-  const [logs,    setLogs]    = useState<AuditLog[]>([]);
-  const [page,    setPage]    = useState(1);
-  const [total,   setTotal]   = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [search,  setSearch]  = useState('');
+  const [logs,      setLogs]      = useState<AuditLog[]>([]);
+  const [page,      setPage]      = useState(1);
+  const [total,     setTotal]     = useState(0);
+  const [loading,   setLoading]   = useState(true);
+  const [search,    setSearch]    = useState('');
+  const [dateFrom,  setDateFrom]  = useState('');
+  const [dateTo,    setDateTo]    = useState('');
 
   const fetch = useCallback(async (p = 1) => {
     setLoading(true);
@@ -39,7 +41,14 @@ export default function AdminAuditPage() {
   useEffect(() => { fetch(1); }, [fetch]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const displayed  = search.trim() ? logs.filter(l => l.action.toLowerCase().includes(search.toLowerCase()) || l.actor_email.toLowerCase().includes(search.toLowerCase())) : logs;
+  const displayed  = logs.filter(l => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || l.action.toLowerCase().includes(q) || l.actor_email.toLowerCase().includes(q);
+    const logDate = new Date(l.created_at);
+    const matchFrom = !dateFrom || logDate >= new Date(dateFrom);
+    const matchTo   = !dateTo   || logDate <= new Date(dateTo + 'T23:59:59');
+    return matchSearch && matchFrom && matchTo;
+  });
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
@@ -50,17 +59,33 @@ export default function AdminAuditPage() {
         <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>Application status changes and staff actions</p>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '9px 14px' }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Filter by action or actor email…" style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#111827', background: 'transparent' }} />
-        {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>Clear</button>}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '9px 14px' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Filter by action or actor email…" style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#111827', background: 'transparent' }} />
+          {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>Clear</button>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '8px 14px' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>From</span>
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, color: '#111827', background: 'transparent', cursor: 'pointer' }} />
+          <span style={{ fontSize: 12, color: '#9ca3af' }}>—</span>
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, color: '#111827', background: 'transparent', cursor: 'pointer' }} />
+          {(dateFrom || dateTo) && <button onClick={() => { setDateFrom(''); setDateTo(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>✕</button>}
+        </div>
+        {displayed.length !== logs.length && <span style={{ fontSize: 12, color: '#6b7280' }}>{displayed.length} of {logs.length} entries</span>}
       </div>
 
-      {loading ? <Spin /> : logs.length === 0 ? (
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '48px 24px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No audit logs yet.</div>
+      {loading ? <Spin /> : displayed.length === 0 ? (
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '60px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>{logs.length === 0 ? '📋' : '🔍'}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6 }}>{logs.length === 0 ? 'No audit logs yet' : 'No logs match your filters'}</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>{logs.length === 0 ? 'Actions taken by staff will appear here.' : 'Try adjusting the search or date range.'}</div>
+          {(search || dateFrom || dateTo) && <button onClick={() => { setSearch(''); setDateFrom(''); setDateTo(''); }} style={{ marginTop: 14, padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Clear filters</button>}
+        </div>
       ) : (
         <>
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <div className="admin-table-wrap" style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>

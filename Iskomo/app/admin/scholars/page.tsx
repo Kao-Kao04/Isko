@@ -72,7 +72,12 @@ export default function AdminScholarsPage() {
       </div>
 
       {loading ? <Spin /> : displayed.length === 0 ? (
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '48px 24px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No scholars found.</div>
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '60px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🎓</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6 }}>No scholars found</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>{search ? 'Try a different search term.' : filter !== 'all' ? `No ${filter} scholars in the system.` : 'No scholars have been awarded yet.'}</div>
+          {(search || filter !== 'all') && <button onClick={() => { setSearch(''); setFilter('all'); }} style={{ marginTop: 14, padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Clear filters</button>}
+        </div>
       ) : (
         <>
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
