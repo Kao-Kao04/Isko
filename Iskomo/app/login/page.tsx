@@ -125,6 +125,8 @@ function LoginPageInner() {
   const [signupLoading, setSignupLoading] = useState(false);
   const [emailSent,    setEmailSent]    = useState(false);
   const [signupDev,    setSignupDev]    = useState(false); // dev mode: auto-verified
+  const [resendSent,   setResendSent]   = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,6 +147,15 @@ function LoginPageInner() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    try {
+      await apiFetch('/api/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email }) });
+      setResendSent(true);
+    } catch { /* silent — we show success regardless to avoid enumeration */ setResendSent(true); }
+    finally { setResendLoading(false); }
   };
 
   const ALLOWED_DOMAINS = ['iskolarngbayan.pup.edu.ph', 'gmail.com'];
@@ -310,9 +321,17 @@ function LoginPageInner() {
                 </div>
 
                 {error && (
-                  <p style={{ margin: 0, fontSize: 13, color: '#dc2626', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px' }}>
-                    {error}
-                  </p>
+                  <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px' }}>
+                    <p style={{ margin: 0, fontSize: 13, color: '#dc2626' }}>{error}</p>
+                    {error.toLowerCase().includes('verify') && (
+                      resendSent
+                        ? <p style={{ margin: '6px 0 0', fontSize: 12, color: '#16a34a', fontWeight: 600 }}>✓ Verification email sent — check your inbox (and spam).</p>
+                        : <button type="button" onClick={handleResendVerification} disabled={resendLoading}
+                            style={{ marginTop: 8, background: 'none', border: 'none', cursor: resendLoading ? 'default' : 'pointer', color: TEAL, fontWeight: 700, fontSize: 12, padding: 0, textDecoration: 'underline' }}>
+                            {resendLoading ? 'Sending…' : 'Resend verification email'}
+                          </button>
+                    )}
+                  </div>
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
