@@ -94,6 +94,7 @@ export default function Page() {
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastBody,  setBroadcastBody]  = useState('');
+  const [broadcastLink,  setBroadcastLink]  = useState('');
   const [broadcasting,   setBroadcasting]   = useState(false);
   const [broadcastOk,    setBroadcastOk]    = useState('');
   const [broadcastErr,   setBroadcastErr]   = useState('');
@@ -139,11 +140,13 @@ export default function Page() {
         ...(announceTarget === 'by_scholarship' && announceScholarshipId
           ? { scholarship_id: Number(announceScholarshipId) }
           : {}),
+        ...(broadcastLink.trim() ? { link: broadcastLink.trim() } : {}),
       };
       const data = await notificationApi.announce(payload);
       setBroadcastOk(data.message);
       setBroadcastTitle('');
       setBroadcastBody('');
+      setBroadcastLink('');
       setAnnounceTarget('all');
       setTimeout(() => { setShowBroadcast(false); setBroadcastOk(''); }, 2000);
     } catch (err) {
@@ -350,6 +353,11 @@ export default function Page() {
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Message <span style={{ color: '#dc2626' }}>*</span></label>
               <textarea value={broadcastBody} onChange={e => setBroadcastBody(e.target.value)} rows={4} placeholder="Type your announcement message here..." style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5, boxSizing: 'border-box' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Link <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+              <input type="url" value={broadcastLink} onChange={e => setBroadcastLink(e.target.value)} placeholder="https://... students will be taken here when they tap the notification" style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>Leave blank to link to the Notifications page.</p>
             </div>
           </div>
 
