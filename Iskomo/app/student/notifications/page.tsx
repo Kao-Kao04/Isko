@@ -255,6 +255,10 @@ export default function StudentNotificationsPage() {
                   <span style={{ fontSize: 11, color: '#9ca3af' }}>{formatFull(selected.created_at)}</span>
                 </div>
 
+                {selected.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={selected.image_url} alt="announcement" style={{ width: '100%', borderRadius: 10, objectFit: 'cover', maxHeight: 200, display: 'block' }} />
+                )}
                 <div style={{ background: '#f8fafc', borderRadius: 10, padding: '14px 16px', border: '1px solid #f1f5f9' }}>
                   <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{selected.body}</p>
                 </div>

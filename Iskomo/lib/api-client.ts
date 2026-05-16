@@ -519,7 +519,7 @@ export const notificationApi = {
   dismiss: (id: number) =>
     apiFetch<void>(`/api/notifications/${id}`, { method: 'DELETE' }),
 
-  announce: (data: { title: string; body: string; target?: string; scholarship_id?: number; status_filter?: string; student_ids?: number[]; link?: string }) =>
+  announce: (data: { title: string; body: string; target?: string; scholarship_id?: number; status_filter?: string; student_ids?: number[]; link?: string; image_url?: string }) =>
     apiFetch<{ message: string }>('/api/notifications/announce', {
       method: 'POST',
       body: JSON.stringify(data),

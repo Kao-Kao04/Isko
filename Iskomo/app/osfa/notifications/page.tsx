@@ -92,12 +92,13 @@ export default function Page() {
   const [loading, setLoading]             = useState(true);
   const [activeFilter, setActiveFilter]   = useState<NotifFilter>('All');
   const [showBroadcast, setShowBroadcast] = useState(false);
-  const [broadcastTitle, setBroadcastTitle] = useState('');
-  const [broadcastBody,  setBroadcastBody]  = useState('');
-  const [broadcastLink,  setBroadcastLink]  = useState('');
-  const [broadcasting,   setBroadcasting]   = useState(false);
-  const [broadcastOk,    setBroadcastOk]    = useState('');
-  const [broadcastErr,   setBroadcastErr]   = useState('');
+  const [broadcastTitle,    setBroadcastTitle]    = useState('');
+  const [broadcastBody,     setBroadcastBody]     = useState('');
+  const [broadcastLink,     setBroadcastLink]     = useState('');
+  const [broadcastImage,    setBroadcastImage]    = useState<string | null>(null);
+  const [broadcasting,      setBroadcasting]      = useState(false);
+  const [broadcastOk,       setBroadcastOk]       = useState('');
+  const [broadcastErr,      setBroadcastErr]      = useState('');
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -126,6 +127,26 @@ export default function Page() {
     } catch { /* ignore */ }
   };
 
+  function handleBroadcastImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new window.Image();
+      img.onload = () => {
+        const MAX = 800;
+        const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width  = img.width  * ratio;
+        canvas.height = img.height * ratio;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setBroadcastImage(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.src = ev.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function sendBroadcast() {
     if (!broadcastTitle.trim() || !broadcastBody.trim()) return;
     setBroadcasting(true);
@@ -140,13 +161,15 @@ export default function Page() {
         ...(announceTarget === 'by_scholarship' && announceScholarshipId
           ? { scholarship_id: Number(announceScholarshipId) }
           : {}),
-        ...(broadcastLink.trim() ? { link: broadcastLink.trim() } : {}),
+        ...(broadcastLink.trim()  ? { link:      broadcastLink.trim() }  : {}),
+        ...(broadcastImage        ? { image_url: broadcastImage }        : {}),
       };
       const data = await notificationApi.announce(payload);
       setBroadcastOk(data.message);
       setBroadcastTitle('');
       setBroadcastBody('');
       setBroadcastLink('');
+      setBroadcastImage(null);
       setAnnounceTarget('all');
       setTimeout(() => { setShowBroadcast(false); setBroadcastOk(''); }, 2000);
     } catch (err) {
@@ -358,6 +381,26 @@ export default function Page() {
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Link <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
               <input type="url" value={broadcastLink} onChange={e => setBroadcastLink(e.target.value)} placeholder="https://... students will be taken here when they tap the notification" style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
               <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>Leave blank to link to the Notifications page.</p>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Image <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+              {broadcastImage ? (
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={broadcastImage} alt="preview" style={{ height: 80, borderRadius: 8, border: '1px solid #e5e7eb', objectFit: 'cover', display: 'block' }} />
+                  <button type="button" onClick={() => setBroadcastImage(null)}
+                    style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: '#dc2626', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              ) : (
+                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', border: '1.5px dashed #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 13, color: '#6b7280', background: '#f9fafb' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  Upload Image
+                  <input type="file" accept="image/*" onChange={handleBroadcastImage}
+                    style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+                </div>
+              )}
             </div>
           </div>
 
