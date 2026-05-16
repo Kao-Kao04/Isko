@@ -30,9 +30,9 @@ export default function StudentNotificationsPage() {
     setLoading(true);
     try {
       const res = await notificationApi.list(p, PAGE_SIZE);
-      if (p === 1) setNotifs(res.items ?? res as NotificationResponse[]);
-      else setNotifs(prev => [...prev, ...(res.items ?? [])]);
-      setTotal((res as { total?: number }).total ?? 0);
+      if (p === 1) setNotifs(res.items);
+      else setNotifs(prev => [...prev, ...res.items]);
+      setTotal(res.total);
     } catch { /* silent */ }
     finally { setLoading(false); }
   }, []);
