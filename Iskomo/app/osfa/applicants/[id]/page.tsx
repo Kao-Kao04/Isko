@@ -77,7 +77,10 @@ export default function ApplicantProfilePage() {
   const [scholarship, setScholarship] = useState<ScholarshipResponse | null>(null);
   const [loading,     setLoading]     = useState(true);
 
-  const [activeTab,            setActiveTab]            = useState<'workflow' | 'overview' | 'documents' | 'evaluation' | 'history'>('workflow');
+  const [activeTab,            setActiveTab]            = useState<'workflow' | 'overview' | 'documents' | 'evaluation' | 'history' | 'messages'>('workflow');
+  const [messages,             setMessages]             = useState<Array<{ id: number; sender_id: number; sender_email: string; sender_role: string; body: string; created_at: string }>>([]);
+  const [msgBody,              setMsgBody]              = useState('');
+  const [msgSending,           setMsgSending]           = useState(false);
   const [workflow,             setWorkflow]             = useState<WorkflowResponse | null>(null);
   const [actionLoading,        setActionLoading]        = useState(false);
   const [activeDialog,         setActiveDialog]         = useState<string | null>(null);
@@ -351,8 +354,17 @@ export default function ApplicantProfilePage() {
           ['documents',  `Documents${flaggedRequirements.length > 0 ? ` (${flaggedRequirements.length} flagged)` : ''}`],
           ['evaluation', 'Evaluation'],
           ['history',    `Activity (${audit.length})`],
+          ['messages',   `Messages${messages.length > 0 ? ` (${messages.length})` : ''}`],
         ] as const).map(([key, label]) => (
-          <button key={key} onClick={() => { setActiveTab(key); if (key === 'documents') loadDocuments(); }} style={{ padding: '10px 20px', background: 'none', border: 'none', borderBottom: activeTab === key ? `2px solid ${TEAL}` : '2px solid transparent', marginBottom: -2, fontSize: 14, fontWeight: activeTab === key ? 700 : 500, color: activeTab === key ? TEAL : '#6b7280', cursor: 'pointer' }}>
+          <button key={key} onClick={() => {
+            setActiveTab(key);
+            if (key === 'documents') loadDocuments();
+            if (key === 'messages') {
+              import('@/lib/api').then(({ apiFetch }) =>
+                apiFetch<{ items: typeof messages }>(`/api/applications/${id}/messages`).then(r => setMessages(r.items)).catch(() => {})
+              );
+            }
+          }} style={{ padding: '10px 20px', background: 'none', border: 'none', borderBottom: activeTab === key ? `2px solid ${TEAL}` : '2px solid transparent', marginBottom: -2, fontSize: 14, fontWeight: activeTab === key ? 700 : 500, color: activeTab === key ? TEAL : '#6b7280', cursor: 'pointer' }}>
             {label}
           </button>
         ))}
@@ -1082,6 +1094,55 @@ export default function ApplicantProfilePage() {
           )}
         </div>
       )}
+
+      {/* Messages tab */}
+      {activeTab === 'messages' && (() => {
+        async function sendOsfaMessage() {
+          if (!msgBody.trim()) return;
+          setMsgSending(true);
+          try {
+            const { apiFetch } = await import('@/lib/api');
+            const sent = await apiFetch<typeof messages[0]>(`/api/applications/${id}/messages`, { method: 'POST', body: JSON.stringify({ body: msgBody.trim() }) });
+            setMessages(prev => [...prev, sent]);
+            setMsgBody('');
+          } finally { setMsgSending(false); }
+        }
+        return (
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '28px' }}>
+            <h3 style={sectionTitle}>Messages with Student</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 360, overflowY: 'auto', marginBottom: 16 }}>
+              {messages.length === 0 ? (
+                <p style={{ color: '#9ca3af', fontSize: 13 }}>No messages yet.</p>
+              ) : messages.map(m => {
+                const isOsfa = m.sender_role !== 'student';
+                return (
+                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOsfa ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '75%', background: isOsfa ? TEAL : '#f3f4f6', color: isOsfa ? '#fff' : '#111827', borderRadius: isOsfa ? '12px 12px 2px 12px' : '12px 12px 12px 2px', padding: '10px 14px', fontSize: 14, lineHeight: 1.5 }}>
+                      {m.body}
+                    </div>
+                    <span style={{ fontSize: 11, color: '#9ca3af', marginTop: 3 }}>
+                      {isOsfa ? 'OSFA' : name} · {new Date(m.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                value={msgBody}
+                onChange={e => setMsgBody(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendOsfaMessage(); } }}
+                placeholder="Type a reply to the student…"
+                style={{ flex: 1, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '9px 14px', fontSize: 13, outline: 'none', color: '#111827' }}
+              />
+              <button onClick={sendOsfaMessage} disabled={!msgBody.trim() || msgSending}
+                style={{ padding: '9px 18px', background: msgBody.trim() ? TEAL : '#e5e7eb', border: 'none', borderRadius: 8, color: msgBody.trim() ? '#fff' : '#9ca3af', fontSize: 13, fontWeight: 700, cursor: msgBody.trim() ? 'pointer' : 'not-allowed' }}>
+                {msgSending ? 'Sending…' : 'Send'}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Approve Dialog */}
       {showApproveDialog && (

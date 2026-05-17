@@ -67,6 +67,11 @@ export default function ApplicationDetailPage() {
   const [newFiles,      setNewFiles]      = useState<Record<string, File>>({});
   const [newFileNames,  setNewFileNames]  = useState<Record<string, string>>({});
   const [docCount,      setDocCount]      = useState(0);
+
+  const [messages,     setMessages]     = useState<Array<{ id: number; sender_id: number; sender_email: string; sender_role: string; body: string; created_at: string }>>([]);
+  const [msgBody,      setMsgBody]      = useState('');
+  const [msgSending,   setMsgSending]   = useState(false);
+  const [msgError,     setMsgError]     = useState('');
   const [compliance,    setCompliance]    = useState<ComplianceSubmission[]>([]);
   const [complianceLoading, setComplianceLoading] = useState(false);
   const [complianceDocs,    setComplianceDocs]    = useState<{ id: number; name: string; is_required: boolean }[]>([]);
@@ -85,6 +90,10 @@ export default function ApplicationDetailPage() {
       if (wf) setWorkflow(wf);
       setAudit(aud);
       setDocCount(docs.length);
+      // Load messages
+      import('@/lib/api').then(({ apiFetch }) =>
+        apiFetch<{ items: typeof messages }>(`/api/applications/${numId}/messages`).then(r => setMessages(r.items)).catch(() => {})
+      );
       // Load compliance if at completion stage
       if (wf?.main_status === 'completion') {
         applicationApi.getCompliance(numId).then(setCompliance).catch(() => {});
@@ -108,6 +117,18 @@ export default function ApplicationDetailPage() {
     } finally {
       setWfActionLoading(false);
     }
+  }
+
+  async function sendMessage() {
+    if (!msgBody.trim()) return;
+    setMsgSending(true); setMsgError('');
+    try {
+      const { apiFetch } = await import('@/lib/api');
+      const sent = await apiFetch<typeof messages[0]>(`/api/applications/${id}/messages`, { method: 'POST', body: JSON.stringify({ body: msgBody.trim() }) });
+      setMessages(prev => [...prev, sent]);
+      setMsgBody('');
+    } catch { setMsgError('Failed to send message. Please try again.'); }
+    finally { setMsgSending(false); }
   }
 
   async function submitAppeal() {
@@ -731,6 +752,45 @@ export default function ApplicationDetailPage() {
 
         {/* RIGHT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Messages */}
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+            <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Messages with OSFA
+            </h3>
+            <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+              {messages.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px 0', fontSize: 12, color: '#9ca3af' }}>No messages yet. Send a question to OSFA below.</div>
+              ) : messages.map(m => {
+                const isMe = m.sender_role === 'student';
+                return (
+                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '85%', background: isMe ? COLORS.maroon : '#f3f4f6', color: isMe ? '#fff' : '#111827', borderRadius: isMe ? '12px 12px 2px 12px' : '12px 12px 12px 2px', padding: '9px 13px', fontSize: 13, lineHeight: 1.5 }}>
+                      {m.body}
+                    </div>
+                    <span style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>
+                      {isMe ? 'You' : 'OSFA'} · {new Date(m.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {msgError && <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 8 }}>{msgError}</div>}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={msgBody}
+                onChange={e => setMsgBody(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                placeholder="Type a message…"
+                style={{ flex: 1, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none', color: '#111827' }}
+              />
+              <button onClick={sendMessage} disabled={!msgBody.trim() || msgSending}
+                style={{ padding: '8px 14px', background: msgBody.trim() ? COLORS.maroon : '#e5e7eb', border: 'none', borderRadius: 8, color: msgBody.trim() ? '#fff' : '#9ca3af', fontSize: 13, fontWeight: 600, cursor: msgBody.trim() ? 'pointer' : 'not-allowed' }}>
+                {msgSending ? '…' : 'Send'}
+              </button>
+            </div>
+          </div>
 
           {/* Application info */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
