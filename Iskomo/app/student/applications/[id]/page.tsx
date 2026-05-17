@@ -72,6 +72,7 @@ export default function ApplicationDetailPage() {
   const [msgBody,      setMsgBody]      = useState('');
   const [msgSending,   setMsgSending]   = useState(false);
   const [msgError,     setMsgError]     = useState('');
+  const [scholarshipReqs, setScholarshipReqs] = useState<{ id: number; name: string; is_required: boolean }[]>([]);
   const [compliance,    setCompliance]    = useState<ComplianceSubmission[]>([]);
   const [complianceLoading, setComplianceLoading] = useState(false);
   const [complianceDocs,    setComplianceDocs]    = useState<{ id: number; name: string; is_required: boolean }[]>([]);
@@ -94,6 +95,12 @@ export default function ApplicationDetailPage() {
       import('@/lib/api').then(({ apiFetch }) =>
         apiFetch<{ items: typeof messages }>(`/api/applications/${numId}/messages`).then(r => setMessages(r.items)).catch(() => {})
       );
+      // Load scholarship requirements when resubmission is needed
+      if ((a.status === 'incomplete' || wf?.sub_status === 'revision_requested') && a.scholarship_id) {
+        import('@/lib/api-client').then(({ scholarshipApi }) =>
+          scholarshipApi.get(a.scholarship_id).then(s => setScholarshipReqs(s.requirements ?? [])).catch(() => {})
+        );
+      }
       // Load compliance if at completion stage
       if (wf?.main_status === 'completion') {
         applicationApi.getCompliance(numId).then(setCompliance).catch(() => {});
@@ -489,8 +496,7 @@ export default function ApplicationDetailPage() {
 
           {/* Resubmit section — shown when OSFA marks application as Incomplete or requests document revision */}
           {(app.status === 'incomplete' || workflow?.sub_status === 'revision_requested') && (() => {
-            const scholarship = app.scholarship;
-            const requirements = (scholarship as unknown as { requirements?: { id: number; name: string; is_required: boolean }[] })?.requirements ?? [];
+            const requirements = scholarshipReqs;
             return (
               <div style={{ background: '#fff', borderRadius: 14, border: '1.5px solid #fed7aa', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -518,7 +524,11 @@ export default function ApplicationDetailPage() {
                 )}
 
                 {/* Document upload inputs */}
-                {requirements.length > 0 && (
+                {requirements.length === 0 ? (
+                  <div style={{ padding: '12px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 9, marginBottom: 14, fontSize: 13, color: '#6b7280' }}>
+                    No specific documents required — click Resubmit when you are ready.
+                  </div>
+                ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                     {requirements.map(req => {
                       const hasFile = !!newFileNames[req.name];
