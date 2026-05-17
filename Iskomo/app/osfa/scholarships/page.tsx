@@ -75,6 +75,7 @@ const EMPTY_FORM = {
   deadline: '', slots: '', scholarship_type: 'Merit-Based', eligibility_text: '',
   eligible_colleges: [] as string[],
   eligible_programs: [] as string[],
+  eligible_year_levels: [] as number[],
   cover_image_url: '',
   programInput: '',
   requirements: [] as FormReq[],
@@ -187,6 +188,7 @@ export default function Page() {
       eligibility_text:          s.eligibility_text ?? '',
       eligible_colleges:         s.eligible_colleges ?? [],
       eligible_programs:         s.eligible_programs ?? [],
+      eligible_year_levels:      s.eligible_year_levels ?? [],
       cover_image_url:           s.cover_image_url ?? '',
       programInput:              '',
       requirements:              s.requirements.map(r => ({ tempId: String(r.id), name: r.name, description: r.description ?? undefined, is_required: r.is_required })),
@@ -218,6 +220,7 @@ export default function Page() {
         deadline:                  form.deadline ? new Date(form.deadline).toISOString() : undefined,
         eligible_colleges:         form.eligible_colleges.length > 0 ? form.eligible_colleges : undefined,
         eligible_programs:         form.eligible_programs.length > 0 ? form.eligible_programs : undefined,
+        eligible_year_levels:      form.eligible_year_levels.length > 0 ? form.eligible_year_levels : undefined,
         amount_raw:                form.amount_raw ? parseInt(form.amount_raw) : undefined,
         period:                    form.period || undefined,
         scholarship_type:          form.scholarship_type || undefined,
@@ -618,6 +621,15 @@ export default function Page() {
                       )}
                     </div>
                   )}
+
+                  {/* Year level tags */}
+                  {(s.eligible_year_levels ?? []).length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {(['1st Year','2nd Year','3rd Year','4th Year'] as const).filter((_, i) => (s.eligible_year_levels ?? []).includes(i + 1)).map(label => (
+                        <span key={label} style={{ fontSize: 10, fontWeight: 600, color: '#1e40af', background: '#eff6ff', padding: '2px 7px', borderRadius: 20, border: '1px solid #bfdbfe' }}>{label}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Max semesters + thank-you letter badges */}
@@ -805,6 +817,42 @@ export default function Page() {
                       </span>
                     ))}
                   </div>
+                )}
+              </div>
+
+              {/* Year Level */}
+              <div>
+                <label style={labelStyle}>
+                  Eligible Year Levels
+                  <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginLeft: 6 }}>(leave blank = all year levels)</span>
+                </label>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {[1, 2, 3, 4].map(yr => {
+                    const labels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+                    const checked = form.eligible_year_levels.includes(yr);
+                    return (
+                      <label key={yr} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 9, border: `1.5px solid ${checked ? TEAL : '#e5e7eb'}`, background: checked ? TEAL_LIGHT : '#fff', cursor: 'pointer', fontSize: 13, fontWeight: checked ? 700 : 500, color: checked ? TEAL_DARK : '#374151', transition: 'all 0.15s' }}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => setForm(prev => ({
+                            ...prev,
+                            eligible_year_levels: checked
+                              ? prev.eligible_year_levels.filter(y => y !== yr)
+                              : [...prev.eligible_year_levels, yr].sort(),
+                          }))}
+                          style={{ accentColor: TEAL, width: 14, height: 14 }}
+                        />
+                        {labels[yr - 1]}
+                      </label>
+                    );
+                  })}
+                </div>
+                {form.eligible_year_levels.length > 0 && (
+                  <button type="button" onClick={() => setForm(prev => ({ ...prev, eligible_year_levels: [] }))}
+                    style={{ marginTop: 8, fontSize: 11, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}>
+                    Clear (allow all year levels)
+                  </button>
                 )}
               </div>
 

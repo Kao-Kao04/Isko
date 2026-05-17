@@ -158,13 +158,16 @@ export default function ApplyPage() {
   }
 
   // Eligibility check
-  const userCollege  = user?.student_profile?.college  ?? '';
-  const userProgram  = user?.student_profile?.program  ?? '';
-  const eligColleges = scholarship.eligible_colleges ?? [];
-  const eligPrograms = scholarship.eligible_programs ?? [];
-  const collegeOk    = eligColleges.length === 0 || eligColleges.includes(userCollege);
-  const programOk    = eligPrograms.length === 0 || eligPrograms.includes(userProgram);
-  const isEligible   = collegeOk && programOk;
+  const userCollege   = user?.student_profile?.college    ?? '';
+  const userProgram   = user?.student_profile?.program    ?? '';
+  const userYearLevel = user?.student_profile?.year_level ?? 0;
+  const eligColleges  = scholarship.eligible_colleges    ?? [];
+  const eligPrograms  = scholarship.eligible_programs    ?? [];
+  const eligYears     = scholarship.eligible_year_levels ?? [];
+  const collegeOk  = eligColleges.length === 0 || eligColleges.includes(userCollege);
+  const programOk  = eligPrograms.length === 0 || eligPrograms.includes(userProgram);
+  const yearOk     = eligYears.length === 0    || eligYears.includes(userYearLevel);
+  const isEligible = collegeOk && programOk && yearOk;
 
   if (scholarship.status !== 'active') {
     return (
@@ -199,12 +202,12 @@ export default function ApplyPage() {
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Not Eligible</div>
           <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 16, lineHeight: 1.6 }}>
-            <strong>{scholarship.name}</strong> is restricted to specific colleges or programs and you do not meet the requirements.
+            <strong>{scholarship.name}</strong> is restricted to specific{!collegeOk ? ' colleges' : ''}{!programOk ? ' programs' : ''}{!yearOk ? ' year levels' : ''} and you do not meet the requirements.
           </div>
-          {(eligColleges.length > 0 || eligPrograms.length > 0) && (
+          {(eligColleges.length > 0 || eligPrograms.length > 0 || eligYears.length > 0) && (
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '14px 18px', marginBottom: 24, textAlign: 'left' }}>
               {eligColleges.length > 0 && (
-                <div style={{ marginBottom: eligPrograms.length > 0 ? 10 : 0 }}>
+                <div style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Open to Colleges</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {eligColleges.map(c => (
@@ -214,7 +217,7 @@ export default function ApplyPage() {
                 </div>
               )}
               {eligPrograms.length > 0 && (
-                <div>
+                <div style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Open to Programs</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {eligPrograms.map(p => (
@@ -223,8 +226,18 @@ export default function ApplyPage() {
                   </div>
                 </div>
               )}
-              <div style={{ marginTop: 12, fontSize: 12, color: '#6b7280' }}>
-                Your college: <strong>{userCollege || '—'}</strong> · Program: <strong>{userProgram || '—'}</strong>
+              {eligYears.length > 0 && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Open to Year Levels</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {(['1st Year','2nd Year','3rd Year','4th Year'] as const).filter((_, i) => eligYears.includes(i + 1)).map(label => (
+                      <span key={label} style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}>{label}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{ marginTop: 4, fontSize: 12, color: '#6b7280' }}>
+                Your profile: <strong>{userCollege || '—'}</strong> · <strong>{userProgram || '—'}</strong> · <strong>{userYearLevel ? (['1st','2nd','3rd','4th'][userYearLevel - 1] ?? userYearLevel) + ' Year' : '—'}</strong>
               </div>
             </div>
           )}
