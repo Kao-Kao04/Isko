@@ -50,7 +50,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           gap: 12,
         }}>
           {/* Logo */}
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <Link href="/student/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
               background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
