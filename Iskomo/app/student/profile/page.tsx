@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { apiFetch } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
-import { PUP_COLLEGE_PROGRAMS } from '@/lib/data/mock-user';
+import { PUP_COLLEGE_PROGRAMS } from '@/lib/data/colleges';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 const M  = COLORS.maroon;

@@ -1,10 +1,41 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { COLORS } from '@/lib/theme';
 
 const MAROON = COLORS.maroon;
 const GOLD   = COLORS.gold;
 
+const inp: React.CSSProperties = {
+  width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 8,
+  padding: '10px 14px', fontSize: 14, color: '#111827',
+  background: '#fff', boxSizing: 'border-box', outline: 'none',
+};
+
 export default function ContactPage() {
+  const [name,    setName]    = useState('');
+  const [email,   setEmail]   = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent,    setSent]    = useState(false);
+  const [error,   setError]   = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      setError('Please fill in all required fields.'); return;
+    }
+    setSending(true); setError('');
+    try {
+      await new Promise(r => setTimeout(r, 900));
+      setSent(true);
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* Header */}
@@ -69,6 +100,73 @@ export default function ContactPage() {
           ))}
         </div>
 
+        {/* Contact form */}
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '36px 40px', marginBottom: 48, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 6px' }}>Send us a message</h2>
+          <p style={{ margin: '0 0 28px', fontSize: 13, color: '#6b7280' }}>Fill in the form below and we&apos;ll get back to you within 3–5 business days.</p>
+
+          {sent ? (
+            <div style={{ textAlign: 'center', padding: '32px 24px' }}>
+              <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Message sent!</div>
+              <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 20 }}>Thanks for reaching out. We&apos;ll respond to <strong>{email}</strong> within 3–5 business days.</div>
+              <button onClick={() => { setSent(false); setName(''); setEmail(''); setSubject(''); setMessage(''); }}
+                style={{ padding: '10px 24px', background: MAROON, border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                Send another message
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px 20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    Full Name <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <input style={inp} value={name} onChange={e => setName(e.target.value)} placeholder="Juan dela Cruz" required />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    Email Address <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <input type="email" style={inp} value={email} onChange={e => setEmail(e.target.value)} placeholder="juan@example.com" required />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    Subject
+                  </label>
+                  <input style={inp} value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. Scholarship application question" />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    Message <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <textarea rows={5} style={{ ...inp, resize: 'vertical', lineHeight: 1.6 }} value={message} onChange={e => setMessage(e.target.value)} placeholder="Write your message here…" required />
+                </div>
+              </div>
+
+              {error && (
+                <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626' }}>
+                  {error}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button type="submit" disabled={sending}
+                  style={{ padding: '11px 28px', background: sending ? '#9ca3af' : MAROON, border: 'none', borderRadius: 9, color: '#fff', fontSize: 14, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {sending ? (
+                    <>
+                      <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                      Sending…
+                    </>
+                  ) : 'Send Message'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
         {/* About OSFA */}
         <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '36px 40px', marginBottom: 48, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>About OSFA</h2>
@@ -92,6 +190,7 @@ export default function ContactPage() {
       </div>
 
       {/* Footer */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div style={{ background: '#0d0d0d', padding: '24px', textAlign: 'center' }}>
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
           &copy; 2025 IskoMo — Polytechnic University of the Philippines · OSFA

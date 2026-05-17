@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { registrationApi } from '@/lib/api-client';
-import { PUP_COLLEGE_PROGRAMS } from '@/lib/data/mock-user';
+import { PUP_COLLEGE_PROGRAMS } from '@/lib/data/colleges';
 import { COLORS } from '@/lib/theme';
 
 const TEAL      = COLORS.maroon;

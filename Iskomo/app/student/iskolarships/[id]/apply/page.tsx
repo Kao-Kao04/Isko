@@ -11,12 +11,6 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const DRAFT_KEY = (id: string) => `iskomo_draft_${id}`;
 
-const FALLBACK_REQS = [
-  { id: 'proofOfEnrollment', label: 'Proof of Enrollment / Certificate of Registration', required: true,  hint: 'PDF, JPG, or PNG (Max 5MB)' },
-  { id: 'transcript',        label: 'Transcript of Records / Copy of Grades',            required: true,  hint: 'PDF, JPG, or PNG (Max 5MB)' },
-  { id: 'validId',           label: 'Valid Government ID',                                required: true,  hint: 'PDF, JPG, or PNG (Max 5MB)' },
-  { id: 'form',              label: 'Application Form / Personal Data Sheet',             required: true,  hint: 'PDF or DOC (Max 5MB)' },
-];
 
 export default function ApplyPage() {
   const { id }    = useParams<{ id: string }>();
@@ -267,21 +261,13 @@ export default function ApplyPage() {
     );
   }
 
-  const docsConfig = scholarship.requirements.length
-    ? scholarship.requirements.map(r => ({
-        id:       String(r.id),
-        label:    r.name,
-        required: r.is_required,
-        hint:     r.description ?? 'PDF, JPG, or PNG (Max 5MB)',
-        accept:   '.pdf,.jpg,.jpeg,.png,.doc,.docx',
-      }))
-    : FALLBACK_REQS.map(r => ({
-        id:       r.id,
-        label:    r.label,
-        required: r.required,
-        hint:     r.hint ?? 'PDF, JPG, or PNG (Max 5MB)',
-        accept:   '.pdf,.jpg,.jpeg,.png,.doc,.docx',
-      }));
+  const docsConfig = scholarship.requirements.map(r => ({
+    id:       String(r.id),
+    label:    r.name,
+    required: r.is_required,
+    hint:     r.description ?? 'PDF, JPG, or PNG (Max 5MB)',
+    accept:   '.pdf,.jpg,.jpeg,.png,.doc,.docx',
+  }));
 
   const requiredDocs        = docsConfig.filter(d => d.required);
   const uploadedCount       = requiredDocs.filter(d => files[d.id]).length;
@@ -372,61 +358,75 @@ export default function ApplyPage() {
         {/* Documents */}
         <div style={sectionStyle}>
           <div style={sectionTitle}>Required Documents</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
-            {docsConfig.map(doc => {
-              const hasFile  = !!files[doc.id];
-              const hasError = !!fileErrors[doc.id];
-              return (
-                <div key={doc.id}>
-                  <label style={labelStyle}>
-                    {doc.label} {doc.required && <span style={{ color: '#dc2626' }}>*</span>}
-                  </label>
-                  <div style={{
-                    position: 'relative',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    border: `2px dashed ${hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#d1d5db'}`,
-                    borderRadius: 10, padding: '20px 16px', cursor: 'pointer',
-                    background: hasError ? '#fef2f2' : hasFile ? '#fff5f5' : '#fafafa',
-                    transition: 'all 0.15s',
-                  }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#9ca3af'} strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: hasError ? '#dc2626' : hasFile ? COLORS.maroonD : '#374151', textAlign: 'center' }}>
-                      {hasFile ? <><span style={{ color: '#15803d', marginRight: 4 }}>✓</span>{files[doc.id]}</> : 'Click to upload'}
-                    </span>
-                    <span style={{ fontSize: 11, color: '#9ca3af' }}>{doc.hint}</span>
-                    <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required && !hasFile} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} onChange={e => handleFileChange(e, doc.id)} />
-                  </div>
-                  {hasError && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{fileErrors[doc.id]}</p>}
-                </div>
-              );
-            })}
-
-            <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <label htmlFor="essay" style={labelStyle}>Bakit ka nag-aaply para sa scholarship na ito? <span style={{ color: '#dc2626' }}>*</span></label>
-                <span style={{ fontSize: 12, fontWeight: 600, color: essay.length >= 200 ? '#15803d' : essay.length > 0 ? '#dc2626' : '#9ca3af' }}>
-                  {essay.length} / min. 200 chars {essay.length >= 200 ? '✓' : essay.length > 0 ? `(need ${200 - essay.length} more)` : ''}
-                </span>
+          {docsConfig.length === 0 ? (
+            <div style={{ padding: '20px 24px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#15803d' }}>No documents required</div>
+                <div style={{ fontSize: 12, color: '#166534', marginTop: 2 }}>This scholarship does not require any document uploads.</div>
               </div>
-              <p style={{ margin: '0 0 8px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
-                Isulat ang iyong dahilan sa pag-apply. Maaari kang gumamit ng Filipino o English — gamitin ang wikang komportable ka. (Minimum 200 characters)
-              </p>
-              <textarea id="essay" name="essay" rows={6} required value={essay}
-                onChange={e => setEssay(e.target.value)}
-                onBlur={e => {
-                  if (e.target.value.trim().length > 0 && e.target.value.trim().length < 200) {
-                    e.target.style.borderColor = '#dc2626';
-                  } else {
-                    e.target.style.borderColor = '';
-                  }
-                }}
-                onFocus={e => { e.target.style.borderColor = ''; }}
-                placeholder="Halimbawa: Nag-aaply ako dahil gusto kong matulungan ang aking pamilya at matupad ang aking pangarap na maging..."
-                style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6, border: essay.length > 0 && essay.length < 200 ? '1.5px solid #dc2626' : undefined }} />
             </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
+              {docsConfig.map(doc => {
+                const hasFile  = !!files[doc.id];
+                const hasError = !!fileErrors[doc.id];
+                return (
+                  <div key={doc.id}>
+                    <label style={labelStyle}>
+                      {doc.label} {doc.required && <span style={{ color: '#dc2626' }}>*</span>}
+                    </label>
+                    <div style={{
+                      position: 'relative',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      border: `2px dashed ${hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#d1d5db'}`,
+                      borderRadius: 10, padding: '20px 16px', cursor: 'pointer',
+                      background: hasError ? '#fef2f2' : hasFile ? '#fff5f5' : '#fafafa',
+                      transition: 'all 0.15s',
+                    }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={hasError ? '#dc2626' : hasFile ? COLORS.maroon : '#9ca3af'} strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: hasError ? '#dc2626' : hasFile ? COLORS.maroonD : '#374151', textAlign: 'center' }}>
+                        {hasFile ? <><span style={{ color: '#15803d', marginRight: 4 }}>✓</span>{files[doc.id]}</> : 'Click to upload'}
+                      </span>
+                      <span style={{ fontSize: 11, color: '#9ca3af' }}>{doc.hint}</span>
+                      <input type="file" id={doc.id} name={doc.id} accept={doc.accept} required={doc.required && !hasFile} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} onChange={e => handleFileChange(e, doc.id)} />
+                    </div>
+                    {hasError && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{fileErrors[doc.id]}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Essay */}
+        <div style={sectionStyle}>
+          <div style={sectionTitle}>Essay</div>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <label htmlFor="essay" style={labelStyle}>Bakit ka nag-aaply para sa scholarship na ito? <span style={{ color: '#dc2626' }}>*</span></label>
+              <span style={{ fontSize: 12, fontWeight: 600, color: essay.length >= 200 ? '#15803d' : essay.length > 0 ? '#dc2626' : '#9ca3af' }}>
+                {essay.length} / min. 200 chars {essay.length >= 200 ? '✓' : essay.length > 0 ? `(need ${200 - essay.length} more)` : ''}
+              </span>
+            </div>
+            <p style={{ margin: '0 0 8px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+              Isulat ang iyong dahilan sa pag-apply. Maaari kang gumamit ng Filipino o English — gamitin ang wikang komportable ka. (Minimum 200 characters)
+            </p>
+            <textarea id="essay" name="essay" rows={6} required value={essay}
+              onChange={e => setEssay(e.target.value)}
+              onBlur={e => {
+                if (e.target.value.trim().length > 0 && e.target.value.trim().length < 200) {
+                  e.target.style.borderColor = '#dc2626';
+                } else {
+                  e.target.style.borderColor = '';
+                }
+              }}
+              onFocus={e => { e.target.style.borderColor = ''; }}
+              placeholder="Halimbawa: Nag-aaply ako dahil gusto kong matulungan ang aking pamilya at matupad ang aking pangarap na maging..."
+              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6, border: essay.length > 0 && essay.length < 200 ? '1.5px solid #dc2626' : undefined }} />
           </div>
         </div>
 

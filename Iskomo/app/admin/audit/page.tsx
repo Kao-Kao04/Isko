@@ -30,24 +30,23 @@ export default function AdminAuditPage() {
   const [dateFrom,  setDateFrom]  = useState('');
   const [dateTo,    setDateTo]    = useState('');
 
-  const fetch = useCallback(async (p = 1) => {
+  const fetch = useCallback(async (p = 1, from = dateFrom, to = dateTo) => {
     setLoading(true);
     try {
-      const res = await apiFetch<{ total: number; page: number; items: AuditLog[] }>(`/api/admin/audit?page=${p}&page_size=${PAGE_SIZE}`);
+      const params = new URLSearchParams({ page: String(p), page_size: String(PAGE_SIZE) });
+      if (from) params.set('date_from', from);
+      if (to)   params.set('date_to', to);
+      const res = await apiFetch<{ total: number; page: number; items: AuditLog[] }>(`/api/admin/audit?${params}`);
       setLogs(res.items); setTotal(res.total);
     } catch { /* silent */ } finally { setLoading(false); }
-  }, []);
+  }, [dateFrom, dateTo]);
 
   useEffect(() => { fetch(1); }, [fetch]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const displayed  = logs.filter(l => {
     const q = search.toLowerCase();
-    const matchSearch = !q || l.action.toLowerCase().includes(q) || l.actor_email.toLowerCase().includes(q);
-    const logDate = new Date(l.created_at);
-    const matchFrom = !dateFrom || logDate >= new Date(dateFrom);
-    const matchTo   = !dateTo   || logDate <= new Date(dateTo + 'T23:59:59');
-    return matchSearch && matchFrom && matchTo;
+    return !q || l.action.toLowerCase().includes(q) || l.actor_email.toLowerCase().includes(q);
   });
 
   return (
@@ -68,12 +67,12 @@ export default function AdminAuditPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '8px 14px' }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>From</span>
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, color: '#111827', background: 'transparent', cursor: 'pointer' }} />
+          <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} style={{ border: 'none', outline: 'none', fontSize: 12, color: '#111827', background: 'transparent', cursor: 'pointer' }} />
           <span style={{ fontSize: 12, color: '#9ca3af' }}>—</span>
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, color: '#111827', background: 'transparent', cursor: 'pointer' }} />
-          {(dateFrom || dateTo) && <button onClick={() => { setDateFrom(''); setDateTo(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>✕</button>}
+          <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} style={{ border: 'none', outline: 'none', fontSize: 12, color: '#111827', background: 'transparent', cursor: 'pointer' }} />
+          {(dateFrom || dateTo) && <button onClick={() => { setDateFrom(''); setDateTo(''); setPage(1); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>✕</button>}
         </div>
-        {displayed.length !== logs.length && <span style={{ fontSize: 12, color: '#6b7280' }}>{displayed.length} of {logs.length} entries</span>}
+        {(dateFrom || dateTo) && <span style={{ fontSize: 12, color: '#6b7280' }}>{total} entries found</span>}
       </div>
 
       {loading ? <Spin /> : displayed.length === 0 ? (
