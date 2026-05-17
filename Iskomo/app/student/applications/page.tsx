@@ -259,6 +259,30 @@ export default function ApplicationsPage() {
             </Link>
           </div>
 
+          {/* Contact OSFA card */}
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Contact OSFA</div>
+            </div>
+            <p style={{ margin: '0 0 14px', fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
+              May tanong sa iyong application? Makipag-ugnayan sa OSFA directly.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {applications.length > 0 && (
+                <Link href={`/student/applications/${applications[0].id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: M, borderRadius: 9, color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 700 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Message via Application
+                </Link>
+              )}
+              <Link href="/contact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 9, color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                General Inquiry
+              </Link>
+            </div>
+          </div>
+
           {/* Summary card */}
           {applications.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: 18, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
