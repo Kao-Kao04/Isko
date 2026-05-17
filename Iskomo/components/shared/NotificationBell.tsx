@@ -136,7 +136,10 @@ export default function NotificationBell() {
     // what the backend cached in the route field.
     let dest: string;
     if (n.application_id) {
-      dest = `${roleBase}/applications/${n.application_id}`;
+      const appPath = (user?.role === 'osfa_staff' || user?.role === 'super_admin')
+        ? 'applicants'
+        : 'applications';
+      dest = `${roleBase}/${appPath}/${n.application_id}`;
     } else {
       const t = n.title.toLowerCase();
       if (t.includes('deadline') || t.includes('scholarship')) {
