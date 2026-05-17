@@ -1,10 +1,29 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { adminApi, type StaffResponse } from '@/lib/api-client';
 import { apiFetch } from '@/lib/api';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
+
+// Redirect old ?tab= URLs to proper routes
+function TabRedirect() {
+  const params = useSearchParams();
+  const router = useRouter();
+  useEffect(() => {
+    const tab = params.get('tab');
+    const redirects: Record<string, string> = {
+      dashboard:  '/admin/dashboard',
+      students:   '/admin/students',
+      audit:      '/admin/audit',
+      broadcast:  '/admin/broadcast',
+      reports:    '/admin/reports',
+    };
+    if (tab && redirects[tab]) router.replace(redirects[tab]);
+  }, [params, router]);
+  return null;
+}
 
 const M = COLORS.maroon;
 
@@ -110,6 +129,7 @@ export default function AdminStaffPage() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <Suspense fallback={null}><TabRedirect /></Suspense>
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
