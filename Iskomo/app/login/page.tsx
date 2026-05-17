@@ -391,9 +391,15 @@ function LoginPageInner() {
                     </svg>
                   </div>
                   <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: '#111827' }}>Check your email</h2>
-                  <p style={{ margin: '0 0 24px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+                  <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
                     We sent a verification link to <strong>{signupEmail}</strong>. Click it, then come back to log in.
                   </p>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, marginBottom: 20, textAlign: 'left' }}>
+                    <span style={{ fontSize: 15 }}>⚠️</span>
+                    <p style={{ margin: 0, fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>
+                      Can&apos;t find the email? Check your <strong>Spam</strong> or <strong>Junk</strong> folder — it may have been filtered automatically.
+                    </p>
+                  </div>
                   <button type="button" onClick={() => { setEmailSent(false); setIsSignup(false); }}
                     style={{ width: '100%', padding: '11px', background: '#fff', border: `1.5px solid #e5e7eb`, color: '#374151', borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
                     ← Back to Login
@@ -553,9 +559,15 @@ function ForgotPasswordModal({ show, onClose, email, setEmail, onSubmit, sending
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>Reset link sent</h3>
-            <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
-              If <strong>{email}</strong> is registered, you&apos;ll receive a password reset link. Check your inbox.
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+              If <strong>{email}</strong> is registered, you&apos;ll receive a password reset link.
             </p>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, marginBottom: 20, textAlign: 'left' }}>
+              <span style={{ fontSize: 15 }}>⚠️</span>
+              <p style={{ margin: 0, fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>
+                Can&apos;t find it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+              </p>
+            </div>
             <button onClick={onClose} style={{ width: '100%', padding: '11px', background: teal, color: '#fff', border: 'none', borderRadius: 9, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
               Back to Login
             </button>
