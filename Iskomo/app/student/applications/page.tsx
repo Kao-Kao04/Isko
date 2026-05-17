@@ -277,7 +277,7 @@ export default function ApplicationsPage() {
                   Message via Application
                 </Link>
               )}
-              <Link href="/contact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 9, color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+              <Link href="/student/contact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 9, color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
                 General Inquiry
               </Link>
             </div>
