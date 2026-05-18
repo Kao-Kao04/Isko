@@ -617,23 +617,34 @@ export default function ApplicationDetailPage() {
           })()}
 
           {/* Generate Documents — available at COMPLETION stage */}
-          {workflow?.main_status === 'completion' && (
-            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate Documents</h3>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <a href={applicationApi.documentUrl(app.id, 'confirmation-letter')} target="_blank" rel="noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Confirmation Letter
-                </a>
-                <a href={applicationApi.documentUrl(app.id, 'terms')} target="_blank" rel="noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Terms & Conditions
-                </a>
+          {workflow?.main_status === 'completion' && (() => {
+            async function openDoc(type: 'confirmation-letter' | 'terms') {
+              try {
+                const { apiFetch } = await import('@/lib/api');
+                const html = await apiFetch<string>(`/api/applications/${app.id}/documents/${type}`, {}, 'text');
+                const blob = new Blob([html], { type: 'text/html' });
+                window.open(URL.createObjectURL(blob), '_blank');
+              } catch {
+                alert('Failed to generate document. Please try again.');
+              }
+            }
+            const docBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+            return (
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate Documents</h3>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button onClick={() => openDoc('confirmation-letter')} style={docBtn}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Confirmation Letter
+                  </button>
+                  <button onClick={() => openDoc('terms')} style={docBtn}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Terms & Conditions
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Compliance Checklist — COMPLETION + PENDING_REQUIREMENTS */}
           {workflow?.main_status === 'completion' && workflow?.sub_status === 'PENDING_REQUIREMENTS' && (() => {

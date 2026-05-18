@@ -121,7 +121,7 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 // ── Core fetch wrapper ────────────────────────────────────────────────────────
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, options: RequestInit = {}, responseType: 'json' | 'text' = 'json'): Promise<T> {
   const token      = getAccessToken();
   const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
@@ -181,6 +181,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   }
 
   if (res.status === 204) return undefined as T;
+  if (responseType === 'text') return res.text() as Promise<T>;
   return res.json();
 }
 
