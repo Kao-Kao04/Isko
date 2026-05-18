@@ -100,6 +100,7 @@ export default function ApplicantProfilePage() {
   const [rubric,       setRubric]       = useState({ financialNeed: 3, essay: 3, interview: 3, community: 3 });
   const [rubricSaving, setRubricSaving] = useState(false);
   const [rubricSaved,  setRubricSaved]  = useState(false);
+  const [completionReqs, setCompletionReqs] = useState<Array<{ id: number; requirement_type: string; file_url: string | null; submitted_at: string | null }>>([]);
   const [internalNotes, setInternalNotes] = useState('');
   const [notesSaving,   setNotesSaving]   = useState(false);
   const [notesSaved,    setNotesSaved]    = useState(false);
@@ -358,7 +359,13 @@ export default function ApplicantProfilePage() {
         ] as const).map(([key, label]) => (
           <button key={key} onClick={() => {
             setActiveTab(key);
-            if (key === 'documents') loadDocuments();
+            if (key === 'documents') {
+              loadDocuments();
+              import('@/lib/api').then(({ apiFetch }) =>
+                apiFetch<typeof completionReqs>(`/api/applications/${id}/completion-requirements`)
+                  .then(setCompletionReqs).catch(() => {})
+              );
+            }
             if (key === 'messages') {
               import('@/lib/api').then(({ apiFetch }) =>
                 apiFetch<{ items: typeof messages }>(`/api/applications/${id}/messages`).then(r => setMessages(r.items)).catch(() => {})
@@ -855,6 +862,33 @@ export default function ApplicantProfilePage() {
               </div>
             )}
           </div>
+
+          {/* Completion Requirements — submitted by student after approval */}
+          {completionReqs.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1.5px solid #bfdbfe', padding: '24px 28px' }}>
+              <h3 style={{ ...sectionTitle, marginBottom: 16 }}>Completion Requirements Submitted</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {completionReqs.map(req => (
+                  <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 10, background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#0c4a6e' }}>{req.requirement_type}</div>
+                        {req.submitted_at && <div style={{ fontSize: 11, color: '#7dd3fc', marginTop: 2 }}>Submitted {new Date(req.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>}
+                      </div>
+                    </div>
+                    {req.file_url && (
+                      <a href={req.file_url} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: '#0284c7', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        View File
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Compliance Documents — visible when at COMPLETION stage */}
           {workflow?.main_status === 'completion' && (() => {
