@@ -621,7 +621,7 @@ export default function ApplicationDetailPage() {
             async function openDoc(type: 'confirmation-letter' | 'terms') {
               try {
                 const { apiFetch } = await import('@/lib/api');
-                const html = await apiFetch<string>(`/api/applications/${app.id}/documents/${type}`, {}, 'text');
+                const html = await apiFetch<string>(`/api/applications/${app!.id}/documents/${type}`, {}, 'text');
                 const blob = new Blob([html], { type: 'text/html' });
                 window.open(URL.createObjectURL(blob), '_blank');
               } catch {
