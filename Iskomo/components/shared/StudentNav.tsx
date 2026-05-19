@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { applicationApi } from '@/lib/api-client';
+import { apiFetch } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
 
 const M = COLORS.maroon;
@@ -39,6 +40,15 @@ const studentNavLinks = [
     ),
   },
   {
+    href: '/student/messages',
+    label: 'Messages',
+    icon: (active: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? M : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    ),
+  },
+  {
     href: '/student/profile',
     label: 'Profile',
     icon: (active: boolean) => (
@@ -52,8 +62,9 @@ const studentNavLinks = [
 
 export default function StudentNav() {
   const pathname = usePathname();
-  const [hovered,      setHovered]      = useState<string | null>(null);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [hovered,        setHovered]        = useState<string | null>(null);
+  const [pendingCount,   setPendingCount]   = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     const load = () =>
@@ -64,6 +75,12 @@ export default function StudentNav() {
     const interval = setInterval(load, 60_000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    apiFetch<{ items: Array<{ unread_count: number }> }>('/api/applications/inbox')
+      .then(d => setUnreadMessages((d.items ?? []).reduce((s, c) => s + c.unread_count, 0)))
+      .catch(() => {});
+  }, [pathname]);
 
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 2 }} role="navigation" aria-label="Student navigation">
@@ -110,12 +127,13 @@ export default function StudentNav() {
             <span style={{ letterSpacing: '0.01em', display: 'flex', alignItems: 'center', gap: 4 }}>
               {link.label}
               {link.href === '/student/applications' && pendingCount > 0 && (
-                <span style={{
-                  fontSize: 10, fontWeight: 800, lineHeight: 1,
-                  padding: '2px 5px', borderRadius: 99,
-                  background: M, color: '#fff',
-                }}>
+                <span style={{ fontSize: 10, fontWeight: 800, lineHeight: 1, padding: '2px 5px', borderRadius: 99, background: M, color: '#fff' }}>
                   {pendingCount}
+                </span>
+              )}
+              {link.href === '/student/messages' && unreadMessages > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 800, lineHeight: 1, padding: '2px 5px', borderRadius: 99, background: M, color: '#fff' }}>
+                  {unreadMessages}
                 </span>
               )}
             </span>
