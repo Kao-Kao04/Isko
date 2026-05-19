@@ -419,6 +419,8 @@ a {
 .osfa-hamburger { display: none !important; }
 .osfa-desktop-nav { display: flex !important; }
 
+.osfa-icon-btn:hover { background: #f3f4f6 !important; border: 1px solid #e5e7eb !important; }
+
 /* ── Tablet adjustments ────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .hide-tablet { display: none !important; }

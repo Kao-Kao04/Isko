@@ -83,6 +83,11 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             <PhClock />
             <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
             <NotificationBell />
+            <Link href="/osfa/profile" className="osfa-icon-btn" style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', textDecoration: 'none' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </Link>
             <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
             <SignOutButton />
           </div>
