@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { COLORS } from '@/lib/theme';
+import { apiFetch } from '@/lib/api';
 
 const M  = COLORS.maroon;
 const ML = COLORS.maroonL;
@@ -27,12 +28,21 @@ const NAV_LINKS = [
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg> },
   { href: '/admin/reports',        label: 'Reports',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
+  { href: '/admin/contacts',       label: 'Contacts',
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
 ];
 
 export default function AdminNav() {
   const pathname = usePathname();
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [hovered,      setHovered]      = useState<string | null>(null);
+  const [drawerOpen,   setDrawerOpen]   = useState(false);
+  const [unreadContacts, setUnreadContacts] = useState(0);
+
+  useEffect(() => {
+    apiFetch<{ items: Array<{ is_read: boolean }> }>('/api/admin/contacts?page=1&page_size=100')
+      .then(d => setUnreadContacts((d.items ?? []).filter(i => !i.is_read).length))
+      .catch(() => {});
+  }, [pathname]);
 
   useEffect(() => { setDrawerOpen(false); }, [pathname]);
   useEffect(() => {
@@ -48,6 +58,7 @@ export default function AdminNav() {
   const NavItem = ({ link, drawer = false }: { link: typeof NAV_LINKS[0]; drawer?: boolean }) => {
     const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
     const isHov    = !drawer && hovered === link.href;
+    const badge    = link.href === '/admin/contacts' && unreadContacts > 0 ? unreadContacts : 0;
 
     if (drawer) {
       return (
@@ -60,6 +71,7 @@ export default function AdminNav() {
         }}>
           <span style={{ color: isActive ? M : '#6b7280', display: 'flex', flexShrink: 0 }}>{link.icon}</span>
           <span style={{ flex: 1 }}>{link.label}</span>
+          {badge > 0 && <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 20, background: M, color: '#fff', flexShrink: 0 }}>{badge}</span>}
         </Link>
       );
     }
@@ -77,7 +89,10 @@ export default function AdminNav() {
           position: 'relative', transition: 'all 0.15s ease',
         }}>
         {isActive && <span style={{ position: 'absolute', bottom: -1, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2.5, borderRadius: 9999, background: M }} />}
-        <span style={{ color: isActive ? M : isHov ? '#374151' : '#9ca3af', display: 'flex', transition: 'color 0.15s ease' }}>{link.icon}</span>
+        <span style={{ color: isActive ? M : isHov ? '#374151' : '#9ca3af', display: 'flex', transition: 'color 0.15s ease', position: 'relative' }}>
+          {link.icon}
+          {badge > 0 && <span style={{ position: 'absolute', top: -5, right: -7, fontSize: 9, fontWeight: 800, padding: '1px 4px', borderRadius: 20, background: M, color: '#fff', lineHeight: 1.4, minWidth: 14, textAlign: 'center' }}>{badge}</span>}
+        </span>
         <span style={{ letterSpacing: '0.01em' }}>{link.label}</span>
       </Link>
     );
