@@ -1155,7 +1155,7 @@ export default function ApplicantProfilePage() {
                       {m.body}
                     </div>
                     <span style={{ fontSize: 11, color: '#9ca3af', marginTop: 3 }}>
-                      {isOsfa ? 'OSFA' : name} · {new Date(m.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {isOsfa ? m.sender_email : name} · {new Date(m.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 );
