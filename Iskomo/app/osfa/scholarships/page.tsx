@@ -318,6 +318,18 @@ export default function Page() {
     }
   }
 
+  async function archiveInstead(id: number) {
+    setDeleteError('');
+    try {
+      const updated = await scholarshipApi.updateStatus(id, 'archived');
+      setScholarships(prev => prev.map(s => s.id === id ? { ...s, status: updated.status } : s));
+      setConfirmDelete(null);
+      addToast('success', 'Scholarship archived.');
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to archive scholarship.');
+    }
+  }
+
   function setField(key: keyof typeof EMPTY_FORM, value: string | string[] | boolean) {
     setForm(prev => ({ ...prev, [key]: value }));
   }
@@ -1042,21 +1054,27 @@ export default function Page() {
             )}
             {deleteError?.includes('active application') && (
               <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, fontSize: 12, color: '#92400e' }}>
-                Force delete will permanently remove this scholarship <strong>and all its applications</strong>. This cannot be undone.
+                <strong>Archive</strong> keeps all existing applications intact but stops accepting new ones.<br/>
+                <strong>Force Delete</strong> permanently removes this scholarship <em>and all its applications</em>.
               </div>
             )}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button onClick={() => { setConfirmDelete(null); setDeleteError(''); }} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151', minWidth: 100 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button onClick={() => { setConfirmDelete(null); setDeleteError(''); }} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#374151', minWidth: 90 }}>
                 Cancel
               </button>
               {!deleteError && (
-                <button onClick={() => deleteScholarship(confirmDelete.id)} style={{ flex: 1, padding: 10, background: '#dc2626', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff', minWidth: 100 }}>
+                <button onClick={() => deleteScholarship(confirmDelete.id)} style={{ flex: 1, padding: 10, background: '#dc2626', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#fff', minWidth: 90 }}>
                   Delete Permanently
                 </button>
               )}
               {deleteError?.includes('active application') && (
-                <button onClick={() => deleteScholarship(confirmDelete.id, true)} style={{ flex: 1, padding: 10, background: '#7f1d1d', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#fff', minWidth: 100 }}>
-                  Force Delete + Applications
+                <button onClick={() => archiveInstead(confirmDelete.id)} style={{ flex: 1, padding: 10, background: COLORS.maroon, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#fff', minWidth: 90 }}>
+                  Archive Instead
+                </button>
+              )}
+              {deleteError?.includes('active application') && (
+                <button onClick={() => deleteScholarship(confirmDelete.id, true)} style={{ flex: 1, padding: 10, background: '#7f1d1d', border: 'none', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#fff', minWidth: 90 }}>
+                  Force Delete
                 </button>
               )}
             </div>
