@@ -59,17 +59,45 @@ export default function StudentContactPage() {
       {/* Contact info cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 28 }}>
         {[
-          { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>, label: 'Email', value: 'osfa@pup.edu.ph' },
-          { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.25-8 14-8 14S4 15.25 4 10a8 8 0 0 1 8-8z"/></svg>, label: 'Location', value: 'OSFA Office, PUP Main' },
-          { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: 'Hours', value: 'Mon–Fri, 8AM–5PM' },
+          {
+            icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+            label: 'Email', value: 'osfa@pup.edu.ph',
+            href: 'mailto:osfa@pup.edu.ph',
+            hint: 'Tap to email',
+          },
+          {
+            icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.25-8 14-8 14S4 15.25 4 10a8 8 0 0 1 8-8z"/></svg>,
+            label: 'Location', value: 'OSFA Office, PUP Main',
+            href: 'https://maps.google.com/?q=Polytechnic+University+of+the+Philippines+Manila',
+            hint: 'Open in Maps',
+          },
+          {
+            icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            label: 'Hours', value: 'Mon–Fri, 8AM–5PM',
+            href: null, hint: null,
+          },
         ].map(c => (
-          <div key={c.label} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 9, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{c.icon}</div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginTop: 2 }}>{c.value}</div>
+          c.href ? (
+            <a key={c.label} href={c.href} target="_blank" rel="noopener noreferrer"
+              style={{ background: '#fff', borderRadius: 12, border: `1px solid #e5e7eb`, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `${M}50`; (e.currentTarget as HTMLAnchorElement).style.boxShadow = `0 2px 8px rgba(0,0,0,0.07)`; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = '#e5e7eb'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'none'; }}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{c.icon}</div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginTop: 2 }}>{c.value}</div>
+                {c.hint && <div style={{ fontSize: 10, color: M, fontWeight: 600, marginTop: 2 }}>{c.hint} ↗</div>}
+              </div>
+            </a>
+          ) : (
+            <div key={c.label} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{c.icon}</div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginTop: 2 }}>{c.value}</div>
+              </div>
             </div>
-          </div>
+          )
         ))}
       </div>
 
