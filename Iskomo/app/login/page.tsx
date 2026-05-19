@@ -323,6 +323,11 @@ function LoginPageInner() {
                 {error && (
                   <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px' }}>
                     <p style={{ margin: 0, fontSize: 13, color: '#dc2626' }}>{error}</p>
+                    {error.toLowerCase().includes('invalid credentials') && (
+                      <p style={{ margin: '6px 0 0', fontSize: 12, color: '#9a3412' }}>
+                        Just signed up? Make sure you verified your email first — check your inbox (and spam folder).
+                      </p>
+                    )}
                     {error.toLowerCase().includes('verify') && (
                       resendSent
                         ? <p style={{ margin: '6px 0 0', fontSize: 12, color: '#16a34a', fontWeight: 600 }}>✓ Verification email sent — check your inbox (and spam).</p>

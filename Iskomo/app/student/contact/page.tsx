@@ -77,7 +77,7 @@ export default function StudentContactPage() {
       <div style={{ background: '#fef2f2', border: `1px solid #fecaca`, borderRadius: 12, padding: '14px 18px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
-          <strong>May existing application?</strong> You can message OSFA directly through your{' '}
+          <strong>Have an existing application?</strong> You can message OSFA directly through your{' '}
           <Link href="/student/applications" style={{ color: M, fontWeight: 700, textDecoration: 'none' }}>application page</Link>{' '}
           for faster, application-specific responses.
         </div>

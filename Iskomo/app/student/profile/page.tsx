@@ -28,6 +28,10 @@ export default function Page() {
   const [err,    setErr]      = useState('');
   const [editing, setEditing] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('profile_photo');
+    return null;
+  });
 
   // GWA
   const [gwa, setGwa] = useState('');
@@ -125,13 +129,27 @@ export default function Page() {
         <div style={{ position: 'absolute', top: -30, right: -30, width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 800, color: '#fff', border: '3px solid rgba(255,255,255,0.35)' }}>
-              {initials}
+            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 800, color: '#fff', border: '3px solid rgba(255,255,255,0.35)', overflow: 'hidden' }}>
+              {photoPreview
+                ? <img src={photoPreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : initials}
             </div>
             <button onClick={() => photoInputRef.current?.click()} style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: '50%', background: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </button>
-            <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} />
+            <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                  const dataUrl = ev.target?.result as string;
+                  setPhotoPreview(dataUrl);
+                  localStorage.setItem('profile_photo', dataUrl);
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
           </div>
           <div style={{ flex: 1 }}>
             <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#fff' }}>
