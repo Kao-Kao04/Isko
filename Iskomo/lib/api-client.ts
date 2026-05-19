@@ -236,8 +236,8 @@ export const scholarshipApi = {
       body: JSON.stringify(data),
     }),
 
-  delete: (id: number) =>
-    apiFetch<void>(`/api/scholarships/${id}`, { method: 'DELETE' }),
+  delete: (id: number, force = false) =>
+    apiFetch<void>(`/api/scholarships/${id}${force ? '?force=true' : ''}`, { method: 'DELETE' }),
 
   updateStatus: (id: number, status: ScholarshipStatus) =>
     apiFetch<ScholarshipResponse>(`/api/scholarships/${id}/status`, {

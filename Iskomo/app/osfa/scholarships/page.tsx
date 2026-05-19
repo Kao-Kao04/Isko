@@ -306,10 +306,10 @@ export default function Page() {
     setArchiveConfirmText('');
   }
 
-  async function deleteScholarship(id: number) {
+  async function deleteScholarship(id: number, force = false) {
     setDeleteError('');
     try {
-      await scholarshipApi.delete(id);
+      await scholarshipApi.delete(id, force);
       setScholarships(prev => prev.filter(s => s.id !== id));
       setConfirmDelete(null);
       addToast('error', 'Scholarship permanently deleted.');
@@ -1040,13 +1040,23 @@ export default function Page() {
                 {deleteError}
               </div>
             )}
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setConfirmDelete(null); setDeleteError(''); }} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>
-                {deleteError ? 'Close' : 'Cancel'}
+            {deleteError?.includes('active application') && (
+              <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, fontSize: 12, color: '#92400e' }}>
+                Force delete will permanently remove this scholarship <strong>and all its applications</strong>. This cannot be undone.
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={() => { setConfirmDelete(null); setDeleteError(''); }} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151', minWidth: 100 }}>
+                Cancel
               </button>
               {!deleteError && (
-                <button onClick={() => deleteScholarship(confirmDelete.id)} style={{ flex: 1, padding: 10, background: '#dc2626', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff' }}>
+                <button onClick={() => deleteScholarship(confirmDelete.id)} style={{ flex: 1, padding: 10, background: '#dc2626', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff', minWidth: 100 }}>
                   Delete Permanently
+                </button>
+              )}
+              {deleteError?.includes('active application') && (
+                <button onClick={() => deleteScholarship(confirmDelete.id, true)} style={{ flex: 1, padding: 10, background: '#7f1d1d', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#fff', minWidth: 100 }}>
+                  Force Delete + Applications
                 </button>
               )}
             </div>
