@@ -33,15 +33,14 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
         <div style={{
           maxWidth: 1400,
           margin: '0 auto',
-          display: 'flex',
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
           alignItems: 'center',
-          justifyContent: 'space-between',
           padding: '0 20px',
           minHeight: 62,
-          gap: 12,
         }}>
-          {/* Logo */}
-          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {/* Logo — left column */}
+          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, justifySelf: 'start' }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
               background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
@@ -63,8 +62,8 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
           {/* Center: main nav (desktop) + hamburger (mobile) — OsfaNav handles both */}
           <OsfaNav />
 
-          {/* Right controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Right controls — right column */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifySelf: 'end' }}>
             {/* Dept chip — hidden on very small screens */}
             {deptInfo && (
               <div
