@@ -146,11 +146,11 @@ export default function OsfaNav() {
       <Link href={link.href} aria-current={isActive ? 'page' : undefined}
         onMouseEnter={() => setHovered(link.href)} onMouseLeave={() => setHovered(null)}
         style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-          padding: '6px 8px', borderRadius: 9, textDecoration: 'none',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+          padding: '8px 14px', borderRadius: 10, textDecoration: 'none',
           color: isActive ? M : isHov ? '#374151' : '#6b7280',
           background: isActive ? ML : isHov ? '#f3f4f6' : 'transparent',
-          fontWeight: isActive ? 700 : 500, fontSize: 10.5, minWidth: 48,
+          fontWeight: isActive ? 700 : 500, fontSize: 11.5, minWidth: 62,
           position: 'relative', transition: 'all 0.15s ease',
         }}>
         {isActive && <span style={{ position: 'absolute', bottom: -1, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2.5, borderRadius: 9999, background: M }} />}
@@ -170,7 +170,7 @@ export default function OsfaNav() {
   return (
     <>
       {/* Desktop nav */}
-      <nav className="osfa-desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: 1 }} role="navigation" aria-label="OSFA navigation">
+      <nav className="osfa-desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: 2 }} role="navigation" aria-label="OSFA navigation">
         {PRIMARY.map(link => <NavItem key={link.href} link={link} />)}
 
         {/* More dropdown */}
@@ -178,11 +178,11 @@ export default function OsfaNav() {
           <button
             onClick={() => setMoreOpen(o => !o)}
             style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-              padding: '6px 8px', borderRadius: 9, border: 'none', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+              padding: '8px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
               background: moreOpen || secondaryActive ? ML : 'transparent',
               color: moreOpen || secondaryActive ? M : '#6b7280',
-              fontWeight: secondaryActive ? 700 : 500, fontSize: 10.5, minWidth: 48,
+              fontWeight: secondaryActive ? 700 : 500, fontSize: 11.5, minWidth: 62,
               position: 'relative', transition: 'all 0.15s ease',
             }}>
             {secondaryActive && <span style={{ position: 'absolute', bottom: -1, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2.5, borderRadius: 9999, background: M }} />}
