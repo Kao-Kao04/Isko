@@ -60,6 +60,8 @@ function ApplicantsContent() {
 
   const [applications, setApplications]   = useState<ApplicationResponse[]>([]);
   const [loading, setLoading]             = useState(true);
+  const [serverTotal, setServerTotal]     = useState(0);
+  const [statusCounts, setStatusCounts]   = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery]     = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter]   = useState<typeof STATUS_FILTERS[number]>(
     (searchParams.get('status') as typeof STATUS_FILTERS[number]) || 'all'
@@ -77,26 +79,33 @@ function ApplicantsContent() {
   const [hoveredRow, setHoveredRow]       = useState<number | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchApplications = useCallback(async (search?: string) => {
+  // Fetch status counts independently so tiles always show totals across all pages
+  const fetchCounts = useCallback(async () => {
+    const statuses = ['pending', 'approved', 'rejected', 'incomplete', 'withdrawn'] as const;
+    const [totalRes, ...statusRes] = await Promise.allSettled([
+      applicationApi.count(),
+      ...statuses.map(s => applicationApi.count(s)),
+    ]);
+    const counts: Record<string, number> = {};
+    counts['all'] = totalRes.status === 'fulfilled' ? (totalRes.value as { count: number }).count : 0;
+    statuses.forEach((s, i) => {
+      counts[s] = statusRes[i].status === 'fulfilled' ? (statusRes[i] as PromiseFulfilledResult<{ count: number }>).value.count : 0;
+    });
+    setStatusCounts(counts);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchApplications = useCallback(async (
+    page: number, size: number, status: string, search: string,
+  ) => {
     try {
       setLoading(true);
-      if (search) {
-        // Backend search — single fetch, server handles filtering
-        const result = await applicationApi.list(1, 50, undefined, search);
-        setApplications(result.items ?? []);
-      } else {
-        // No search — batch-fetch up to 250 (5 pages × 50)
-        const first = await applicationApi.list(1, 50);
-        const items = [...(first.items ?? [])];
-        if (first.total > 50) {
-          const pages = Math.min(Math.ceil(first.total / 50), 5);
-          const rest = await Promise.all(
-            Array.from({ length: pages - 1 }, (_, i) => applicationApi.list(i + 2, 50))
-          );
-          rest.forEach(r => items.push(...(r.items ?? [])));
-        }
-        setApplications(items);
-      }
+      const result = await applicationApi.list(
+        page, size,
+        status !== 'all' ? status : undefined,
+        search || undefined,
+      );
+      setApplications(result.items ?? []);
+      setServerTotal(result.total ?? 0);
     } catch {
       addToast('error', 'Failed to load applications.');
     } finally {
@@ -104,52 +113,38 @@ function ApplicantsContent() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Single effect handles both initial load (empty query → immediate) and
-  // subsequent search changes (non-empty query → 400 ms debounce).
+  // Initial counts load
+  useEffect(() => { fetchCounts(); }, [fetchCounts]);
+
+  // Re-fetch page whenever filter, search (debounced), page, or perPage changes
   useEffect(() => {
     const t = setTimeout(
-      () => fetchApplications(searchQuery || undefined),
+      () => fetchApplications(currentPage, perPage, statusFilter, searchQuery),
       searchQuery ? 400 : 0,
     );
     return () => clearTimeout(t);
-  }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPage, perPage, statusFilter, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filtered = applications.filter(a => {
-    const q = searchQuery.toLowerCase();
-    const name = getFullName(a).toLowerCase();
-    const email = (a.student?.email ?? '').toLowerCase();
-    const program = (a.student?.program ?? '').toLowerCase();
-    const scholarship = (a.scholarship?.name ?? '').toLowerCase();
-    const matchSearch = name.includes(q) || email.includes(q) || program.includes(q) || scholarship.includes(q);
-    const matchStatus = statusFilter === 'all' || a.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
-
-  const sorted = [...filtered].sort((a, b) => {
+  // Sort current page client-side
+  const sorted = [...applications].sort((a, b) => {
     let cmp = 0;
-    if (sortKey === 'name')        cmp = getFullName(a).localeCompare(getFullName(b));
+    if (sortKey === 'name')             cmp = getFullName(a).localeCompare(getFullName(b));
     else if (sortKey === 'scholarship') cmp = (a.scholarship?.name ?? '').localeCompare(b.scholarship?.name ?? '');
-    else if (sortKey === 'status') cmp = a.status.localeCompare(b.status);
+    else if (sortKey === 'status')      cmp = a.status.localeCompare(b.status);
     else cmp = new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime();
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
-  const paginated  = sorted.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const totalPages = Math.max(1, Math.ceil(serverTotal / perPage));
+  const paginated  = sorted;
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('asc'); }
-    setCurrentPage(1);
   }
 
-  const statusCounts = STATUS_FILTERS.reduce((acc, s) => {
-    acc[s] = s === 'all' ? applications.length : applications.filter(a => a.status === s).length;
-    return acc;
-  }, {} as Record<string, number>);
-
   const toggleRow = (id: number) => setSelectedRows(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const toggleAll = () => selectedRows.size === paginated.length ? setSelectedRows(new Set()) : setSelectedRows(new Set(paginated.map(a => a.id)));
+  const toggleAll = () => selectedRows.size === sorted.length ? setSelectedRows(new Set()) : setSelectedRows(new Set(sorted.map(a => a.id)));
 
   async function handleApprove(ids: number[]) {
     const eligible = ids.filter(id => {
@@ -164,8 +159,11 @@ function ApplicantsContent() {
     setActionLoading(true);
     try {
       await Promise.all(eligible.map(id => applicationApi.updateStatus(id, 'approved')));
-      setApplications(prev => prev.map(a => eligible.includes(a.id) ? { ...a, status: 'approved' as ApplicationStatus } : a));
       addToast('success', `${eligible.length} applicant${eligible.length > 1 ? 's' : ''} approved.`);
+      await Promise.all([
+        fetchApplications(currentPage, perPage, statusFilter, searchQuery),
+        fetchCounts(),
+      ]);
     } catch {
       addToast('error', 'Failed to approve some applications.');
     } finally {
@@ -184,8 +182,11 @@ function ApplicantsContent() {
     try {
       const remarks = `${rejectReason}${rejectNote ? ` — ${rejectNote}` : ''}`;
       await Promise.all(eligible.map(id => applicationApi.updateStatus(id, 'rejected', remarks)));
-      setApplications(prev => prev.map(a => eligible.includes(a.id) ? { ...a, status: 'rejected' as ApplicationStatus } : a));
       addToast('error', `${eligible.length} applicant${eligible.length > 1 ? 's' : ''} rejected.`);
+      await Promise.all([
+        fetchApplications(currentPage, perPage, statusFilter, searchQuery),
+        fetchCounts(),
+      ]);
     } catch {
       addToast('error', 'Failed to reject some applications.');
     } finally {
@@ -284,11 +285,11 @@ function ApplicantsContent() {
           const isHov = hoveredTile === label;
           return (
             <div key={label}
-              onClick={() => { setStatusFilter(label); setCurrentPage(1); }}
+              onClick={() => { setStatusFilter(label); setCurrentPage(1); setSelectedRows(new Set()); }}
               onMouseEnter={() => setHoveredTile(label)}
               onMouseLeave={() => setHoveredTile(null)}
               style={{ background: active ? (s ? s.bg : '#f3f4f6') : '#fff', border: `1px solid ${active ? (s ? s.dot + '80' : '#9ca3af80') : isHov ? '#d1d5db' : '#e2e8f0'}`, borderRadius: 11, padding: '12px 14px', cursor: 'pointer', boxShadow: active ? CARD_SHADOW : isHov ? '0 2px 8px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.05)', transform: isHov && !active ? 'translateY(-1px)' : 'none', transition: 'all 0.15s ease' }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: s ? s.color : '#374151', letterSpacing: '-0.02em' }}>{statusCounts[label] ?? 0}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: s ? s.color : '#374151', letterSpacing: '-0.02em' }}>{statusCounts[label] ?? '—'}</div>
               <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3, fontWeight: 500, textTransform: 'capitalize' }}>{label}</div>
             </div>
           );
@@ -301,14 +302,14 @@ function ApplicantsContent() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input type="text" placeholder="Search by name, email, program, or scholarship..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }} style={{ width: '100%', paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8, border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#111827', outline: 'none', background: '#f9fafb', boxSizing: 'border-box' }} />
+          <input type="text" placeholder="Search by name, email, or scholarship..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); setSelectedRows(new Set()); }} style={{ width: '100%', paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8, border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#111827', outline: 'none', background: '#f9fafb', boxSizing: 'border-box' }} />
         </div>
         {(searchQuery || statusFilter !== 'all') && (
           <button onClick={() => { setSearchQuery(''); setStatusFilter('all'); setCurrentPage(1); }} style={{ padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, color: '#6b7280', background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             Clear filters
           </button>
         )}
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9ca3af', whiteSpace: 'nowrap' }}>{sorted.length} result{sorted.length !== 1 ? 's' : ''}</span>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9ca3af', whiteSpace: 'nowrap' }}>{serverTotal} result{serverTotal !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Bulk action bar */}
@@ -408,15 +409,22 @@ function ApplicantsContent() {
         {/* Pagination */}
         <div style={{ padding: '14px 18px', borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <span style={{ fontSize: 13, color: '#6b7280' }}>
-            Showing {sorted.length === 0 ? 0 : (currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, sorted.length)} of {sorted.length}
+            Showing {serverTotal === 0 ? 0 : (currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, serverTotal)} of {serverTotal}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} style={{ padding: '6px 10px', borderRadius: 7, border: '1px solid #e5e7eb', background: '#fff', color: currentPage === 1 ? '#d1d5db' : '#374151', fontSize: 12, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>«</button>
             <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #e5e7eb', background: '#fff', color: currentPage === 1 ? '#d1d5db' : '#374151', fontSize: 13, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>Prev</button>
-            {[...Array(Math.min(totalPages, 5))].map((_, i) => (
-              <button key={i + 1} onClick={() => setCurrentPage(i + 1)} style={{ width: 32, height: 32, borderRadius: 7, border: currentPage === i + 1 ? `1.5px solid ${TEAL}` : '1px solid #e5e7eb', background: currentPage === i + 1 ? TEAL_LIGHT : '#fff', color: currentPage === i + 1 ? TEAL : '#374151', fontSize: 13, fontWeight: currentPage === i + 1 ? 700 : 400, cursor: 'pointer' }}>{i + 1}</button>
-            ))}
+            {(() => {
+              const pages: number[] = [];
+              const delta = 2;
+              for (let i = Math.max(1, currentPage - delta); i <= Math.min(totalPages, currentPage + delta); i++) pages.push(i);
+              return pages.map(p => (
+                <button key={p} onClick={() => setCurrentPage(p)} style={{ width: 32, height: 32, borderRadius: 7, border: currentPage === p ? `1.5px solid ${TEAL}` : '1px solid #e5e7eb', background: currentPage === p ? TEAL_LIGHT : '#fff', color: currentPage === p ? TEAL : '#374151', fontSize: 13, fontWeight: currentPage === p ? 700 : 400, cursor: 'pointer' }}>{p}</button>
+              ));
+            })()}
             <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #e5e7eb', background: '#fff', color: currentPage === totalPages ? '#d1d5db' : '#374151', fontSize: 13, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}>Next</button>
-            <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setCurrentPage(1); }} style={{ padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 7, fontSize: 12, color: '#374151', background: '#f9fafb', outline: 'none', cursor: 'pointer' }}>
+            <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} style={{ padding: '6px 10px', borderRadius: 7, border: '1px solid #e5e7eb', background: '#fff', color: currentPage === totalPages ? '#d1d5db' : '#374151', fontSize: 12, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}>»</button>
+            <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setCurrentPage(1); setSelectedRows(new Set()); }} style={{ padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 7, fontSize: 12, color: '#374151', background: '#f9fafb', outline: 'none', cursor: 'pointer' }}>
               {perPageOptions.map(n => <option key={n} value={n}>{n} per page</option>)}
             </select>
           </div>
