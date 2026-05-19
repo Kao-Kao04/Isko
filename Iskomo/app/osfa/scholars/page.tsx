@@ -97,7 +97,9 @@ export default function Page() {
       const updated = await scholarApi.updateStatus(statusModal.id, newStatus, {
         reason: statusReason.trim() || undefined,
       });
-      setScholars(prev => prev.map(s => s.id === updated.id ? updated : s));
+      setScholars(prev => prev.map(s => s.id === updated.id
+        ? { ...updated, student_name: s.student_name, scholarship_name: s.scholarship_name }
+        : s));
       const isTermination = newStatus === 'terminated';
       addToast('success', isTermination
         ? 'Scholar status updated. A termination notice has been emailed to the student.'

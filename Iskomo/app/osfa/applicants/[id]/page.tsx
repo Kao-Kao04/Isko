@@ -129,8 +129,8 @@ export default function ApplicantProfilePage() {
     }
   }
 
-  async function loadDocuments() {
-    if (documents.length > 0) return;
+  async function loadDocuments(force = false) {
+    if (!force && documents.length > 0) return;
     setDocsLoading(true);
     try {
       const docs = await documentApi.list(Number(id));
@@ -813,7 +813,7 @@ export default function ApplicantProfilePage() {
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h3 style={sectionTitle}>Submitted Documents</h3>
-              <button onClick={() => { setDocuments([]); loadDocuments(); }} style={{ fontSize: 12, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Refresh</button>
+              <button onClick={() => loadDocuments(true)} style={{ fontSize: 12, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Refresh</button>
             </div>
             {docsLoading ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', color: '#9ca3af', fontSize: 13 }}>
@@ -849,11 +849,19 @@ export default function ApplicantProfilePage() {
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             View
                           </button>
-                          <a href={isSafeUrl(doc.file_url) ? doc.file_url : '#'} download target="_blank" rel="noopener noreferrer"
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                          <button onClick={async () => {
+                            try {
+                              const res = await fetch(doc.file_url);
+                              const blob = await res.blob();
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url; a.download = doc.file_name || 'document';
+                              a.click(); URL.revokeObjectURL(url);
+                            } catch { window.open(doc.file_url, '_blank'); }
+                          }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             Download
-                          </a>
+                          </button>
                         </div>
                       )}
                     </div>

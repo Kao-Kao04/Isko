@@ -28,7 +28,7 @@ export default function RegistrationsPage() {
   const { toasts, addToast, removeToast } = useToast();
   const [students,       setStudents]       = useState<Student[]>([]);
   const [loading,        setLoading]        = useState(true);
-  const [filter,         setFilter]         = useState<'pending_verification' | 'verified' | 'rejected' | 'all'>('pending_verification');
+  const [filter,         setFilter]         = useState<'pending_verification' | 'verified' | 'rejected' | 'all'>('all');
   const [appFilter,      setAppFilter]      = useState<'' | 'with_application' | 'no_application'>();
   const [search,         setSearch]         = useState('');
   const [selectedId,     setSelectedId]     = useState<number | null>(null);
