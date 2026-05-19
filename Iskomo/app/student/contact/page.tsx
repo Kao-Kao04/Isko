@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
 
 const M = COLORS.maroon;
@@ -28,12 +29,10 @@ export default function StudentContactPage() {
     }
     setSending(true); setError('');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? ''}/api/contact`, {
+      await apiFetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), email: email.trim(), subject: subject.trim() || undefined, message: message.trim() }),
       });
-      if (!res.ok) throw new Error('Server error');
       setSent(true);
     } catch {
       setError('Something went wrong. Please try again or email us directly.');
