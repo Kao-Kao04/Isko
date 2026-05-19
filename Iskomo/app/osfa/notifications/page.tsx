@@ -66,7 +66,10 @@ function getGroup(createdAt: string): NotifGroup {
 }
 
 function mapNotif(n: NotificationResponse): DisplayNotif {
-  const href = n.route ? `/osfa${n.route}` : (n.application_id ? `/osfa/applicants/${n.application_id}` : undefined);
+  // Backend _derive_route uses /applications/{id} (student path).
+  // OSFA needs /applicants/{id} — replace it so the link is correct.
+  const route = n.route?.replace(/^\/applications\//, '/applicants/') ?? null;
+  const href = route ? `/osfa${route}` : (n.application_id ? `/osfa/applicants/${n.application_id}` : undefined);
   return {
     id:            n.id,
     type:          n.application_id ? 'application' : 'info',
