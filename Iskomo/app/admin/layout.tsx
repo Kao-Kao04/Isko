@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import SignOutButton from '@/components/shared/SignOutButton';
 import AdminNav from '@/components/shared/AdminNav';
+import PhClock from '@/components/shared/PhClock';
 import { COLORS } from '@/lib/theme';
 
 const M = COLORS.maroon;
@@ -35,8 +36,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <AdminNav />
           </div>
 
-          {/* Right — identity + sign out */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Right — clock + identity + sign out */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <PhClock />
+            <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
             <div className="hide-tablet" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 5px 5px', borderRadius: 9, border: '1px solid #fecaca', background: '#fff5f5' }}>
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: `linear-gradient(135deg, ${M}, #5C0000)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 800 }}>SA</div>
               <div>

@@ -2,40 +2,47 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { COLORS } from '@/lib/theme';
 import { apiFetch } from '@/lib/api';
 
 const M  = COLORS.maroon;
 const ML = COLORS.maroonL;
 
-const NAV_LINKS = [
-  { href: '/admin/dashboard',      label: 'Dashboard',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
-  { href: '/admin/staff',          label: 'Staff',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
-  { href: '/admin/students',       label: 'Students',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg> },
-  { href: '/admin/registrations',  label: 'Registrations',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
-  { href: '/admin/applications',   label: 'Applications',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> },
-  { href: '/admin/scholars',       label: 'Scholars',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> },
-  { href: '/admin/audit',          label: 'Audit',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-  { href: '/admin/broadcast',      label: 'Broadcast',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg> },
-  { href: '/admin/reports',        label: 'Reports',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
-  { href: '/admin/contacts',       label: 'Contacts',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+const PRIMARY_LINKS = [
+  { href: '/admin/dashboard',    label: 'Dashboard',
+    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+  { href: '/admin/staff',        label: 'Staff',
+    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+  { href: '/admin/students',     label: 'Students',
+    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg> },
+  { href: '/admin/applications', label: 'Applications',
+    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> },
+  { href: '/admin/scholars',     label: 'Scholars',
+    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> },
 ];
 
+const MORE_LINKS = [
+  { href: '/admin/registrations', label: 'Registrations',
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
+  { href: '/admin/audit',         label: 'Audit Logs',
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+  { href: '/admin/broadcast',     label: 'Broadcast',
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg> },
+  { href: '/admin/reports',       label: 'Reports',
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
+  { href: '/admin/contacts',      label: 'Contacts',
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+];
+
+const ALL_LINKS = [...PRIMARY_LINKS, ...MORE_LINKS];
+
 export default function AdminNav() {
-  const pathname = usePathname();
-  const [hovered,      setHovered]      = useState<string | null>(null);
-  const [drawerOpen,   setDrawerOpen]   = useState(false);
+  const pathname  = usePathname();
+  const moreRef   = useRef<HTMLDivElement>(null);
+  const [hovered,        setHovered]        = useState<string | null>(null);
+  const [drawerOpen,     setDrawerOpen]     = useState(false);
+  const [moreOpen,       setMoreOpen]       = useState(false);
   const [unreadContacts, setUnreadContacts] = useState(0);
 
   useEffect(() => {
@@ -44,18 +51,31 @@ export default function AdminNav() {
       .catch(() => {});
   }, [pathname]);
 
-  useEffect(() => { setDrawerOpen(false); }, [pathname]);
+  useEffect(() => { setDrawerOpen(false); setMoreOpen(false); }, [pathname]);
+
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setDrawerOpen(false); };
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { setDrawerOpen(false); setMoreOpen(false); } };
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
   }, []);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = drawerOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [drawerOpen]);
 
-  const NavItem = ({ link, drawer = false }: { link: typeof NAV_LINKS[0]; drawer?: boolean }) => {
+  const isMoreActive = MORE_LINKS.some(l => pathname === l.href || pathname.startsWith(l.href + '/'));
+  const moreUnread   = MORE_LINKS.some(l => l.href === '/admin/contacts') && unreadContacts > 0;
+
+  const NavItem = ({ link, drawer = false }: { link: typeof ALL_LINKS[0]; drawer?: boolean }) => {
     const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
     const isHov    = !drawer && hovered === link.href;
     const badge    = link.href === '/admin/contacts' && unreadContacts > 0 ? unreadContacts : 0;
@@ -63,7 +83,7 @@ export default function AdminNav() {
     if (drawer) {
       return (
         <Link href={link.href} style={{
-          display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px',
+          display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
           textDecoration: 'none', borderRadius: 10,
           background: isActive ? ML : 'transparent',
           color: isActive ? M : '#374151', fontWeight: isActive ? 700 : 500, fontSize: 14,
@@ -71,7 +91,7 @@ export default function AdminNav() {
         }}>
           <span style={{ color: isActive ? M : '#6b7280', display: 'flex', flexShrink: 0 }}>{link.icon}</span>
           <span style={{ flex: 1 }}>{link.label}</span>
-          {badge > 0 && <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 20, background: M, color: '#fff', flexShrink: 0 }}>{badge}</span>}
+          {badge > 0 && <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 20, background: M, color: '#fff' }}>{badge}</span>}
         </Link>
       );
     }
@@ -82,14 +102,14 @@ export default function AdminNav() {
         onMouseLeave={() => setHovered(null)}
         style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-          padding: '6px 8px', borderRadius: 9, textDecoration: 'none',
+          padding: '6px 9px', borderRadius: 9, textDecoration: 'none',
           color: isActive ? M : isHov ? '#374151' : '#6b7280',
           background: isActive ? ML : isHov ? '#f3f4f6' : 'transparent',
-          fontWeight: isActive ? 700 : 500, fontSize: 10.5, minWidth: 52,
+          fontWeight: isActive ? 700 : 500, fontSize: 10.5, minWidth: 54,
           position: 'relative', transition: 'all 0.15s ease',
         }}>
         {isActive && <span style={{ position: 'absolute', bottom: -1, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2.5, borderRadius: 9999, background: M }} />}
-        <span style={{ color: isActive ? M : isHov ? '#374151' : '#9ca3af', display: 'flex', transition: 'color 0.15s ease', position: 'relative' }}>
+        <span style={{ color: isActive ? M : isHov ? '#374151' : '#9ca3af', display: 'flex', transition: 'color 0.15s', position: 'relative' }}>
           {link.icon}
           {badge > 0 && <span style={{ position: 'absolute', top: -5, right: -7, fontSize: 9, fontWeight: 800, padding: '1px 4px', borderRadius: 20, background: M, color: '#fff', lineHeight: 1.4, minWidth: 14, textAlign: 'center' }}>{badge}</span>}
         </span>
@@ -100,10 +120,58 @@ export default function AdminNav() {
 
   return (
     <>
+      {/* Desktop nav */}
       <nav className="osfa-desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: 1 }} role="navigation" aria-label="Admin navigation">
-        {NAV_LINKS.map(link => <NavItem key={link.href} link={link} />)}
+        {PRIMARY_LINKS.map(link => <NavItem key={link.href} link={link} />)}
+
+        {/* More dropdown */}
+        <div ref={moreRef} style={{ position: 'relative' }}>
+          <button onClick={() => setMoreOpen(o => !o)}
+            onMouseEnter={() => setHovered('__more__')}
+            onMouseLeave={() => setHovered(null)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              padding: '6px 9px', borderRadius: 9, border: 'none', cursor: 'pointer',
+              background: moreOpen || isMoreActive ? ML : hovered === '__more__' ? '#f3f4f6' : 'transparent',
+              color: moreOpen || isMoreActive ? M : '#6b7280',
+              fontWeight: moreOpen || isMoreActive ? 700 : 500, fontSize: 10.5, minWidth: 54,
+              position: 'relative', transition: 'all 0.15s',
+            }}>
+            {isMoreActive && <span style={{ position: 'absolute', bottom: -1, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2.5, borderRadius: 9999, background: M }} />}
+            <span style={{ color: moreOpen || isMoreActive ? M : hovered === '__more__' ? '#374151' : '#9ca3af', display: 'flex', position: 'relative', transition: 'color 0.15s' }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+              {moreUnread && <span style={{ position: 'absolute', top: -5, right: -7, fontSize: 9, fontWeight: 800, padding: '1px 4px', borderRadius: 20, background: M, color: '#fff', lineHeight: 1.4, minWidth: 14, textAlign: 'center' }}>{unreadContacts}</span>}
+            </span>
+            <span>More</span>
+          </button>
+
+          {moreOpen && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', width: 200, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 1100, overflow: 'hidden', padding: '6px' }}>
+              {MORE_LINKS.map(link => {
+                const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+                const badge    = link.href === '/admin/contacts' && unreadContacts > 0 ? unreadContacts : 0;
+                return (
+                  <Link key={link.href} href={link.href} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
+                    borderRadius: 8, textDecoration: 'none',
+                    background: isActive ? ML : 'transparent',
+                    color: isActive ? M : '#374151', fontWeight: isActive ? 700 : 500, fontSize: 13,
+                  }}
+                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isActive ? ML : 'transparent'; }}
+                  >
+                    <span style={{ color: isActive ? M : '#6b7280', display: 'flex', flexShrink: 0 }}>{link.icon}</span>
+                    <span style={{ flex: 1 }}>{link.label}</span>
+                    {badge > 0 && <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 20, background: M, color: '#fff' }}>{badge}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </nav>
 
+      {/* Hamburger (mobile) */}
       <button className="osfa-hamburger" onClick={() => setDrawerOpen(o => !o)}
         aria-label={drawerOpen ? 'Close menu' : 'Open menu'} aria-expanded={drawerOpen}
         style={{ background: drawerOpen ? ML : 'none', border: `1.5px solid ${drawerOpen ? '#fca5a5' : '#e5e7eb'}`, borderRadius: 8, cursor: 'pointer', padding: '7px 10px', display: 'flex', alignItems: 'center', color: drawerOpen ? M : '#374151', transition: 'all 0.15s' }}>
@@ -112,6 +180,7 @@ export default function AdminNav() {
           : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>}
       </button>
 
+      {/* Mobile drawer */}
       {drawerOpen && (
         <>
           <div onClick={() => setDrawerOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(2px)', zIndex: 1100 }} />
@@ -126,7 +195,13 @@ export default function AdminNav() {
               </button>
             </div>
             <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 24px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {NAV_LINKS.map(link => <NavItem key={link.href} link={link} drawer />)}
+              {/* Primary */}
+              {PRIMARY_LINKS.map(link => <NavItem key={link.href} link={link} drawer />)}
+              {/* Divider + More */}
+              <div style={{ margin: '8px 0 4px', padding: '0 16px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>More</div>
+              </div>
+              {MORE_LINKS.map(link => <NavItem key={link.href} link={link} drawer />)}
             </nav>
           </div>
         </>
