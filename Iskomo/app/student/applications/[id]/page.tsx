@@ -646,8 +646,8 @@ export default function ApplicationDetailPage() {
             );
           })()}
 
-          {/* Compliance Checklist — COMPLETION + PENDING_REQUIREMENTS */}
-          {workflow?.main_status === 'completion' && workflow?.sub_status === 'PENDING_REQUIREMENTS' && (() => {
+          {/* Compliance Checklist — COMPLETION + pending_requirements */}
+          {workflow?.main_status === 'completion' && workflow?.sub_status === 'pending_requirements' && (() => {
             const requiredDocs = complianceDocs.filter(d => d.is_required);
             const verifiedCount = compliance.filter(c => c.is_verified).length;
             const totalRequired = requiredDocs.length;
