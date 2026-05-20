@@ -40,15 +40,6 @@ const typeStyle: Record<string, { bg: string; color: string; icon: ReactNode }> 
   info:        { bg: '#f8fafc', color: '#475569', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
 };
 
-const notifTitles: Record<string, string> = {
-  status:     'Application Update',
-  deadline:   'Deadline Approaching',
-  info:       'Information',
-  approved:   'Application Approved',
-  rejected:   'Application Rejected',
-  incomplete: 'Application Incomplete',
-  resubmit:   'Resubmission Required',
-};
 
 function formatTime(createdAt: string): string {
   const diff = Date.now() - new Date(createdAt).getTime();
@@ -359,7 +350,7 @@ export default function Page() {
             </div>
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {[
-                { label: 'Review Pending Applications', href: '/osfa/applicants' },
+                { label: 'Review Pending Applications', href: '/osfa/applicants?status=pending' },
                 { label: 'View All Applicants',         href: '/osfa/applicants' },
                 { label: 'Manage Scholarships',         href: '/osfa/scholarships' },
               ].map(link => (
