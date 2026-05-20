@@ -56,8 +56,8 @@ export default function OsfaMessagesPage() {
   const [sending,    setSending]    = useState(false);
   const [replyError, setReplyError] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setApiError(null);
     const [appRes, contactRes] = await Promise.allSettled([
       apiFetch<{ items: Omit<AppConversation, 'kind'>[] }>('/api/applications/inbox'),
@@ -90,10 +90,28 @@ export default function OsfaMessagesPage() {
     });
 
     setConvos(merged);
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Re-load when a message/contact notification arrives via the shared WS event
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const t = ((e as CustomEvent).detail?.title ?? '').toLowerCase();
+      if (t.includes('message') || t.includes('reply') || t.includes('contact')) {
+        load(true); // silent — don't show spinner
+      }
+    };
+    window.addEventListener('iskomo:notification', handler);
+    return () => window.removeEventListener('iskomo:notification', handler);
+  }, [load]);
+
+  // 30-second poll as fallback (catches contact form submissions which don't push WS)
+  useEffect(() => {
+    const id = setInterval(() => load(true), 30_000); // silent poll
+    return () => clearInterval(id);
+  }, [load]);
 
   async function markContactRead(c: ContactConversation) {
     if (!c.is_read) {
@@ -143,7 +161,7 @@ export default function OsfaMessagesPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>Messages</h1>
           {totalUnread > 0 && <span style={{ fontSize: 12, fontWeight: 800, padding: '2px 9px', borderRadius: 20, background: M, color: '#fff' }}>{totalUnread} unread</span>}
-          <button onClick={load} disabled={loading} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 12, color: '#6b7280' }}>
+          <button onClick={() => load()} disabled={loading} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 12, color: '#6b7280' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }}><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             Refresh
           </button>

@@ -85,6 +85,8 @@ export default function NotificationBell() {
           setNotifs(prev => [notif, ...prev.filter(n => n.id !== notif.id)]);
           setWsAlert(notif.title);
           setTimeout(() => setWsAlert(null), 4000);
+          // Broadcast so other pages (e.g. Messages) can react without their own WS
+          window.dispatchEvent(new CustomEvent('iskomo:notification', { detail: notif }));
         } catch { /* ignore malformed frames */ }
       };
 
