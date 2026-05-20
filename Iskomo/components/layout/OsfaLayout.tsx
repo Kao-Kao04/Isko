@@ -30,28 +30,24 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
         <div style={{ height: 3, background: `linear-gradient(90deg, ${TEAL} 0%, #5C0000 50%, #C9A027 100%)` }} />
 
         {/*
-          1fr auto 1fr:
-            col-1 (1fr) → logo, justifySelf:start
-            col-2 (auto) → nav wrapper div (single grid item — OsfaNav is a Fragment
-                            so it must be wrapped or its children become separate grid items)
-            col-3 (1fr) → right controls, justifySelf:end
-          Both outer columns are equal 1fr so the center column is pixel-perfect middle.
+          position:relative on the row lets us absolutely center the nav.
+          Logo stays left, right controls stay right via flex space-between.
+          Nav is position:absolute left:50% translateX(-50%) — pixel-perfect center
+          regardless of how wide or narrow the logo / controls are.
         */}
         <div style={{
           maxWidth: 1400,
           margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
+          position: 'relative',
+          display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           padding: '0 20px',
           minHeight: 62,
         }}>
 
           {/* ── Left: logo ── */}
-          <Link href="/osfa/dashboard" style={{
-            textDecoration: 'none', display: 'flex', alignItems: 'center',
-            gap: 10, justifySelf: 'start',
-          }}>
+          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
               background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
@@ -70,13 +66,22 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             </div>
           </Link>
 
-          {/* ── Center: nav (wrapped so Fragment children don't bleed into grid) ── */}
-          <div>
+          {/*
+            ── Center: nav — absolutely centered on the page ──
+            This div is pulled out of the flex flow via position:absolute,
+            centered with left:50% + translateX(-50%), and pointer-events
+            are preserved so nav links remain clickable.
+          */}
+          <div style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+          }}>
             <OsfaNav />
           </div>
 
           {/* ── Right: controls ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifySelf: 'end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {deptInfo && (
               <div className="hide-tablet" style={{
                 display: 'flex', alignItems: 'center', gap: 6,
