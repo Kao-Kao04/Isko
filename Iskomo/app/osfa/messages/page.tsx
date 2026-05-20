@@ -52,8 +52,9 @@ export default function OsfaMessagesPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [search,   setSearch]   = useState('');
   const [selected, setSelected] = useState<ContactConversation | null>(null);
-  const [reply,    setReply]    = useState('');
-  const [sending,  setSending]  = useState(false);
+  const [reply,      setReply]      = useState('');
+  const [sending,    setSending]    = useState(false);
+  const [replyError, setReplyError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -106,6 +107,7 @@ export default function OsfaMessagesPage() {
   async function sendReply() {
     if (!selected || !reply.trim()) return;
     setSending(true);
+    setReplyError('');
     try {
       const updated = await apiFetch<ContactConversation>(`/api/osfa/contacts/${selected.id}/reply`, {
         method: 'POST',
@@ -114,8 +116,9 @@ export default function OsfaMessagesPage() {
       setSelected({ ...updated, kind: 'contact' });
       setConvos(prev => prev.map(x => x.kind === 'contact' && x.id === selected.id ? { ...updated, kind: 'contact' } : x));
       setReply('');
-    } catch { /* silent */ }
-    finally { setSending(false); }
+    } catch (err) {
+      setReplyError(err instanceof Error ? err.message : 'Failed to send reply. Please try again.');
+    } finally { setSending(false); }
   }
 
   const filtered = convos.filter(c => {
@@ -289,6 +292,9 @@ export default function OsfaMessagesPage() {
                     rows={3}
                     style={{ width: '100%', border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#111827', resize: 'vertical', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }}
                   />
+                  {replyError && (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: '#dc2626' }}>{replyError}</p>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
                     <span style={{ fontSize: 11, color: '#9ca3af' }}>Reply will also be sent to {selected.email}</span>
                     <button onClick={sendReply} disabled={sending || !reply.trim()} style={{ padding: '8px 20px', background: reply.trim() && !sending ? M : '#d1d5db', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#fff', cursor: reply.trim() && !sending ? 'pointer' : 'not-allowed' }}>
