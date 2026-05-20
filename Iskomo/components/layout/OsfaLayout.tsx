@@ -34,13 +34,14 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
           maxWidth: 1400,
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
+          gridTemplateColumns: 'auto 1fr auto',
           alignItems: 'center',
           padding: '0 20px',
           minHeight: 62,
+          gap: 12,
         }}>
-          {/* Logo — left column */}
-          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, justifySelf: 'start' }}>
+          {/* Logo — left column, natural width */}
+          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
               background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
