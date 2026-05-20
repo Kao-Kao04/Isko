@@ -35,8 +35,6 @@ const MORE_LINKS = [
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
 ];
 
-const ALL_LINKS = [...PRIMARY_LINKS, ...MORE_LINKS];
-
 export default function AdminNav() {
   const pathname  = usePathname();
   const moreRef   = useRef<HTMLDivElement>(null);
@@ -75,7 +73,7 @@ export default function AdminNav() {
   const isMoreActive = MORE_LINKS.some(l => pathname === l.href || pathname.startsWith(l.href + '/'));
   const moreUnread   = MORE_LINKS.some(l => l.href === '/admin/contacts') && unreadContacts > 0;
 
-  const NavItem = ({ link, drawer = false }: { link: typeof ALL_LINKS[0]; drawer?: boolean }) => {
+  const NavItem = ({ link, drawer = false }: { link: typeof PRIMARY_LINKS[0]; drawer?: boolean }) => {
     const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
     const isHov    = !drawer && hovered === link.href;
     const badge    = link.href === '/admin/contacts' && unreadContacts > 0 ? unreadContacts : 0;
