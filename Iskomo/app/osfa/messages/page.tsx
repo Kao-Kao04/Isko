@@ -49,12 +49,15 @@ export default function OsfaMessagesPage() {
   const router = useRouter();
   const [convos,   setConvos]   = useState<Conversation[]>([]);
   const [loading,  setLoading]  = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [search,   setSearch]   = useState('');
   const [selected, setSelected] = useState<ContactConversation | null>(null);
   const [reply,    setReply]    = useState('');
   const [sending,  setSending]  = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setApiError(null);
     const [appRes, contactRes] = await Promise.allSettled([
       apiFetch<{ items: Omit<AppConversation, 'kind'>[] }>('/api/applications/inbox'),
       apiFetch<{ items: Omit<ContactConversation, 'kind'>[] }>('/api/osfa/contacts?page=1&page_size=100'),
@@ -67,6 +70,13 @@ export default function OsfaMessagesPage() {
     const contacts: ContactConversation[] = contactRes.status === 'fulfilled'
       ? (contactRes.value.items ?? []).map(x => ({ ...x, kind: 'contact' as const }))
       : [];
+
+    if (appRes.status === 'rejected' || contactRes.status === 'rejected') {
+      const errs: string[] = [];
+      if (appRes.status === 'rejected')     errs.push('application messages');
+      if (contactRes.status === 'rejected') errs.push('contact inquiries');
+      setApiError(`Failed to load: ${errs.join(', ')}. Check backend logs or try refreshing.`);
+    }
 
     // Merge and sort by most recent
     const merged: Conversation[] = [
@@ -130,9 +140,21 @@ export default function OsfaMessagesPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>Messages</h1>
           {totalUnread > 0 && <span style={{ fontSize: 12, fontWeight: 800, padding: '2px 9px', borderRadius: 20, background: M, color: '#fff' }}>{totalUnread} unread</span>}
+          <button onClick={load} disabled={loading} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 12, color: '#6b7280' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }}><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
         </div>
         <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>Application conversations + general inquiries from students</p>
       </div>
+
+      {/* API error banner */}
+      {apiError && (
+        <div style={{ marginBottom: 16, padding: '10px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, fontSize: 13, color: '#dc2626', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {apiError}
+        </div>
+      )}
 
       {/* Search */}
       <div style={{ position: 'relative', marginBottom: 16 }}>
@@ -158,8 +180,16 @@ export default function OsfaMessagesPage() {
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ margin: '0 auto 12px', display: 'block' }}>
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 4 }}>No messages yet</div>
-              <div style={{ fontSize: 12, color: '#9ca3af' }}>Student messages will appear here.</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
+                {apiError ? 'Could not load messages' : search ? 'No results found' : 'No messages yet'}
+              </div>
+              <div style={{ fontSize: 12, color: '#9ca3af' }}>
+                {apiError
+                  ? 'An error occurred. Try refreshing.'
+                  : search
+                    ? 'Try a different search term.'
+                    : 'Student messages and contact inquiries will appear here.'}
+              </div>
             </div>
           ) : filtered.map((c, i) => {
             const isUnread = c.kind === 'application' ? c.unread_count > 0 : !c.is_read;

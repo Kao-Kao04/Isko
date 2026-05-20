@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
@@ -21,6 +21,18 @@ export default function StudentContactPage() {
   const [sending, setSending] = useState(false);
   const [sent,    setSent]    = useState(false);
   const [error,   setError]   = useState('');
+
+  // Pre-fill from student profile so student_user_id is reliably linked
+  useEffect(() => {
+    apiFetch<{ email: string; student_profile?: { first_name?: string; last_name?: string } }>('/api/auth/me')
+      .then(u => {
+        if (u.student_profile?.first_name || u.student_profile?.last_name) {
+          setName(`${u.student_profile.first_name ?? ''} ${u.student_profile.last_name ?? ''}`.trim());
+        }
+        if (u.email) setEmail(u.email);
+      })
+      .catch(() => {}); // silent — student can still fill manually
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
