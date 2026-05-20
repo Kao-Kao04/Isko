@@ -57,8 +57,8 @@ export default function OsfaMessagesPage() {
   const [replyError, setReplyError] = useState('');
 
   const load = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    setApiError(null);
+    if (!silent) { setLoading(true); setApiError(null); }
+
     const [appRes, contactRes] = await Promise.allSettled([
       apiFetch<{ items: Omit<AppConversation, 'kind'>[] }>('/api/applications/inbox'),
       apiFetch<{ items: Omit<ContactConversation, 'kind'>[] }>('/api/osfa/contacts?page=1&page_size=100'),
@@ -72,23 +72,23 @@ export default function OsfaMessagesPage() {
       ? (contactRes.value.items ?? []).map(x => ({ ...x, kind: 'contact' as const }))
       : [];
 
+    // Always update error state after requests complete:
+    // — clear it if everything succeeded (silent poll fixed itself)
+    // — set it if something failed (no flicker: we didn't clear it at the start)
     if (appRes.status === 'rejected' || contactRes.status === 'rejected') {
       const errs: string[] = [];
       if (appRes.status === 'rejected')     errs.push('application messages');
       if (contactRes.status === 'rejected') errs.push('contact inquiries');
       setApiError(`Failed to load: ${errs.join(', ')}. Check backend logs or try refreshing.`);
+    } else {
+      setApiError(null);
     }
 
-    // Merge and sort by most recent
-    const merged: Conversation[] = [
-      ...apps,
-      ...contacts,
-    ].sort((a, b) => {
+    const merged: Conversation[] = [...apps, ...contacts].sort((a, b) => {
       const ta = a.kind === 'application' ? a.last_message_at : a.created_at;
       const tb = b.kind === 'application' ? b.last_message_at : b.created_at;
       return new Date(tb ?? 0).getTime() - new Date(ta ?? 0).getTime();
     });
-
     setConvos(merged);
     if (!silent) setLoading(false);
   }, []);
