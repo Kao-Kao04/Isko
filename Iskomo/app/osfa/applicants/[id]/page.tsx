@@ -217,10 +217,18 @@ export default function ApplicantProfilePage() {
 
   async function handleApprove() {
     try {
-      const updated = await applicationApi.updateStatus(Number(id), 'approved');
-      setApp(updated);
-      await refreshAudit();
-      addToast('success', `Application approved.`);
+      if (workflow?.main_status === 'decision') {
+        await doWorkflowAction(() => workflowApi.decide(Number(id), 'approved'), 'Application approved.');
+      } else if (workflow?.main_status != null) {
+        addToast('error', 'This application is managed by the workflow. Use the Decision step in the Workflow tab to approve.');
+        setShowApproveDialog(false);
+        return;
+      } else {
+        const updated = await applicationApi.updateStatus(Number(id), 'approved');
+        setApp(updated);
+        await refreshAudit();
+        addToast('success', 'Application approved.');
+      }
     } catch { addToast('error', 'Failed to approve application.'); }
     setShowApproveDialog(false);
   }
@@ -229,10 +237,18 @@ export default function ApplicantProfilePage() {
     if (!rejectReason) return;
     const note = `${rejectReason}${rejectNote ? ': ' + rejectNote : ''}`;
     try {
-      const updated = await applicationApi.updateStatus(Number(id), 'rejected', note);
-      setApp(updated);
-      await refreshAudit();
-      addToast('error', `Application rejected.`);
+      if (workflow?.main_status === 'decision') {
+        await doWorkflowAction(() => workflowApi.decide(Number(id), 'rejected', note), 'Application rejected.');
+      } else if (workflow?.main_status != null) {
+        addToast('error', 'This application is managed by the workflow. Use the Decision step in the Workflow tab to reject.');
+        setShowRejectDialog(false);
+        return;
+      } else {
+        const updated = await applicationApi.updateStatus(Number(id), 'rejected', note);
+        setApp(updated);
+        await refreshAudit();
+        addToast('error', 'Application rejected.');
+      }
     } catch { addToast('error', 'Failed to reject application.'); }
     setShowRejectDialog(false);
     setRejectReason('');
@@ -241,10 +257,18 @@ export default function ApplicantProfilePage() {
 
   async function handleMarkIncomplete() {
     try {
-      const updated = await applicationApi.updateStatus(Number(id), 'incomplete', incompleteNote || undefined);
-      setApp(updated);
-      await refreshAudit();
-      addToast('warning', `Application marked Incomplete.`);
+      if (workflow?.main_status === 'verification') {
+        // Workflow app at Verification — request-revision sets status=incomplete
+        // and moves sub_status to revision_requested so the student gets notified.
+        const note = incompleteNote.trim() || 'Please review and resubmit your documents.';
+        await doWorkflowAction(() => workflowApi.requestRevision(Number(id), note), 'Revision requested.');
+      } else {
+        // Pre-workflow or legacy application
+        const updated = await applicationApi.updateStatus(Number(id), 'incomplete', incompleteNote || undefined);
+        setApp(updated);
+        await refreshAudit();
+        addToast('warning', 'Application marked Incomplete.');
+      }
     } catch { addToast('error', 'Failed to mark application incomplete.'); }
     setShowIncompleteDialog(false);
     setIncompleteNote('');
