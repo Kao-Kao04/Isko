@@ -30,18 +30,28 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
         {/* Brand accent bar */}
         <div style={{ height: 3, background: `linear-gradient(90deg, ${TEAL} 0%, #5C0000 50%, #C9A027 100%)` }} />
 
+        {/*
+          1fr auto 1fr grid:
+          - Left 1fr  → logo (justifySelf:start keeps it left)
+          - auto      → nav takes only its natural width, sits exactly center
+          - Right 1fr → controls (justifySelf:end keeps them right)
+          This guarantees the nav is truly centered regardless of logo/controls widths.
+        */}
         <div style={{
           maxWidth: 1400,
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: 'auto 1fr auto',
+          gridTemplateColumns: '1fr auto 1fr',
           alignItems: 'center',
           padding: '0 20px',
           minHeight: 62,
-          gap: 12,
         }}>
-          {/* Logo — left column, natural width */}
-          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+
+          {/* Logo */}
+          <Link href="/osfa/dashboard" style={{
+            textDecoration: 'none', display: 'flex', alignItems: 'center',
+            gap: 10, justifySelf: 'start',
+          }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
               background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
@@ -60,28 +70,21 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             </div>
           </Link>
 
-          {/* Center: main nav (desktop) + hamburger (mobile) — OsfaNav handles both */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <OsfaNav />
-          </div>
+          {/* Nav — sits in the auto center column, truly centered on the page */}
+          <OsfaNav />
 
-          {/* Right controls — right column */}
+          {/* Right controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifySelf: 'end' }}>
-            {/* Dept chip — hidden on very small screens */}
             {deptInfo && (
-              <div
-                className="hide-tablet"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '5px 12px', borderRadius: 20,
-                  background: deptInfo.bg, border: `1px solid ${deptInfo.color}30`,
-                }}
-              >
+              <div className="hide-tablet" style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', borderRadius: 20,
+                background: deptInfo.bg, border: `1px solid ${deptInfo.color}30`,
+              }}>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: deptInfo.color }} />
                 <span style={{ fontSize: 12, fontWeight: 700, color: deptInfo.color }}>{deptInfo.label}</span>
               </div>
             )}
-
             <PhClock />
             <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
             <NotificationBell />
