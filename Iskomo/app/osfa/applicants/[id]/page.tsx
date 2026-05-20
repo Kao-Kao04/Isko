@@ -262,8 +262,14 @@ export default function ApplicantProfilePage() {
         // and moves sub_status to revision_requested so the student gets notified.
         const note = incompleteNote.trim() || 'Please review and resubmit your documents.';
         await doWorkflowAction(() => workflowApi.requestRevision(Number(id), note), 'Revision requested.');
+      } else if (workflow?.main_status != null) {
+        // Workflow app at a stage where revision isn't applicable (Interview, Decision, etc.)
+        addToast('error', 'Mark Incomplete is only available at the Verification stage. Use the Workflow tab to manage this application.');
+        setShowIncompleteDialog(false);
+        setIncompleteNote('');
+        return;
       } else {
-        // Pre-workflow or legacy application
+        // Pre-workflow / legacy application
         const updated = await applicationApi.updateStatus(Number(id), 'incomplete', incompleteNote || undefined);
         setApp(updated);
         await refreshAudit();
