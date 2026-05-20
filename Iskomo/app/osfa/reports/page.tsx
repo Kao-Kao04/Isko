@@ -29,23 +29,31 @@ const STATUS_LABEL: Record<string, string> = {
   waitlisted:  'Waitlisted',
 };
 
-// ── Trends — main_status values from backend (lowercase after values_callable fix)
+// ── Trends — covers both workflow (main_status) and legacy (status) values
 const TREND_LABEL: Record<string, string> = {
+  // workflow main_status values (lowercase)
   application:  'Submitted',
-  verification: 'Under Verification',
+  verification: 'Verification',
   interview:    'Interview',
   decision:     'Decision',
   completion:   'Completed',
   rejected:     'Rejected',
   withdrawn:    'Withdrawn',
-  // legacy uppercase keys (backward compat)
+  // legacy status values (for apps without workflow)
+  pending:      'Pending',
+  approved:     'Approved',
+  incomplete:   'Incomplete',
+  // uppercase backward compat
   APPLICATION:  'Submitted',
-  VERIFICATION: 'Under Verification',
+  VERIFICATION: 'Verification',
   INTERVIEW:    'Interview',
   DECISION:     'Decision',
   COMPLETION:   'Completed',
   REJECTED:     'Rejected',
   WITHDRAWN:    'Withdrawn',
+  PENDING:      'Pending',
+  APPROVED:     'Approved',
+  INCOMPLETE:   'Incomplete',
 };
 
 const TREND_COLOR: Record<string, string> = {
@@ -56,6 +64,11 @@ const TREND_COLOR: Record<string, string> = {
   completion:   '#059669',
   rejected:     '#dc2626',
   withdrawn:    '#6b7280',
+  // legacy
+  pending:      '#f59e0b',
+  approved:     '#059669',
+  incomplete:   '#ea580c',
+  // uppercase
   APPLICATION:  '#6366f1',
   VERIFICATION: '#2563eb',
   INTERVIEW:    '#7c3aed',
@@ -63,6 +76,9 @@ const TREND_COLOR: Record<string, string> = {
   COMPLETION:   '#059669',
   REJECTED:     '#dc2626',
   WITHDRAWN:    '#6b7280',
+  PENDING:      '#f59e0b',
+  APPROVED:     '#059669',
+  INCOMPLETE:   '#ea580c',
 };
 
 function StatCard({ label, value, sub, color = '#111827' }: { label: string; value: string | number; sub?: string; color?: string }) {
