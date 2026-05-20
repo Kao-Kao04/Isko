@@ -204,12 +204,10 @@ export default function NotificationBell() {
               )}
             </div>
 
-            {/* View all link — only for students */}
-            {roleBase === '/student' && (
-              <div style={{ padding: '8px 16px', borderBottom: '1px solid #f3f4f6', textAlign: 'right' }}>
-                <a href="/student/notifications" style={{ fontSize: 12, color: MAROON, fontWeight: 600, textDecoration: 'none' }}>View all notifications →</a>
-              </div>
-            )}
+            {/* View all link */}
+            <div style={{ padding: '8px 16px', borderBottom: '1px solid #f3f4f6', textAlign: 'right' }}>
+              <a href={`${roleBase}/notifications`} style={{ fontSize: 12, color: MAROON, fontWeight: 600, textDecoration: 'none' }}>View all notifications →</a>
+            </div>
 
             {notifs.length === 0 ? (
               <div style={{ padding: '36px 16px', textAlign: 'center' }}>

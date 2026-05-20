@@ -11,7 +11,7 @@ import { COLORS } from '@/lib/theme';
 const TEAL = COLORS.maroon;
 const TEAL_LIGHT = COLORS.maroonL;
 
-type NotifFilter = 'All' | 'Unread' | 'Applications' | 'System';
+type NotifFilter = 'All' | 'Unread' | 'New Applications' | 'Messages' | 'System';
 type NotifGroup  = 'Today' | 'Yesterday' | 'Earlier';
 
 interface DisplayNotif {
@@ -28,6 +28,8 @@ interface DisplayNotif {
 }
 
 const typeStyle: Record<string, { bg: string; color: string; icon: ReactNode }> = {
+  submission:  { bg: '#f0fdf4', color: '#059669', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+  message:     { bg: '#eff6ff', color: '#2563eb', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
   application: { bg: '#eff6ff', color: '#2563eb', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   status:      { bg: '#eff6ff', color: '#2563eb', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   approved:    { bg: '#fff5f5', color: '#059669', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg> },
@@ -65,6 +67,16 @@ function getGroup(createdAt: string): NotifGroup {
   return 'Earlier';
 }
 
+function classifyOsfaType(n: NotificationResponse): string {
+  const t = n.title.toLowerCase();
+  if (t.includes('message') || t.includes('reply')) return 'message';
+  if (n.application_id) {
+    if (t.includes('submit') || t.includes('resubmit')) return 'submission';
+    return 'application';
+  }
+  return 'info';
+}
+
 function mapNotif(n: NotificationResponse): DisplayNotif {
   // Backend _derive_route uses /applications/{id} (student path).
   // OSFA needs /applicants/{id} — replace it so the link is correct.
@@ -72,7 +84,7 @@ function mapNotif(n: NotificationResponse): DisplayNotif {
   const href = route ? `/osfa${route}` : (n.application_id ? `/osfa/applicants/${n.application_id}` : undefined);
   return {
     id:            n.id,
-    type:          n.application_id ? 'application' : 'info',
+    type:          classifyOsfaType(n),
     title:         n.title,
     message:       n.body,
     time:          formatTime(n.created_at),
@@ -183,11 +195,15 @@ export default function Page() {
   }
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+  const newAppCount  = notifications.filter(n => n.type === 'submission').length;
+  const messageCount = notifications.filter(n => n.type === 'message').length;
+  const systemCount  = notifications.filter(n => n.type === 'info').length;
 
   const filtered = notifications.filter(n => {
-    if (activeFilter === 'Unread')       return !n.isRead;
-    if (activeFilter === 'Applications') return n.applicationId !== null;
-    if (activeFilter === 'System')       return n.applicationId === null;
+    if (activeFilter === 'Unread')           return !n.isRead;
+    if (activeFilter === 'New Applications') return n.type === 'submission';
+    if (activeFilter === 'Messages')         return n.type === 'message';
+    if (activeFilter === 'System')           return n.type === 'info';
     return true;
   });
 
@@ -244,11 +260,19 @@ export default function Page() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 20, alignItems: 'start' }}>
         <div>
-          <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#fff', borderRadius: 10, padding: 4, border: '1px solid #e5e7eb', width: 'fit-content' }}>
-            {(['All', 'Unread', 'Applications', 'System'] as NotifFilter[]).map(f => (
-              <button key={f} onClick={() => setActiveFilter(f)} style={{ padding: '7px 16px', borderRadius: 7, border: 'none', background: activeFilter === f ? TEAL_LIGHT : 'transparent', color: activeFilter === f ? TEAL : '#6b7280', fontSize: 13, fontWeight: activeFilter === f ? 700 : 500, cursor: 'pointer' }}>
-                {f}
-                {f === 'Unread' && unreadCount > 0 && <span style={{ marginLeft: 6, background: '#dc2626', color: '#fff', fontSize: 10, fontWeight: 700, padding: '1px 5px', borderRadius: 99 }}>{unreadCount}</span>}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#fff', borderRadius: 10, padding: 4, border: '1px solid #e5e7eb', flexWrap: 'wrap' }}>
+            {([
+              { label: 'All',              count: null },
+              { label: 'Unread',           count: unreadCount },
+              { label: 'New Applications', count: newAppCount },
+              { label: 'Messages',         count: messageCount },
+              { label: 'System',           count: systemCount },
+            ] as { label: NotifFilter; count: number | null }[]).map(({ label, count }) => (
+              <button key={label} onClick={() => setActiveFilter(label)} style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: activeFilter === label ? TEAL_LIGHT : 'transparent', color: activeFilter === label ? TEAL : '#6b7280', fontSize: 13, fontWeight: activeFilter === label ? 700 : 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {label}
+                {count !== null && count > 0 && (
+                  <span style={{ marginLeft: 5, background: label === 'Unread' ? '#dc2626' : TEAL, color: '#fff', fontSize: 10, fontWeight: 700, padding: '1px 5px', borderRadius: 99 }}>{count}</span>
+                )}
               </button>
             ))}
           </div>
@@ -281,7 +305,11 @@ export default function Page() {
                         <div style={{ width: 38, height: 38, borderRadius: 9, background: ts.bg, color: ts.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ts.icon}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                            <h4 style={{ margin: 0, fontSize: 14, fontWeight: n.isRead ? 600 : 700, color: '#111827' }}>{n.title}</h4>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', flex: 1 }}>
+                              <h4 style={{ margin: 0, fontSize: 14, fontWeight: n.isRead ? 600 : 700, color: '#111827' }}>{n.title}</h4>
+                              {n.type === 'submission' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: '#f0fdf4', color: '#059669', whiteSpace: 'nowrap', flexShrink: 0 }}>NEW APPLICATION</span>}
+                              {n.type === 'message'    && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: '#eff6ff', color: '#2563eb', whiteSpace: 'nowrap', flexShrink: 0 }}>MESSAGE</span>}
+                            </div>
                             <span style={{ fontSize: 11, color: '#9ca3af', whiteSpace: 'nowrap', marginTop: 1, flexShrink: 0 }}>{n.time}</span>
                           </div>
                           <p style={{ margin: '0 0 12px', fontSize: 13, color: '#4b5563', lineHeight: 1.5 }}>{n.message}</p>
@@ -311,10 +339,11 @@ export default function Page() {
             </div>
             <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { label: 'Total',        value: notifications.length,                                                       color: '#374151' },
-                { label: 'Unread',       value: unreadCount,                                                                color: '#dc2626' },
-                { label: 'Applications', value: notifications.filter(n => n.applicationId !== null).length, color: '#2563eb' },
-                { label: 'System',       value: notifications.filter(n => n.applicationId === null).length, color: '#d97706' },
+                { label: 'Total',            value: notifications.length, color: '#374151' },
+                { label: 'Unread',           value: unreadCount,          color: '#dc2626' },
+                { label: 'New Applications', value: newAppCount,           color: '#059669' },
+                { label: 'Messages',         value: messageCount,          color: '#2563eb' },
+                { label: 'System',           value: systemCount,           color: '#d97706' },
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 13, color: '#6b7280' }}>{row.label}</span>
