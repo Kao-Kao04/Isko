@@ -61,7 +61,9 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
           </Link>
 
           {/* Center: main nav (desktop) + hamburger (mobile) — OsfaNav handles both */}
-          <OsfaNav />
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <OsfaNav />
+          </div>
 
           {/* Right controls — right column */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifySelf: 'end' }}>
