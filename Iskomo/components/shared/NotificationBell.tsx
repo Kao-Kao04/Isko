@@ -143,7 +143,8 @@ export default function NotificationBell() {
     } else {
       const t = n.title.toLowerCase();
       if (t.includes('deadline') || t.includes('scholarship')) {
-        dest = `${roleBase}/iskolarships`;
+        // Student route is intentionally "iskolarships"; OSFA route is "scholarships"
+        dest = roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`;
       } else if (t.includes('registration')) {
         dest = `${roleBase}/registrations`;
       } else {
@@ -217,7 +218,15 @@ export default function NotificationBell() {
             ) : (
               <div style={{ maxHeight: 380, overflowY: 'auto' }}>
                 {notifs.map(n => {
-                  const c = TYPE_CFG[n.application_id ? 'status' : 'info'];
+                  const _t = n.title.toLowerCase();
+                  const _type = _t.includes('approv') ? 'approved'
+                    : _t.includes('reject') ? 'rejected'
+                    : _t.includes('incomplete') || _t.includes('revision') ? 'incomplete'
+                    : _t.includes('deadline') ? 'deadline'
+                    : _t.includes('resubmit') ? 'resubmit'
+                    : n.application_id ? 'status'
+                    : 'info';
+                  const c = TYPE_CFG[_type];
                   return (
                     <div key={n.id} onClick={() => handleItemClick(n)} style={{ padding: '11px 16px', borderBottom: '1px solid #f3f4f6', background: n.is_read ? '#fff' : '#fafffe', display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', transition: 'background 0.12s' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
