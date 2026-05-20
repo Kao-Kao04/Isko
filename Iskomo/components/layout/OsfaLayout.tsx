@@ -27,15 +27,15 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
         borderBottom: '1px solid #e2e8f0',
         boxShadow: '0 1px 12px rgba(0,0,0,0.07)',
       }}>
-        {/* Brand accent bar */}
         <div style={{ height: 3, background: `linear-gradient(90deg, ${TEAL} 0%, #5C0000 50%, #C9A027 100%)` }} />
 
         {/*
-          1fr auto 1fr grid:
-          - Left 1fr  → logo (justifySelf:start keeps it left)
-          - auto      → nav takes only its natural width, sits exactly center
-          - Right 1fr → controls (justifySelf:end keeps them right)
-          This guarantees the nav is truly centered regardless of logo/controls widths.
+          1fr auto 1fr:
+            col-1 (1fr) → logo, justifySelf:start
+            col-2 (auto) → nav wrapper div (single grid item — OsfaNav is a Fragment
+                            so it must be wrapped or its children become separate grid items)
+            col-3 (1fr) → right controls, justifySelf:end
+          Both outer columns are equal 1fr so the center column is pixel-perfect middle.
         */}
         <div style={{
           maxWidth: 1400,
@@ -47,7 +47,7 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
           minHeight: 62,
         }}>
 
-          {/* Logo */}
+          {/* ── Left: logo ── */}
           <Link href="/osfa/dashboard" style={{
             textDecoration: 'none', display: 'flex', alignItems: 'center',
             gap: 10, justifySelf: 'start',
@@ -70,10 +70,12 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             </div>
           </Link>
 
-          {/* Nav — sits in the auto center column, truly centered on the page */}
-          <OsfaNav />
+          {/* ── Center: nav (wrapped so Fragment children don't bleed into grid) ── */}
+          <div>
+            <OsfaNav />
+          </div>
 
-          {/* Right controls */}
+          {/* ── Right: controls ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifySelf: 'end' }}>
             {deptInfo && (
               <div className="hide-tablet" style={{
@@ -96,6 +98,7 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
             <SignOutButton />
           </div>
+
         </div>
       </header>
 
