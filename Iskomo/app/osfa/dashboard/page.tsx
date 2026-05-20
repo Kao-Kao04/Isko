@@ -7,11 +7,9 @@ import { applicationApi, scholarshipApi, notificationApi, dashboardApi, type App
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
-const TEAL = COLORS.maroon;
-const TEAL_DARK = COLORS.maroonD;
-const TEAL_LIGHT = COLORS.maroonL;
-const CARD_SHADOW = '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)';
-const CARD_SHADOW_HOVER = '0 8px 28px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)';
+const M      = COLORS.maroon;
+const MD     = COLORS.maroonD;
+const M_LIGHT = COLORS.maroonL;
 
 function getDaysLeft(deadline: string | null): number {
   if (!deadline) return 999;
@@ -23,25 +21,31 @@ function formatDeadline(deadline: string | null): string {
   return new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-const urgencyStyle: Record<string, { bg: string; border: string; color: string; chip: string }> = {
-  critical: { bg: '#fff5f5', border: '#fca5a5', color: '#dc2626', chip: '#fef2f2' },
-  warning:  { bg: '#fffdf0', border: '#fde68a', color: '#d97706', chip: '#fffbeb' },
-  normal:   { bg: '#f8fafc', border: '#e2e8f0', color: '#64748b', chip: '#f1f5f9' },
-};
+function timeAgo(d: string): string {
+  const diff  = Date.now() - new Date(d).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins < 1)   return 'Just now';
+  if (mins < 60)  return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days === 1) return 'Yesterday';
+  return `${days} days ago`;
+}
+
+const DEPT_LABEL: Record<string, string> = { public: 'Public Dept.', private: 'Private Dept.' };
 
 export default function Page() {
   const router = useRouter();
-  const { user } = useCurrentUser();
+  const { user, loading: userLoading } = useCurrentUser();
   const displayName = user?.student_profile?.first_name ?? user?.email?.split('@')[0] ?? 'OSFA';
+  const dept = user?.department ?? '';
 
   const [applications,   setApplications]   = useState<ApplicationResponse[]>([]);
   const [scholarships,   setScholarships]   = useState<ScholarshipResponse[]>([]);
   const [notifications,  setNotifications]  = useState<NotificationResponse[]>([]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hoveredCard, setHoveredCard]         = useState<string | null>(null);
-  const [hoveredActivity, setHoveredActivity] = useState<string | null>(null);
-  const [hoveredDeadline, setHoveredDeadline] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     const [statsRes, appsRes, scholRes, notifsRes] = await Promise.allSettled([
@@ -58,196 +62,241 @@ export default function Page() {
   }, []);
 
   async function handleNotifClick(n: NotificationResponse) {
-    try {
-      await notificationApi.markRead(n.id);
-      setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
-    } catch {}
+    try { await notificationApi.markRead(n.id); setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x)); } catch {}
     const route = n.route?.replace(/^\/applications\//, '/applicants/') ?? null;
     router.push(route ? `/osfa${route}` : '/osfa/notifications');
   }
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Prefer backend stats endpoint; fall back to computing from fetched apps
   const s = dashboardStats;
-  const totalApplicants  = s?.total_applications ?? applications.length;
-  const pendingCount     = s?.pending   ?? applications.filter(a => a.status === 'pending').length;
-  const approvedCount    = s?.approved  ?? applications.filter(a => a.status === 'approved').length;
-  const rejectedCount    = s?.rejected  ?? applications.filter(a => a.status === 'rejected').length;
-  const incompleteCount  = applications.filter(a => a.status === 'incomplete').length;
-  const inReviewCount    = applications.filter(a => a.eval_status === 'in_review').length;
+  const totalApplicants = s?.total_applications ?? applications.length;
+  const pendingCount    = s?.pending   ?? applications.filter(a => a.status === 'pending').length;
+  const approvedCount   = s?.approved  ?? applications.filter(a => a.status === 'approved').length;
+  const rejectedCount   = s?.rejected  ?? applications.filter(a => a.status === 'rejected').length;
+  const incompleteCount = applications.filter(a => a.status === 'incomplete').length;
+  const inReviewCount   = applications.filter(a => a.eval_status === 'in_review').length;
   const activeScholarships = scholarships.filter(sc => sc.status === 'active');
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const stats = [
+  const statCards = [
     {
-      label: 'Total Applicants',
-      value: String(totalApplicants),
-      change: `${pendingCount} pending review`,
-      trend: 'up' as const,
+      label: 'Total Applicants', value: totalApplicants, sub: `${pendingCount} pending`,
+      subColor: pendingCount > 0 ? '#d97706' : '#059669',
       href: '/osfa/applicants',
-      icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>),
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+      bg: '#eff6ff', iconColor: '#2563eb',
     },
     {
-      label: 'Pending Review',
-      value: String(pendingCount),
-      change: `${inReviewCount} in review`,
-      trend: 'warn' as const,
+      label: 'Pending Review', value: pendingCount, sub: `${inReviewCount} in review`,
+      subColor: '#d97706',
       href: '/osfa/applicants?status=pending',
-      icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>),
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+      bg: '#fffbeb', iconColor: '#d97706',
     },
     {
-      label: 'Approved',
-      value: String(approvedCount),
-      change: `${totalApplicants > 0 ? Math.round((approvedCount / totalApplicants) * 100) : 0}% approval rate`,
-      trend: 'up' as const,
+      label: 'Approved', value: approvedCount,
+      sub: `${totalApplicants > 0 ? Math.round((approvedCount / totalApplicants) * 100) : 0}% approval rate`,
+      subColor: '#059669',
       href: '/osfa/applicants?status=approved',
-      icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>),
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+      bg: '#f0fdf4', iconColor: '#059669',
     },
     {
-      label: 'Rejected',
-      value: String(rejectedCount),
-      change: `${incompleteCount} incomplete`,
-      trend: 'down' as const,
+      label: 'Rejected', value: rejectedCount, sub: `${incompleteCount} incomplete`,
+      subColor: '#dc2626',
       href: '/osfa/applicants?status=rejected',
-      icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>),
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>,
+      bg: '#fef2f2', iconColor: '#dc2626',
     },
   ];
 
-  const trendColor = (t: 'up' | 'warn' | 'down') =>
-    t === 'up' ? '#059669' : t === 'warn' ? '#d97706' : '#dc2626';
-
-  const applicationSummary = [
-    { label: 'Pending',    count: pendingCount,    color: '#f59e0b', status: 'pending'    },
-    { label: 'In Review',  count: inReviewCount,   color: '#3b82f6', status: 'in_review'  },
-    { label: 'Approved',   count: approvedCount,   color: '#10b981', status: 'approved'   },
-    { label: 'Rejected',   count: rejectedCount,   color: '#dc2626', status: 'rejected'   },
+  const appSummary = [
+    { label: 'Pending',    count: pendingCount,    color: '#f59e0b', status: 'pending' },
+    { label: 'In Review',  count: inReviewCount,   color: '#3b82f6', status: 'in_review' },
+    { label: 'Approved',   count: approvedCount,   color: '#10b981', status: 'approved' },
+    { label: 'Rejected',   count: rejectedCount,   color: '#dc2626', status: 'rejected' },
     { label: 'Incomplete', count: incompleteCount, color: '#f97316', status: 'incomplete' },
   ];
-  const summaryTotal = applicationSummary.reduce((s, r) => s + r.count, 0);
+  const summaryTotal = appSummary.reduce((a, r) => a + r.count, 0);
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 28px' }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px' }}>
+      <style>{`
+        @keyframes spin  { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+      `}</style>
 
-      {/* Page header */}
-      <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>
-            Welcome, {displayName}!
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-            {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/osfa/applicants?status=pending" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: '#fff', border: '1px solid #e2e8f0', color: '#374151', borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 600, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Review Pending
-            {pendingCount > 0 && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', padding: '1px 8px', borderRadius: 20, fontWeight: 700 }}>{pendingCount}</span>}
-          </Link>
-          <Link href="/osfa/scholarships" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 600, boxShadow: `0 2px 10px ${TEAL}50` }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New Scholarship
-          </Link>
-        </div>
-      </div>
+      {/* ── Hero Banner ─────────────────────────────────────────────────── */}
+      <div style={{ background: `linear-gradient(135deg, ${M} 0%, ${MD} 60%, #C9A027 100%)`, borderRadius: 20, padding: '28px 32px', marginBottom: 24, position: 'relative', overflow: 'hidden' }}>
+        {/* decorative circles */}
+        <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+        <div style={{ position: 'absolute', bottom: -70, right: 100, width: 260, height: 260, borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 80px)' }} />
 
-      {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 24 }}>
-        {stats.map(s => {
-          const isHov = hoveredCard === s.label;
-          return (
-            <Link key={s.label} href={s.href} onMouseEnter={() => setHoveredCard(s.label)} onMouseLeave={() => setHoveredCard(null)}
-              style={{ textDecoration: 'none', background: '#fff', borderRadius: 14, border: `1px solid ${isHov ? '#cbd5e1' : '#e2e8f0'}`, padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: isHov ? CARD_SHADOW_HOVER : CARD_SHADOW, transform: isHov ? 'translateY(-2px)' : 'translateY(0)', transition: 'all 0.2s ease' }}>
-              <div style={{ width: 46, height: 46, borderRadius: 12, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#64748b' }}>{s.icon}</div>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{s.label}</div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', lineHeight: 1.1, marginTop: 4, letterSpacing: '-0.02em' }}>{s.value}</div>
-                <div style={{ fontSize: 11, color: trendColor(s.trend), marginTop: 4, fontWeight: 600 }}>{s.change}</div>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.82)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>OSFA Portal</p>
+              <h1 style={{ margin: '0 0 18px', fontSize: 26, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
+                Welcome back, <span style={{ color: '#F5D060' }}>{userLoading ? '…' : displayName}!</span>
+              </h1>
+              {/* Info chips */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {dept && (
+                  <div style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 30, padding: '5px 14px', border: '1px solid rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.82)', fontWeight: 600 }}>Department</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{DEPT_LABEL[dept] ?? dept}</span>
+                  </div>
+                )}
+                <div style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', borderRadius: 30, padding: '5px 14px', border: '1px solid rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.82)', fontWeight: 600 }}>Active Scholarships</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{activeScholarships.length}</span>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', borderRadius: 30, padding: '5px 14px', border: '1px solid rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.82)', fontWeight: 600 }}>Today</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>
+                    {new Date().toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
               </div>
+            </div>
+
+            {/* Pending stat box */}
+            <div style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', borderRadius: 14, padding: '16px 22px', border: '1px solid rgba(255,255,255,0.18)', minWidth: 150, textAlign: 'center', flexShrink: 0 }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.82)', marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Pending Review</div>
+              <div style={{ fontSize: 38, fontWeight: 800, color: pendingCount > 0 ? '#F5D060' : '#fff', lineHeight: 1 }}>{loading ? '…' : pendingCount}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 6 }}>{totalApplicants} total applicants</div>
+            </div>
+          </div>
+
+          {/* Quick action buttons */}
+          <div style={{ display: 'flex', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
+            <Link href="/osfa/applicants?status=pending" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 18px', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 700, border: '1px solid rgba(255,255,255,0.25)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Review Pending
+              {pendingCount > 0 && <span style={{ background: '#F5D060', color: '#92400e', fontSize: 11, fontWeight: 800, padding: '1px 7px', borderRadius: 20 }}>{pendingCount}</span>}
             </Link>
-          );
-        })}
+            <Link href="/osfa/scholarships" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 18px', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 700, border: '1px solid rgba(255,255,255,0.25)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Scholarship
+            </Link>
+            <Link href="/osfa/notifications" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 18px', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: 13, fontWeight: 700, border: '1px solid rgba(255,255,255,0.25)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Notifications
+              {unreadCount > 0 && <span style={{ background: '#F5D060', color: '#92400e', fontSize: 11, fontWeight: 800, padding: '1px 7px', borderRadius: 20 }}>{unreadCount}</span>}
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* Main two-column layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
+      {/* ── 4 Stat Cards ───────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 24 }}>
+        {statCards.map(c => (
+          <Link key={c.label} href={c.href} style={{ textDecoration: 'none', background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', transition: 'box-shadow 0.15s, transform 0.15s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(0,0,0,0.1)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: c.iconColor }}>{c.icon}</div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{c.label}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', lineHeight: 1.1, marginTop: 2 }}>{loading ? '…' : c.value}</div>
+              <div style={{ fontSize: 11, color: c.subColor, marginTop: 3, fontWeight: 600 }}>{c.sub}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* ── Main Grid ──────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
 
         {/* LEFT column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Recent Applications */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 3, height: 16, borderRadius: 99, background: TEAL, flexShrink: 0 }} />
-                  <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Recent Applications</h2>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: M_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
-                <p style={{ margin: '4px 0 0 11px', fontSize: 12, color: '#94a3b8' }}>Latest applications across all scholarship programs</p>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>Recent Applications</h2>
+                  <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>Latest applications across all scholarships</p>
+                </div>
               </div>
-              <Link href="/osfa/applicants" style={{ fontSize: 12, fontWeight: 700, color: TEAL, textDecoration: 'none', padding: '5px 12px', background: TEAL_LIGHT, borderRadius: 7, border: '1px solid #F5D060' }}>View All</Link>
+              <Link href="/osfa/applicants" style={{ fontSize: 12, fontWeight: 700, color: M, textDecoration: 'none', padding: '6px 14px', background: M_LIGHT, borderRadius: 20, border: `1px solid ${M}30`, display: 'flex', alignItems: 'center', gap: 4 }}>
+                View All
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </Link>
             </div>
-            <div style={{ position: 'relative', padding: '6px 0' }}>
+            <div>
               {loading ? (
-                <div style={{ padding: '32px 24px', display: 'flex', justifyContent: 'center' }}>
-                  <div style={{ width: 24, height: 24, border: `2.5px solid #f3f4f6`, borderTop: `2.5px solid ${TEAL}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <div style={{ padding: '28px', display: 'flex', justifyContent: 'center' }}>
+                  <div style={{ width: 24, height: 24, border: `2.5px solid #f3f4f6`, borderTop: `2.5px solid ${M}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                 </div>
               ) : applications.length === 0 ? (
-                <div style={{ padding: '32px 24px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No applications yet.</div>
-              ) : (
-                <div style={{ position: 'absolute', left: 29, top: 20, bottom: 20, width: 1.5, background: '#e2e8f0', zIndex: 0 }} />
-              )}
-              {applications.slice(0, 5).map((a, idx) => {
-                const isHov = hoveredActivity === String(a.id);
-                const name = a.student ? `${a.student.first_name ?? ''} ${a.student.last_name ?? ''}`.trim() : `Student #${a.student_id}`;
-                const dotColors: Record<string, string> = { pending: '#f59e0b', approved: '#10b981', rejected: '#dc2626', incomplete: '#f97316', withdrawn: '#94a3b8' };
+                <div style={{ padding: '32px 24px', textAlign: 'center' }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                  <p style={{ margin: 0, fontSize: 13, color: '#9ca3af' }}>No applications yet.</p>
+                </div>
+              ) : applications.slice(0, 6).map((a, idx) => {
+                const name = a.student ? `${a.student.first_name ?? ''} ${a.student.last_name ?? ''}`.trim() || a.student.email : `Student #${a.student_id}`;
+                const DOT: Record<string, string> = { pending: '#f59e0b', approved: '#10b981', rejected: '#dc2626', incomplete: '#f97316', withdrawn: '#94a3b8' };
+                const BADGE: Record<string, { bg: string; color: string }> = {
+                  pending:    { bg: '#fef3c7', color: '#92400e' },
+                  approved:   { bg: '#dcfce7', color: '#15803d' },
+                  rejected:   { bg: '#fee2e2', color: '#dc2626' },
+                  incomplete: { bg: '#ffedd5', color: '#c2410c' },
+                  withdrawn:  { bg: '#f3f4f6', color: '#6b7280' },
+                };
+                const bd = BADGE[a.status] ?? BADGE.withdrawn;
                 return (
-                  <div key={a.id} onMouseEnter={() => setHoveredActivity(String(a.id))} onMouseLeave={() => setHoveredActivity(null)}
-                    style={{ display: 'flex', alignItems: 'flex-start', padding: '13px 24px', background: isHov ? '#f8fafc' : 'transparent', transition: 'background 0.15s ease' }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: dotColors[a.status] ?? '#94a3b8', border: '2.5px solid #fff', boxShadow: `0 0 0 2.5px ${dotColors[a.status] ?? '#94a3b8'}38`, flexShrink: 0, marginTop: 4, marginRight: 16, zIndex: 1 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{name}</div>
-                        <span style={{ fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                          {new Date(a.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                        Applied for {a.scholarship?.name ?? `Scholarship #${a.scholarship_id}`} — <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{a.status}</span>
-                      </div>
-                      <Link href={`/osfa/applicants/${a.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, color: isHov ? TEAL : '#94a3b8', textDecoration: 'none', marginTop: 6 }}>
-                        View details
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                      </Link>
+                  <Link key={a.id} href={`/osfa/applicants/${a.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: idx < Math.min(applications.length, 6) - 1 ? '1px solid #f9fafb' : 'none', textDecoration: 'none', transition: 'background 0.12s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg, ${M}, ${MD})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                      {name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                     </div>
-                  </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {a.scholarship?.name ?? `Scholarship #${a.scholarship_id}`}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20, background: bd.bg, color: bd.color, textTransform: 'capitalize' }}>{a.status}</span>
+                      <span style={{ fontSize: 11, color: '#9ca3af' }}>{timeAgo(a.submitted_at)}</span>
+                    </div>
+                  </Link>
                 );
               })}
             </div>
           </div>
 
           {/* Application Summary */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 3, height: 16, borderRadius: 99, background: '#64748b', flexShrink: 0 }} />
-                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Application Summary</h2>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>Application Breakdown</h2>
               </div>
-              <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>Total: {summaryTotal}</span>
+              <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>Total: {summaryTotal}</span>
             </div>
-            <div style={{ padding: '12px 24px 18px' }}>
-              {applicationSummary.map(s => {
-                const pct = summaryTotal > 0 ? Math.round((s.count / summaryTotal) * 100) : 0;
+            <div style={{ padding: '10px 22px 16px' }}>
+              {appSummary.map(row => {
+                const pct = summaryTotal > 0 ? Math.round((row.count / summaryTotal) * 100) : 0;
                 return (
-                  <Link key={s.label} href={`/osfa/applicants?status=${s.status}`}
-                    style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #f8fafc' }}>
-                    <span style={{ fontSize: 13, color: '#374151', minWidth: 110, fontWeight: 500 }}>{s.label}</span>
-                    <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: s.color, borderRadius: 99, transition: 'width 0.4s ease' }} />
+                  <Link key={row.label} href={`/osfa/applicants?status=${row.status}`}
+                    style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #f9fafb' }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: row.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: '#374151', minWidth: 90, fontWeight: 500 }}>{row.label}</span>
+                    <div style={{ flex: 1, height: 7, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: row.color, borderRadius: 99, transition: 'width 0.5s ease' }} />
                     </div>
-                    <span style={{ fontSize: 12, color: '#94a3b8', minWidth: 34, textAlign: 'right' }}>{pct}%</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', minWidth: 24, textAlign: 'right' }}>{s.count}</span>
+                    <span style={{ fontSize: 12, color: '#9ca3af', minWidth: 32, textAlign: 'right' }}>{pct}%</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', minWidth: 22, textAlign: 'right' }}>{row.count}</span>
                   </Link>
                 );
               })}
@@ -259,30 +308,37 @@ export default function Page() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Upcoming Deadlines */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 9 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               </div>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Upcoming Deadlines</h3>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Upcoming Deadlines</h3>
             </div>
-            <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {activeScholarships.length === 0 ? (
-                <div style={{ padding: '16px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No active scholarships.</div>
-              ) : activeScholarships.map(s => {
-                const daysLeft = getDaysLeft(s.deadline);
-                const urgency = daysLeft <= 3 ? 'critical' : daysLeft <= 10 ? 'warning' : 'normal';
-                const u = urgencyStyle[urgency];
-                const isHov = hoveredDeadline === s.id;
+                <div style={{ padding: '20px 8px', textAlign: 'center' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>No active scholarships.</p>
+                </div>
+              ) : activeScholarships.slice(0, 5).map(sc => {
+                const daysLeft = getDaysLeft(sc.deadline);
+                const urgent = daysLeft <= 3;
+                const warning = !urgent && daysLeft <= 10;
+                const bg = urgent ? '#fef2f2' : warning ? '#fffbeb' : '#f8fafc';
+                const border = urgent ? '#fecaca' : warning ? '#fde68a' : '#e5e7eb';
+                const chipColor = urgent ? '#dc2626' : warning ? '#d97706' : '#64748b';
+                const chipBg = urgent ? '#fee2e2' : warning ? '#fef9c3' : '#f1f5f9';
                 return (
-                  <Link key={s.id} href={`/osfa/applicants?scholarship=${s.id}`}
-                    onMouseEnter={() => setHoveredDeadline(s.id)} onMouseLeave={() => setHoveredDeadline(null)}
-                    style={{ textDecoration: 'none', padding: '12px 14px', borderRadius: 10, background: u.bg, border: `1px solid ${u.border}`, display: 'block', transform: isHov ? 'translateX(3px)' : 'none', transition: 'transform 0.15s ease' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', marginBottom: 6 }}>{s.name}</div>
+                  <Link key={sc.id} href={`/osfa/applicants?scholarship=${sc.id}`}
+                    style={{ textDecoration: 'none', padding: '11px 13px', borderRadius: 10, background: bg, border: `1px solid ${border}`, display: 'block', transition: 'transform 0.12s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'translateX(3px)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'translateX(0)'}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#111827', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sc.name}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 11, color: '#64748b' }}>{formatDeadline(s.deadline)}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: u.color, padding: '2px 9px', borderRadius: 20, background: u.chip }}>
-                        {daysLeft <= 0 ? 'Expired' : daysLeft >= 999 ? 'No deadline' : `${daysLeft}d left`}
+                      <span style={{ fontSize: 11, color: '#6b7280' }}>{formatDeadline(sc.deadline)}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: chipColor, padding: '2px 8px', borderRadius: 20, background: chipBg }}>
+                        {daysLeft <= 0 ? 'Expired' : daysLeft >= 999 ? 'Open' : `${daysLeft}d left`}
                       </span>
                     </div>
                   </Link>
@@ -291,38 +347,68 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Announcements */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: CARD_SHADOW }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 9 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: TEAL_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          {/* Notifications */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: M_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               </div>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Announcements</h3>
-              {notifications.filter(n => !n.is_read).length > 0 && (
-                <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, background: TEAL, color: '#fff', borderRadius: 99, padding: '2px 8px' }}>
-                  {notifications.filter(n => !n.is_read).length} unread
-                </span>
-              )}
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Notifications</h3>
+              {unreadCount > 0 && <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 800, background: M, color: '#fff', padding: '2px 8px', borderRadius: 99 }}>{unreadCount} new</span>}
             </div>
-            <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               {loading ? (
-                <div style={{ padding: '16px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading...</div>
+                <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading…</div>
               ) : notifications.length === 0 ? (
-                <div style={{ padding: '16px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No announcements.</div>
-              ) : notifications.map(n => (
+                <div style={{ padding: '28px 18px', textAlign: 'center' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>No notifications yet.</p>
+                </div>
+              ) : notifications.slice(0, 5).map((n, idx) => (
                 <button key={n.id} onClick={() => handleNotifClick(n)}
-                  style={{ textAlign: 'left', width: '100%', display: 'block', padding: '14px 16px', background: n.is_read ? '#fafafa' : '#fff9ff', borderRadius: 10, borderLeft: `4px solid ${n.application_id ? TEAL : '#94a3b8'}`, cursor: 'pointer', transition: 'background 0.15s', border: 'none', borderLeftWidth: 4, borderLeftStyle: 'solid', borderLeftColor: n.application_id ? TEAL : '#94a3b8' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f1f5f9'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = n.is_read ? '#fafafa' : '#fff9ff'}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <h4 style={{ margin: 0, fontSize: 13, fontWeight: n.is_read ? 600 : 700, color: '#0f172a' }}>{n.title}</h4>
-                    {!n.is_read && <div style={{ width: 7, height: 7, borderRadius: '50%', background: TEAL, flexShrink: 0, marginLeft: 8, marginTop: 3 }} />}
+                  style={{ textAlign: 'left', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '11px 16px', borderBottom: idx < Math.min(notifications.length, 5) - 1 ? '1px solid #f3f4f6' : 'none', display: 'flex', alignItems: 'flex-start', gap: 10, transition: 'background 0.12s' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: n.application_id ? M_LIGHT : '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    {n.application_id
+                      ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={M} strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>}
                   </div>
-                  <p style={{ margin: '0 0 8px', fontSize: 12, color: '#475569', lineHeight: 1.55 }}>{n.body}</p>
-                  <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                    {new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: '0 0 2px', fontSize: 12, color: '#111827', fontWeight: n.is_read ? 400 : 600, lineHeight: 1.4 }}>{n.title}</p>
+                    <span style={{ fontSize: 11, color: '#9ca3af' }}>{timeAgo(n.created_at)}</span>
+                  </div>
+                  {!n.is_read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: M, flexShrink: 0, marginTop: 7 }} />}
                 </button>
+              ))}
+            </div>
+            {notifications.length > 0 && (
+              <div style={{ padding: '10px 16px', borderTop: '1px solid #f3f4f6', textAlign: 'center' }}>
+                <Link href="/osfa/notifications" style={{ fontSize: 12, fontWeight: 700, color: M, textDecoration: 'none' }}>View all notifications →</Link>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Links */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid #f3f4f6' }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Quick Links</h3>
+            </div>
+            <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                { label: 'Pending Applications',  href: '/osfa/applicants?status=pending',  color: '#d97706', bg: '#fffbeb' },
+                { label: 'All Applicants',         href: '/osfa/applicants',                  color: '#2563eb', bg: '#eff6ff' },
+                { label: 'Scholar Management',     href: '/osfa/scholars',                    color: '#059669', bg: '#f0fdf4' },
+                { label: 'Manage Scholarships',    href: '/osfa/scholarships',                color: M,         bg: M_LIGHT  },
+                { label: 'Registrations',          href: '/osfa/registrations',               color: '#7c3aed', bg: '#f5f3ff' },
+              ].map(link => (
+                <Link key={link.label} href={link.href}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 9, textDecoration: 'none', color: '#374151', fontSize: 13, fontWeight: 500, background: '#fafafa', border: '1px solid #f3f4f6', transition: 'background 0.12s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = link.bg; (e.currentTarget as HTMLElement).style.color = link.color; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#fafafa'; (e.currentTarget as HTMLElement).style.color = '#374151'; }}>
+                  {link.label}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </Link>
               ))}
             </div>
           </div>
