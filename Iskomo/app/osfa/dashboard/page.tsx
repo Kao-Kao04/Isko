@@ -241,7 +241,6 @@ export default function Page() {
                 </div>
               ) : applications.slice(0, 6).map((a, idx) => {
                 const name = a.student ? `${a.student.first_name ?? ''} ${a.student.last_name ?? ''}`.trim() || a.student.email : `Student #${a.student_id}`;
-                const DOT: Record<string, string> = { pending: '#f59e0b', approved: '#10b981', rejected: '#dc2626', incomplete: '#f97316', withdrawn: '#94a3b8' };
                 const BADGE: Record<string, { bg: string; color: string }> = {
                   pending:    { bg: '#fef3c7', color: '#92400e' },
                   approved:   { bg: '#dcfce7', color: '#15803d' },
