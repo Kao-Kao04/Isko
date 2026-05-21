@@ -202,6 +202,7 @@ export default function ApplicationDetailPage() {
   const scholarshipName = app.scholarship?.name ?? `Scholarship #${app.scholarship_id}`;
   const studentName     = app.student ? `${app.student.first_name ?? ''} ${app.student.last_name ?? ''}`.trim() : '';
   const badge           = STATUS_BADGE[app.status] ?? STATUS_BADGE.pending;
+  const isPublic        = app.scholarship?.category === 'public';
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 16px' }}>
@@ -290,15 +291,21 @@ export default function ApplicationDetailPage() {
                     </span>
                   </div>
 
-                  {/* Interview card */}
+                  {/* Interview / Submission Deadline card */}
                   {ms === 'interview' && workflow.interview_datetime && (
                     <div style={{ marginTop: 18, padding: '14px 16px', background: '#fff5f5', borderRadius: 10, border: `1px solid ${COLORS.maroon}30` }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        Interview Scheduled
+                        {isPublic ? 'Submission Deadline' : 'Interview Scheduled'}
                       </div>
-                      <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}><strong>Date & Time:</strong> {formatInterviewDt(workflow.interview_datetime)}</div>
-                      {workflow.interview_location && <div style={{ fontSize: 13, color: '#374151' }}><strong>Location:</strong> {workflow.interview_location}</div>}
+                      <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}><strong>{isPublic ? 'Submit documents by:' : 'Date & Time:'}</strong> {formatInterviewDt(workflow.interview_datetime)}</div>
+                      {workflow.interview_location && <div style={{ fontSize: 13, color: '#374151' }}><strong>{isPublic ? 'Submit to:' : 'Location:'}</strong> {workflow.interview_location}</div>}
+                    </div>
+                  )}
+                  {/* Public: OSFA hasn't set the deadline yet */}
+                  {isPublic && ms === 'interview' && !workflow.interview_datetime && (
+                    <div style={{ marginTop: 18, padding: '12px 16px', background: '#eff6ff', borderRadius: 10, border: '1px solid #bfdbfe', fontSize: 13, color: '#1d4ed8' }}>
+                      OSFA will notify you once the submission deadline is set.
                     </div>
                   )}
 
@@ -333,8 +340,8 @@ export default function ApplicationDetailPage() {
             const ms = workflow.main_status ?? '';
             const ss = workflow.sub_status  ?? '';
             const inp: React.CSSProperties = { width: '100%', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' };
-            const showSchedule   = ms === 'interview' && ss === 'not_scheduled';
-            const showReschedule = ms === 'interview' && (ss === 'scheduled' || ss === 'rescheduled');
+            const showSchedule   = ms === 'interview' && ss === 'not_scheduled' && !isPublic;
+            const showReschedule = ms === 'interview' && (ss === 'scheduled' || ss === 'rescheduled') && !isPublic;
             const showSubmitReqs = ms === 'completion' && ss === 'pending_requirements';
             const showWithdraw   = !isTerminal(ms, ss) && ms !== 'completion';
             if (!showSchedule && !showReschedule && !showWithdraw && !showSubmitReqs) return null;

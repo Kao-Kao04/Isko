@@ -182,6 +182,8 @@ export default function ApplicantProfilePage() {
   const staffDept = currentUser?.department;
   const appDept   = scholarship?.category ?? null;
   const wrongDept = currentUser?.role === 'osfa_staff' && staffDept && appDept && staffDept !== appDept;
+  // Public scholarships use a paper-submission flow instead of a live interview
+  const isPublic  = scholarship?.category === 'public';
 
   useEffect(() => {
     const numId = Number(id);
@@ -473,21 +475,23 @@ export default function ApplicantProfilePage() {
               )}
             </div>
 
-            {/* Interview card */}
+            {/* Interview / Submission card */}
             {ms === 'interview' && wf.interview_datetime && (
               <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${TEAL}30`, padding: '20px 24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   </div>
-                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>Interview Scheduled</h3>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>
+                    {isPublic ? 'Submission Deadline Set' : 'Interview Scheduled'}
+                  </h3>
                 </div>
                 <div style={{ fontSize: 14, color: '#374151', marginBottom: 6 }}>
-                  <strong>Date & Time:</strong> {formatInterviewDt(wf.interview_datetime)}
+                  <strong>{isPublic ? 'Submit documents by:' : 'Date & Time:'}</strong> {formatInterviewDt(wf.interview_datetime)}
                 </div>
                 {wf.interview_location && (
                   <div style={{ fontSize: 14, color: '#374151' }}>
-                    <strong>Location:</strong> {wf.interview_location}
+                    <strong>{isPublic ? 'Submit to:' : 'Location:'}</strong> {wf.interview_location}
                   </div>
                 )}
               </div>
@@ -541,16 +545,16 @@ export default function ApplicantProfilePage() {
                 if (ss === 'revision_requested')
                   actions.push(<button key="resubmit" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.startVerification(Number(id)), 'Marked as resubmitted.')}>Mark as Resubmitted</button>);
                 if (ss === 'validated')
-                  actions.push(<button key="open_sched" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.openScheduling(Number(id)), 'Interview scheduling opened.')}>Open Interview Scheduling</button>);
+                  actions.push(<button key="open_sched" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.openScheduling(Number(id)), isPublic ? 'Submission period opened.' : 'Interview scheduling opened.')}>{isPublic ? 'Open Submission Period' : 'Open Interview Scheduling'}</button>);
               }
 
               if (ms === 'interview') {
                 if (ss === 'not_scheduled' || ss === 'rescheduled')
-                  actions.push(<button key="sched" style={btn('#fff', TEAL)} onClick={() => setActiveDialog('schedule')}>Schedule Interview</button>);
+                  actions.push(<button key="sched" style={btn('#fff', TEAL)} onClick={() => setActiveDialog('schedule')}>{isPublic ? 'Set Submission Date' : 'Schedule Interview'}</button>);
                 if (ss === 'scheduled')
                   actions.push(
-                    <button key="complete" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.completeInterview(Number(id)), 'Interview completed.')}>Complete Interview</button>,
-                    <button key="reschedule" style={btn('#374151', '#f3f4f6')} onClick={() => setActiveDialog('reschedule')}>Reschedule</button>,
+                    <button key="complete" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.completeInterview(Number(id)), isPublic ? 'Documents marked as submitted.' : 'Interview completed.')}>{isPublic ? 'Mark as Submitted' : 'Complete Interview'}</button>,
+                    <button key="reschedule" style={btn('#374151', '#f3f4f6')} onClick={() => setActiveDialog('reschedule')}>{isPublic ? 'Change Date' : 'Reschedule'}</button>,
                   );
                 if (ss === 'interview_completed')
                   actions.push(<button key="evaluate" style={btn('#fff', TEAL)} onClick={() => setActiveDialog('evaluate')}>Submit Evaluation</button>);
@@ -604,10 +608,16 @@ export default function ApplicantProfilePage() {
 
             {(activeDialog === 'schedule' || activeDialog === 'reschedule') && (
               <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${TEAL}40`, padding: '20px 24px' }}>
-                <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: '#111827' }}>{activeDialog === 'reschedule' ? 'Reschedule' : 'Schedule'} Interview</h3>
+                <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: '#111827' }}>
+                  {isPublic
+                    ? (activeDialog === 'reschedule' ? 'Change Submission Date' : 'Set Submission Deadline')
+                    : (activeDialog === 'reschedule' ? 'Reschedule Interview' : 'Schedule Interview')}
+                </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Date & Time</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>
+                      {isPublic ? 'Submission Deadline' : 'Date & Time'}
+                    </label>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <input
                         type="date"
@@ -625,26 +635,35 @@ export default function ApplicantProfilePage() {
                     {dateError && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#dc2626' }}>{dateError}</p>}
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Location</label>
-                    <input type="text" value={scheduleForm.location} onChange={e => setScheduleForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Room 301, Admin Building" style={inp} />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>
+                      {isPublic ? 'Submission Location (optional)' : 'Location'}
+                    </label>
+                    <input type="text" value={scheduleForm.location} onChange={e => setScheduleForm(f => ({ ...f, location: e.target.value }))}
+                      placeholder={isPublic ? 'e.g. OSFA Office, Room 301 (leave blank if not needed)' : 'e.g. Room 301, Admin Building'} style={inp} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Note (optional)</label>
-                    <input type="text" value={scheduleForm.note} onChange={e => setScheduleForm(f => ({ ...f, note: e.target.value }))} placeholder="Any additional notes" style={inp} />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>
+                      {isPublic ? 'Instructions (optional)' : 'Note (optional)'}
+                    </label>
+                    <input type="text" value={scheduleForm.note} onChange={e => setScheduleForm(f => ({ ...f, note: e.target.value }))}
+                      placeholder={isPublic ? 'e.g. Bring original copies of all documents' : 'Any additional notes'} style={inp} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button style={btn('#fff', TEAL)} onClick={() => {
-                    if (!scheduleForm.date || !scheduleForm.time || !scheduleForm.location) {
-                      setDateError('Date, time, and location are required.');
+                    // Location optional for public (paper submission), required for private (interview)
+                    if (!scheduleForm.date || !scheduleForm.time || (!isPublic && !scheduleForm.location)) {
+                      setDateError(isPublic ? 'Date and time are required.' : 'Date, time, and location are required.');
                       return;
                     }
                     const dt = new Date(`${scheduleForm.date}T${scheduleForm.time}`);
-                    if (dt <= new Date()) { setDateError('Interview date must be in the future.'); return; }
+                    if (dt <= new Date()) { setDateError(isPublic ? 'Submission date must be in the future.' : 'Interview date must be in the future.'); return; }
                     setDateError('');
                     const data = { interview_datetime: dt.toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) };
-                    // OSFA always calls scheduleInterview (sets new datetime); student requests use rescheduleInterview
-                    doWorkflowAction(() => workflowApi.scheduleInterview(Number(id), data), `Interview ${activeDialog === 'reschedule' ? 'rescheduled' : 'scheduled'}.`);
+                    doWorkflowAction(() => workflowApi.scheduleInterview(Number(id), data),
+                      isPublic
+                        ? (activeDialog === 'reschedule' ? 'Submission date updated.' : 'Submission deadline set.')
+                        : (activeDialog === 'reschedule' ? 'Interview rescheduled.' : 'Interview scheduled.'));
                   }}>Confirm</button>
                   <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setScheduleForm({ date: '', time: '', location: '', note: '' }); }}>Cancel</button>
                 </div>
@@ -1070,7 +1089,7 @@ export default function ApplicantProfilePage() {
         const criteria = [
           { key: 'financialNeed' as const, label: 'Financial Need',            score: rubric.financialNeed, max: 5, note: 'Based on income declaration' },
           { key: 'essay' as const,         label: 'Motivation Letter / Essay', score: rubric.essay,         max: 5, note: 'Quality and relevance' },
-          { key: 'interview' as const,     label: 'Interview Performance',     score: rubric.interview,     max: 5, note: 'Optional — set 0 if N/A' },
+          { key: 'interview' as const,     label: isPublic ? 'Document Quality' : 'Interview Performance',     score: rubric.interview,     max: 5, note: 'Optional — set 0 if N/A' },
           { key: 'community' as const,     label: 'Community Involvement',     score: rubric.community,     max: 5, note: 'Activities / org participation' },
         ];
         const totalScore = Object.values(rubric).reduce((a, b) => a + b, 0);
