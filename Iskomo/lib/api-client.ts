@@ -117,6 +117,7 @@ export interface ApplicationScholarshipInfo {
   id: number;
   name: string;
   scholarship_type: string | null;
+  category: 'public' | 'private' | null;
 }
 
 export interface AppealResponse {
