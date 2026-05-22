@@ -105,6 +105,7 @@ export async function logout(): Promise<void> {
   }).catch(() => {});
   clearCsrfToken();
   clearAccessToken();
+  localStorage.removeItem('remember_me');
   document.cookie = 'role=; path=/; max-age=0';
   document.cookie = 'department=; path=/; max-age=0';
 }

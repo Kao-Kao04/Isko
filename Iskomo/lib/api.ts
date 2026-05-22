@@ -180,12 +180,18 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, respo
         headers['Authorization'] = `Bearer ${newToken}`;
         const newCsrf = getCsrfToken();
         if (newCsrf) headers['X-CSRF-Token'] = newCsrf;
-        res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
-        if (res.ok) {
-          if (res.status === 204) return undefined as T;
-          if (responseType === 'text') return res.text() as Promise<T>;
-          return res.json();
+        const retried = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
+        if (retried.ok) {
+          if (retried.status === 204) return undefined as T;
+          if (responseType === 'text') return retried.text() as Promise<T>;
+          return retried.json();
         }
+        // Retry failed with a real error (not auth) — surface it properly
+        if (retried.status < 500) {
+          const retryBody = await retried.json().catch(() => ({} as Record<string, unknown>));
+          throw new Error(mapError(parseErrorBody(retryBody, retried.status)));
+        }
+        throw new Error('Something went wrong on our end. Please try again shortly.');
       }
       clearAccessToken();
       if (typeof window !== 'undefined') window.location.href = '/login?reason=session_expired';
