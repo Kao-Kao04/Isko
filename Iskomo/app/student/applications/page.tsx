@@ -100,6 +100,13 @@ export default function ApplicationsPage() {
       <style>{`
         .app-card-action:hover { opacity: 0.85; }
         .app-card-row:hover { background: #fafafa !important; }
+        @media (max-width: 700px) {
+          .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .apps-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 400px) {
+          .stat-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {/* Page header */}
