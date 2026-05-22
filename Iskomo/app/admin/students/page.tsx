@@ -60,7 +60,8 @@ export default function AdminStudentsPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), page_size: String(PAGE_SIZE) });
-      if (f !== 'all' && f !== 'scholar') params.set('account_status', f);
+      if (f === 'scholar') params.set('scholar_only', 'true');
+      else if (f !== 'all') params.set('account_status', f);
       const res = await apiFetch<Paginated<AdminStudent>>(`/api/admin/students?${params}`);
       setStudents(res.items); setTotal(res.total);
     } catch { /* silent */ } finally { setLoading(false); }
@@ -112,15 +113,11 @@ export default function AdminStudentsPage() {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const displayed  = students.filter(s => {
-    if (filter === 'scholar' && !s.scholar_status) return false;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      const name = s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}`.toLowerCase() : '';
-      return name.includes(q) || s.email.toLowerCase().includes(q) || (s.student_profile?.student_number ?? '').toLowerCase().includes(q);
-    }
-    return true;
-  });
+  const displayed  = search.trim() ? students.filter(s => {
+    const q = search.toLowerCase();
+    const name = s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}`.toLowerCase() : '';
+    return name.includes(q) || s.email.toLowerCase().includes(q) || (s.student_profile?.student_number ?? '').toLowerCase().includes(q);
+  }) : students;
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
@@ -135,7 +132,7 @@ export default function AdminStudentsPage() {
       {/* Filters + search */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 10, padding: 4, flexWrap: 'wrap' }}>
-          {[{ value: 'all', label: 'All' }, { value: 'pending_verification', label: 'Pending' }, { value: 'verified', label: 'Verified' }, { value: 'scholar', label: '🎓 Scholars' }, { value: 'rejected', label: 'Rejected' }, { value: 'unregistered', label: 'Unregistered' }].map(f => (
+          {[{ value: 'all', label: 'All' }, { value: 'pending_verification', label: 'Pending' }, { value: 'verified', label: 'Verified' }, { value: 'scholar', label: 'Scholars' }, { value: 'rejected', label: 'Rejected' }, { value: 'unregistered', label: 'Unregistered' }].map(f => (
             <button key={f.value} onClick={() => { setFilter(f.value); setPage(1); }}
               style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: filter === f.value ? '#fff' : 'transparent', color: filter === f.value ? M : '#6b7280', fontSize: 12, fontWeight: filter === f.value ? 700 : 500, cursor: 'pointer', boxShadow: filter === f.value ? '0 1px 4px rgba(0,0,0,0.08)' : 'none' }}>
               {f.label}
