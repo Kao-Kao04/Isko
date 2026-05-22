@@ -113,6 +113,23 @@ export default function ApplicationDetailPage() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
+  // Auto-refresh messages when OSFA sends a reply via WebSocket notification
+  useEffect(() => {
+    const numId = Number(id);
+    const onNotif = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.application_id === numId) {
+        import('@/lib/api').then(({ apiFetch }) =>
+          apiFetch<{ items: typeof messages }>(`/api/applications/${numId}/messages`)
+            .then(r => setMessages(r.items))
+            .catch(() => {})
+        );
+      }
+    };
+    window.addEventListener('iskomo:notification', onNotif);
+    return () => window.removeEventListener('iskomo:notification', onNotif);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function doWfAction(fn: () => Promise<WorkflowResponse>, msg: string) {
     setWfActionLoading(true);
     setWfError('');

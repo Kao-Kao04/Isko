@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { applicationApi, scholarshipApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type ScholarshipResponse, type DocumentResponse, type WorkflowResponse, type ComplianceSubmission, type ComplianceDocType } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
@@ -77,7 +77,10 @@ export default function ApplicantProfilePage() {
   const [scholarship, setScholarship] = useState<ScholarshipResponse | null>(null);
   const [loading,     setLoading]     = useState(true);
 
-  const [activeTab,            setActiveTab]            = useState<'workflow' | 'overview' | 'documents' | 'evaluation' | 'history' | 'messages'>('workflow');
+  const searchParams = useSearchParams();
+  const [activeTab,            setActiveTab]            = useState<'workflow' | 'overview' | 'documents' | 'evaluation' | 'history' | 'messages'>(
+    (searchParams.get('tab') as 'workflow' | 'overview' | 'documents' | 'evaluation' | 'history' | 'messages') ?? 'workflow'
+  );
   const [messages,             setMessages]             = useState<Array<{ id: number; sender_id: number; sender_email: string; sender_role: string; body: string; created_at: string }>>([]);
   const [msgBody,              setMsgBody]              = useState('');
   const [msgSending,           setMsgSending]           = useState(false);
@@ -213,6 +216,12 @@ export default function ApplicantProfilePage() {
       if (wf?.main_status === 'completion') {
         applicationApi.getCompliance(numId).then(setCompliance).catch(() => {});
         scholarshipApi.listComplianceDocs(a.scholarship_id).then(setComplianceDocTypes).catch(() => {});
+      }
+      // Pre-load messages if navigated directly to messages tab (e.g. from messages page)
+      if (searchParams.get('tab') === 'messages') {
+        import('@/lib/api').then(({ apiFetch }) =>
+          apiFetch<{ items: typeof messages }>(`/api/applications/${numId}/messages`).then(r => setMessages(r.items)).catch(() => {})
+        );
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
