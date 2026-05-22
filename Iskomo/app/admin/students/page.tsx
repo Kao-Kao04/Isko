@@ -15,8 +15,19 @@ const ACCT_BADGE: Record<string, { bg: string; color: string; label: string }> =
   rejected:             { bg: '#fee2e2', color: '#dc2626', label: 'Rejected' },
 };
 
+const SCHOLAR_BADGE: Record<string, { bg: string; color: string; label: string }> = {
+  active:       { bg: '#dcfce7', color: '#15803d', label: 'Scholar' },
+  probationary: { bg: '#fef3c7', color: '#92400e', label: 'Probationary' },
+  under_review: { bg: '#eff6ff', color: '#1d4ed8', label: 'Under Review' },
+  on_leave:     { bg: '#f3f4f6', color: '#374151', label: 'On Leave' },
+  suspended:    { bg: '#fee2e2', color: '#dc2626', label: 'Suspended' },
+  graduated:    { bg: '#f0fdf4', color: '#166534', label: 'Graduated' },
+  terminated:   { bg: '#fee2e2', color: '#dc2626', label: 'Terminated' },
+};
+
 interface AdminStudent {
   id: number; email: string; account_status: string; is_active: boolean; created_at: string;
+  scholar_status: string | null;
   student_profile: { first_name: string; last_name: string; student_number: string; college: string; program: string } | null;
 }
 interface Paginated<T> { items: T[]; total: number; page: number; }
@@ -49,7 +60,7 @@ export default function AdminStudentsPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), page_size: String(PAGE_SIZE) });
-      if (f !== 'all') params.set('account_status', f);
+      if (f !== 'all' && f !== 'scholar') params.set('account_status', f);
       const res = await apiFetch<Paginated<AdminStudent>>(`/api/admin/students?${params}`);
       setStudents(res.items); setTotal(res.total);
     } catch { /* silent */ } finally { setLoading(false); }
@@ -101,11 +112,15 @@ export default function AdminStudentsPage() {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const displayed  = search.trim() ? students.filter(s => {
-    const q = search.toLowerCase();
-    const name = s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}`.toLowerCase() : '';
-    return name.includes(q) || s.email.toLowerCase().includes(q) || (s.student_profile?.student_number ?? '').toLowerCase().includes(q);
-  }) : students;
+  const displayed  = students.filter(s => {
+    if (filter === 'scholar' && !s.scholar_status) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const name = s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}`.toLowerCase() : '';
+      return name.includes(q) || s.email.toLowerCase().includes(q) || (s.student_profile?.student_number ?? '').toLowerCase().includes(q);
+    }
+    return true;
+  });
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
@@ -120,7 +135,7 @@ export default function AdminStudentsPage() {
       {/* Filters + search */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 10, padding: 4, flexWrap: 'wrap' }}>
-          {[{ value: 'all', label: 'All' }, { value: 'pending_verification', label: 'Pending' }, { value: 'verified', label: 'Verified' }, { value: 'rejected', label: 'Rejected' }, { value: 'unregistered', label: 'Unregistered' }].map(f => (
+          {[{ value: 'all', label: 'All' }, { value: 'pending_verification', label: 'Pending' }, { value: 'verified', label: 'Verified' }, { value: 'scholar', label: '🎓 Scholars' }, { value: 'rejected', label: 'Rejected' }, { value: 'unregistered', label: 'Unregistered' }].map(f => (
             <button key={f.value} onClick={() => { setFilter(f.value); setPage(1); }}
               style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: filter === f.value ? '#fff' : 'transparent', color: filter === f.value ? M : '#6b7280', fontSize: 12, fontWeight: filter === f.value ? 700 : 500, cursor: 'pointer', boxShadow: filter === f.value ? '0 1px 4px rgba(0,0,0,0.08)' : 'none' }}>
               {f.label}
@@ -141,7 +156,7 @@ export default function AdminStudentsPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                  {['Name', 'Student No.', 'Email', 'College', 'Status', 'Active', 'Actions'].map(h => (
+                  {['Name', 'Student No.', 'Email', 'College', 'Status', 'Scholar', 'Active', 'Actions'].map(h => (
                     <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -158,6 +173,13 @@ export default function AdminStudentsPage() {
                       <td style={{ padding: '12px 16px', color: '#6b7280', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</td>
                       <td style={{ padding: '12px 16px', color: '#374151' }}>{s.student_profile?.college ?? '—'}</td>
                       <td style={{ padding: '12px 16px' }}><span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, background: badge.bg, color: badge.color, fontSize: 11, fontWeight: 700 }}>{badge.label}</span></td>
+                      <td style={{ padding: '12px 16px' }}>
+                        {s.scholar_status ? (
+                          <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, background: (SCHOLAR_BADGE[s.scholar_status] ?? SCHOLAR_BADGE.active).bg, color: (SCHOLAR_BADGE[s.scholar_status] ?? SCHOLAR_BADGE.active).color, fontSize: 11, fontWeight: 700 }}>
+                            {(SCHOLAR_BADGE[s.scholar_status] ?? SCHOLAR_BADGE.active).label}
+                          </span>
+                        ) : <span style={{ color: '#d1d5db', fontSize: 12 }}>—</span>}
+                      </td>
                       <td style={{ padding: '12px 16px' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 20, background: active ? '#f0fdf4' : '#f3f4f6', color: active ? '#059669' : '#9ca3af', fontSize: 11, fontWeight: 600 }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: active ? '#10b981' : '#d1d5db' }} />{active ? 'Yes' : 'No'}</span></td>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
