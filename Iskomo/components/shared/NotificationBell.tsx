@@ -128,10 +128,10 @@ export default function NotificationBell() {
   const unread = notifs.filter(n => !n.is_read).length;
 
   async function handleItemClick(n: NotificationResponse) {
-    try {
-      await notificationApi.markRead(n.id);
-      setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
-    } catch { /* ignore */ }
+    // Mark read silently — never let a network error block navigation
+    notificationApi.markRead(n.id)
+      .then(() => setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x)))
+      .catch(() => { /* silent — stale read state is fine */ });
     setOpen(false);
 
     // Compute destination client-side so routing is correct regardless of
@@ -196,7 +196,8 @@ export default function NotificationBell() {
       {open && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setOpen(false)} />
-          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 360, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', boxShadow: '0 8px 32px rgba(0,0,0,0.14)', zIndex: 999, overflow: 'hidden' }}>
+          {/* Fixed to viewport so it never overflows on narrow screens */}
+          <div style={{ position: 'fixed', top: 72, right: 8, width: 360, maxWidth: 'calc(100vw - 16px)', background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', boxShadow: '0 8px 32px rgba(0,0,0,0.14)', zIndex: 999, overflow: 'hidden' }}>
             <div style={{ padding: '14px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
                 Notifications
