@@ -1227,19 +1227,25 @@ export default function ApplicantProfilePage() {
                 );
               })}
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <input
-                value={msgBody}
-                onChange={e => setMsgBody(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendOsfaMessage(); } }}
-                placeholder="Type a reply to the student…"
-                style={{ flex: 1, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '9px 14px', fontSize: 13, outline: 'none', color: '#111827' }}
-              />
-              <button onClick={sendOsfaMessage} disabled={!msgBody.trim() || msgSending}
-                style={{ padding: '9px 18px', background: msgBody.trim() ? TEAL : '#e5e7eb', border: 'none', borderRadius: 8, color: msgBody.trim() ? '#fff' : '#9ca3af', fontSize: 13, fontWeight: 700, cursor: msgBody.trim() ? 'pointer' : 'not-allowed' }}>
-                {msgSending ? 'Sending…' : 'Send'}
-              </button>
-            </div>
+            {currentUser?.role === 'super_admin' ? (
+              <div style={{ padding: '10px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
+                View only — Super Admin cannot reply to messages
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 10 }}>
+                <input
+                  value={msgBody}
+                  onChange={e => setMsgBody(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendOsfaMessage(); } }}
+                  placeholder="Type a reply to the student…"
+                  style={{ flex: 1, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '9px 14px', fontSize: 13, outline: 'none', color: '#111827' }}
+                />
+                <button onClick={sendOsfaMessage} disabled={!msgBody.trim() || msgSending}
+                  style={{ padding: '9px 18px', background: msgBody.trim() ? TEAL : '#e5e7eb', border: 'none', borderRadius: 8, color: msgBody.trim() ? '#fff' : '#9ca3af', fontSize: 13, fontWeight: 700, cursor: msgBody.trim() ? 'pointer' : 'not-allowed' }}>
+                  {msgSending ? 'Sending…' : 'Send'}
+                </button>
+              </div>
+            )}
           </div>
         );
       })()}
