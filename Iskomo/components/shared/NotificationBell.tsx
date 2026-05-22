@@ -247,13 +247,12 @@ export default function NotificationBell() {
             )}
             {/* View all — always visible at bottom */}
             <div style={{ borderTop: '1px solid #f3f4f6', padding: '10px 16px' }}>
-              <a
-                href={`${roleBase}/notifications`}
-                onClick={() => setOpen(false)}
-                style={{ display: 'block', textAlign: 'center', padding: '9px 0', background: MAROON, color: '#fff', borderRadius: 9, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
+              <button
+                onClick={() => { setOpen(false); router.push(`${roleBase}/notifications`); }}
+                style={{ display: 'block', width: '100%', textAlign: 'center', padding: '9px 0', background: MAROON, color: '#fff', borderRadius: 9, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}
               >
                 View All Notifications
-              </a>
+              </button>
             </div>
           </div>
         </>
