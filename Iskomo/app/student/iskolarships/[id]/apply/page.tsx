@@ -295,7 +295,7 @@ export default function ApplyPage() {
   const canSubmit = allRequiredUploaded && agreed.declaration && agreed.terms && !submitting;
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 24px 100px' }}>
+    <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 24px 140px' }}>
 
       <Breadcrumb items={[
         { label: 'Iskolarships', href: '/student/iskolarships' },
@@ -467,40 +467,40 @@ export default function ApplyPage() {
         )}
       </form>
 
-      {/* Sticky submit bar */}
+      {/* Sticky submit bar — two-row layout so it fits on any screen size */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
         background: '#fff', borderTop: '1px solid #e5e7eb',
         boxShadow: '0 -4px 16px rgba(0,0,0,0.08)',
-        padding: '14px 24px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        padding: '12px 16px',
+        display: 'flex', flexDirection: 'column', gap: 10,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid ${canSubmit ? '#15803d' : COLORS.maroon}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: canSubmit ? '#15803d' : COLORS.maroon }}>
-                {Math.round(((uploadedCount + (essay.trim().length > 0 ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%
-              </span>
+        {/* Row 1: progress info */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid ${canSubmit ? '#15803d' : COLORS.maroon}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: canSubmit ? '#15803d' : COLORS.maroon }}>
+              {Math.round(((uploadedCount + (essay.trim().length > 0 ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%
+            </span>
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>
+              {canSubmit ? 'Ready to submit!' : 'Complete your application'}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>
-                {canSubmit ? 'Ready to submit!' : 'Complete your application'}
-              </div>
-              <div style={{ fontSize: 11, color: '#6b7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {uploadedCount}/{requiredDocs.length} docs · {essay.trim().length > 0 ? '✓' : '✗'} essay · {agreed.declaration && agreed.terms ? '✓' : '✗'} agreements
-              </div>
+            <div style={{ fontSize: 11, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {uploadedCount}/{requiredDocs.length} docs · {essay.trim().length > 0 ? '✓' : '✗'} essay · {agreed.declaration && agreed.terms ? '✓' : '✗'} agreements
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-          <button type="button" onClick={() => router.back()} style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+        {/* Row 2: action buttons — full width */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" onClick={() => router.back()} style={{ flex: 1, padding: '11px 0', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
             Cancel
           </button>
           <button
             onClick={() => { if (canSubmit) setShowModal(true); }}
             disabled={submitting}
             style={{
-              padding: '10px 24px', borderRadius: 8, border: 'none', whiteSpace: 'nowrap',
+              flex: 2, padding: '11px 0', borderRadius: 8, border: 'none',
               background: canSubmit ? `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})` : '#d1d5db',
               fontSize: 13, fontWeight: 700, color: canSubmit ? '#fff' : '#9ca3af',
               cursor: canSubmit ? 'pointer' : 'not-allowed',
