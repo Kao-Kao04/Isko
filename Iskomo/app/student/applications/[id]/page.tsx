@@ -223,7 +223,11 @@ export default function ApplicationDetailPage() {
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 16px' }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .app-detail-grid { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
+        @media (max-width: 700px) { .app-detail-grid { grid-template-columns: 1fr; } }
+      `}</style>
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20, fontSize: 13 }}>
@@ -256,7 +260,7 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 20 }}>
+      <div className="app-detail-grid">
 
         {/* LEFT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -830,7 +834,7 @@ export default function ApplicationDetailPage() {
                 placeholder="Type a message…"
                 style={{ flex: 1, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none', color: '#111827' }}
               />
-              <button onClick={sendMessage} disabled={!msgBody.trim() || msgSending}
+              <button type="button" onClick={sendMessage} disabled={!msgBody.trim() || msgSending}
                 style={{ padding: '8px 14px', background: msgBody.trim() ? COLORS.maroon : '#e5e7eb', border: 'none', borderRadius: 8, color: msgBody.trim() ? '#fff' : '#9ca3af', fontSize: 13, fontWeight: 600, cursor: msgBody.trim() ? 'pointer' : 'not-allowed' }}>
                 {msgSending ? '…' : 'Send'}
               </button>
