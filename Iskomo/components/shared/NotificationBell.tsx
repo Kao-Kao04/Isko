@@ -207,11 +207,6 @@ export default function NotificationBell() {
               )}
             </div>
 
-            {/* View all link */}
-            <div style={{ padding: '8px 16px', borderBottom: '1px solid #f3f4f6', textAlign: 'right' }}>
-              <a href={`${roleBase}/notifications`} style={{ fontSize: 12, color: MAROON, fontWeight: 600, textDecoration: 'none' }}>View all notifications →</a>
-            </div>
-
             {notifs.length === 0 ? (
               <div style={{ padding: '36px 16px', textAlign: 'center' }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -250,6 +245,16 @@ export default function NotificationBell() {
                 })}
               </div>
             )}
+            {/* View all — always visible at bottom */}
+            <div style={{ borderTop: '1px solid #f3f4f6', padding: '10px 16px' }}>
+              <a
+                href={`${roleBase}/notifications`}
+                onClick={() => setOpen(false)}
+                style={{ display: 'block', textAlign: 'center', padding: '9px 0', background: MAROON, color: '#fff', borderRadius: 9, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
+              >
+                View All Notifications
+              </a>
+            </div>
           </div>
         </>
       )}
