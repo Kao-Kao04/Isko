@@ -83,11 +83,15 @@ export async function login(email: string, password: string, rememberMe = false)
 
   const data = await res.json();
   if (data.csrf_token) setCsrfToken(data.csrf_token);
-  setAccessToken(data.access_token);
+
+  // Store preference so refreshAccessToken can preserve the same cookie lifetime
+  localStorage.setItem('remember_me', rememberMe ? '1' : '0');
+  setAccessToken(data.access_token, rememberMe);
 
   const user = await getMe();
   const secure = location.protocol === 'https:' ? '; Secure' : '';
-  const maxAge = 60 * 60 * 24 * 7;
+  // remember_me=true → 30-day persistent cookies; false → 8-hour (expires naturally)
+  const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 8;
   document.cookie = `role=${user.role}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
   document.cookie = `department=${user.department ?? ''}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
 

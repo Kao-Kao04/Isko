@@ -79,9 +79,11 @@ function getAccessToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function setAccessToken(token: string) {
+function setAccessToken(token: string, persist = true) {
   const secure = location.protocol === 'https:' ? '; Secure' : '';
-  const maxAge = 60 * 60 * 24 * 7;
+  // persist=true  → 30 days (remember me)
+  // persist=false → 8 hours (matches token expiry, clears on natural expiry)
+  const maxAge = persist ? 60 * 60 * 24 * 30 : 60 * 60 * 8;
   document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=${maxAge}; SameSite=Strict${secure}`;
 }
 
@@ -113,7 +115,8 @@ async function refreshAccessToken(): Promise<string | null> {
     if (!res.ok) return null;
     const data = await res.json();
     if (data.csrf_token) setCsrfToken(data.csrf_token);
-    setAccessToken(data.access_token);
+    const rememberMe = typeof window !== 'undefined' && localStorage.getItem('remember_me') === '1';
+    setAccessToken(data.access_token, rememberMe);
     return data.access_token;
   } catch {
     return null;
@@ -170,8 +173,21 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, respo
 
     const body = await res.json().catch(() => ({} as Record<string, unknown>));
 
-    // 403 CSRF_INVALID — session has expired, redirect immediately
+    // 403 CSRF_INVALID — CSRF cookie expired; try a silent refresh to get a new one
     if (res.status === 403 && (body as Record<string, unknown>).code === 'CSRF_INVALID') {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        headers['Authorization'] = `Bearer ${newToken}`;
+        const newCsrf = getCsrfToken();
+        if (newCsrf) headers['X-CSRF-Token'] = newCsrf;
+        res = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store' });
+        if (res.ok) {
+          if (res.status === 204) return undefined as T;
+          if (responseType === 'text') return res.text() as Promise<T>;
+          return res.json();
+        }
+      }
+      clearAccessToken();
       if (typeof window !== 'undefined') window.location.href = '/login?reason=session_expired';
       throw new Error('Your session expired. Please log in again.');
     }
