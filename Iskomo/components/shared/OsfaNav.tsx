@@ -152,10 +152,10 @@ export default function OsfaNav() {
         onMouseEnter={() => setHovered(link.href)} onMouseLeave={() => setHovered(null)}
         style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-          padding: '8px 16px', borderRadius: 10, textDecoration: 'none',
+          padding: '8px 12px', borderRadius: 10, textDecoration: 'none',
           color: isActive ? M : isHov ? '#374151' : '#6b7280',
           background: isActive ? ML : isHov ? '#f3f4f6' : 'transparent',
-          fontWeight: isActive ? 700 : 500, fontSize: 11.5, minWidth: 66,
+          fontWeight: isActive ? 700 : 500, fontSize: 11.5, minWidth: 58,
           position: 'relative', transition: 'all 0.15s ease',
         }}>
         {isActive && <span style={{ position: 'absolute', bottom: -1, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2.5, borderRadius: 9999, background: M }} />}
@@ -184,10 +184,10 @@ export default function OsfaNav() {
             onClick={() => setMoreOpen(o => !o)}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-              padding: '8px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+              padding: '8px 10px', borderRadius: 10, border: 'none', cursor: 'pointer',
               background: moreOpen || secondaryActive ? ML : 'transparent',
               color: moreOpen || secondaryActive ? M : '#6b7280',
-              fontWeight: secondaryActive ? 700 : 500, fontSize: 11.5, minWidth: 62,
+              fontWeight: secondaryActive ? 700 : 500, fontSize: 11.5, minWidth: 54,
               position: 'relative', transition: 'all 0.15s ease',
             }}>
             {secondaryActive && <span style={{ position: 'absolute', bottom: -1, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2.5, borderRadius: 9999, background: M }} />}
