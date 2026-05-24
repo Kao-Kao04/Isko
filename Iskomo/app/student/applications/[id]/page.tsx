@@ -223,12 +223,6 @@ export default function ApplicationDetailPage() {
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 16px' }}>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .app-detail-grid { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
-        @media (max-width: 700px) { .app-detail-grid { grid-template-columns: 1fr; } }
-      `}</style>
-
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20, fontSize: 13 }}>
         <Link href="/student/applications" style={{ color: COLORS.maroon, textDecoration: 'none', fontWeight: 500 }}>My Applications</Link>

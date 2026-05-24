@@ -94,10 +94,10 @@ export default function StudentMessagesPage() {
         <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>Your conversations with OSFA</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selected ? '300px 1fr' : '1fr', gap: 16, alignItems: 'start' }}>
+      <div className="msg-split-grid" style={{ gridTemplateColumns: selected ? '300px 1fr' : '1fr' }}>
 
-        {/* List */}
-        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        {/* List — hidden on mobile when contact detail is open */}
+        <div className={selected ? 'msg-list-hidden' : undefined} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           {loading ? (
             <div style={{ padding: 48, display: 'flex', justifyContent: 'center' }}>
               <div style={{ width: 28, height: 28, border: `3px solid #f3f4f6`, borderTop: `3px solid ${M}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
@@ -212,7 +212,6 @@ export default function StudentMessagesPage() {
         )}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

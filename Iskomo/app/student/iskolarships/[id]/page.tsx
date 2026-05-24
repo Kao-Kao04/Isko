@@ -60,12 +60,6 @@ export default function ScholarshipDetailPage() {
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 24px' }}>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .sch-detail-grid { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
-        @media (max-width: 700px) { .sch-detail-grid { grid-template-columns: 1fr; } }
-      `}</style>
-
       <Breadcrumb items={[
         { label: 'Iskolarships', href: '/student/iskolarships' },
         { label: s.title },

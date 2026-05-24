@@ -491,11 +491,26 @@ a {
   .iskol-sidebar-inner .iskol-filter-full { grid-column: 1 / -1; }
 }
 
+/* ── Application detail grid (desktop two-col → single col on mobile) ───────── */
+.app-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+}
+.sch-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
+  align-items: start;
+}
+
 /* ── Applications ──────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .apps-grid    { grid-template-columns: 1fr !important; }
-  .apps-sidebar { display: none !important; }
-  .stat-grid    { grid-template-columns: repeat(2, 1fr) !important; }
+  .apps-grid       { grid-template-columns: 1fr !important; }
+  .apps-sidebar    { display: none !important; }
+  .stat-grid       { grid-template-columns: repeat(2, 1fr) !important; }
+  .app-detail-grid { grid-template-columns: 1fr !important; }
+  .sch-detail-grid { grid-template-columns: 1fr !important; }
 
   /* Action buttons — stack on very narrow screens */
   .app-actions  { flex-direction: column !important; gap: 6px !important; }
@@ -506,6 +521,45 @@ a {
 /* Stat grid — single column on very small phones */
 @media (max-width: 380px) {
   .stat-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Student page containers — tighter horizontal padding on phones ─────────── */
+@media (max-width: 480px) {
+  .student-page-wrap { padding-left: 12px !important; padding-right: 12px !important; }
+}
+
+/* ── Messages ──────────────────────────────────────────────────────────────── */
+.msg-split-grid { display: grid; gap: 16px; align-items: start; }
+
+@media (max-width: 640px) {
+  /* Stack list + detail vertically; hide the list when detail is open */
+  .msg-split-grid { grid-template-columns: 1fr !important; }
+  .msg-list-hidden { display: none !important; }
+}
+
+/* ── Notifications panel (bottom-sheet on mobile, side panel on desktop) ─── */
+@keyframes slideUp    { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+@media (max-width: 640px) {
+  .notif-panel {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    z-index: 300;
+    max-height: 75vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s ease !important;
+  }
+  .notif-backdrop { display: block !important; }
+}
+@media (min-width: 641px) {
+  .notif-panel { animation: slideRight 0.25s ease; }
+  .notif-backdrop { display: none !important; }
 }
 
 /* ── Profile ───────────────────────────────────────────────────────────────── */

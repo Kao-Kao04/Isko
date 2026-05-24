@@ -111,18 +111,6 @@ export default function StudentNotificationsPage() {
 
   return (
     <>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes slideRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @media (max-width: 640px) {
-          .notif-panel { animation: slideUp 0.25s ease !important; }
-        }
-        @media (min-width: 641px) {
-          .notif-panel { animation: slideRight 0.25s ease !important; }
-        }
-      `}</style>
-
       <div style={{ maxWidth: selected ? 1100 : 640, margin: '0 auto', padding: '28px 16px 100px', display: 'flex', gap: 20, alignItems: 'flex-start', transition: 'max-width 0.25s ease' }}>
 
         {/* ── Notification List ── */}
@@ -282,24 +270,6 @@ export default function StudentNotificationsPage() {
               </div>
             </div>
 
-            {/* Mobile bottom sheet — shown via media query trick with inline style override */}
-            <style>{`
-              @media (max-width: 640px) {
-                .notif-panel {
-                  position: fixed !important;
-                  bottom: 0 !important;
-                  left: 0 !important;
-                  right: 0 !important;
-                  top: auto !important;
-                  width: 100% !important;
-                  border-radius: 20px 20px 0 0 !important;
-                  z-index: 300;
-                  max-height: 75vh;
-                  overflow-y: auto;
-                }
-                .notif-backdrop { display: block !important; }
-              }
-            `}</style>
           </>
         )}
       </div>
