@@ -10,8 +10,8 @@ import { COLORS } from '@/lib/theme';
 const TEAL = COLORS.maroon;
 
 const DEPT_LABEL: Record<string, { label: string; bg: string; color: string }> = {
-  public:  { label: 'Public Dept.',  bg: '#eff6ff', color: '#1d4ed8' },
-  private: { label: 'Private Dept.', bg: '#fdf4ff', color: '#7e22ce' },
+  public:  { label: 'Public',  bg: '#eff6ff', color: '#1d4ed8' },
+  private: { label: 'Private', bg: '#fdf4ff', color: '#7e22ce' },
 };
 
 export default async function OsfaLayout({ children }: { children: React.ReactNode }) {

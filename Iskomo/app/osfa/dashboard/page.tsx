@@ -33,7 +33,7 @@ function timeAgo(d: string): string {
   return `${days} days ago`;
 }
 
-const DEPT_LABEL: Record<string, string> = { public: 'Public Dept.', private: 'Private Dept.' };
+const DEPT_LABEL: Record<string, string> = { public: 'Public', private: 'Private' };
 
 export default function Page() {
   const router = useRouter();

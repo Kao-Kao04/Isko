@@ -315,11 +315,12 @@ export default function Page() {
       addToast('error', 'Scholarship permanently deleted.');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to delete scholarship.';
-      // Already deleted server-side — remove from list silently
-      if (msg.toLowerCase().includes('not found')) {
-        setScholarships(prev => prev.filter(s => s.id !== id));
+      const lower = msg.toLowerCase();
+      // Server confirmed it's gone, or network error — reload list to get actual state
+      if (lower.includes('not found') || lower.includes('failed to fetch') || lower.includes('network')) {
+        await fetchScholarships();
         setConfirmDelete(null);
-        addToast('error', 'Scholarship permanently deleted.');
+        addToast('error', 'Scholarship deleted.');
       } else {
         setDeleteError(msg);
       }
