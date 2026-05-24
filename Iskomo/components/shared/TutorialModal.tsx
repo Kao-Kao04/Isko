@@ -122,6 +122,8 @@ export default function TutorialModal() {
           boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
           pointerEvents: 'all',
           animation: 'tutorialFadeIn 0.25s ease',
+          maxHeight: 'calc(100vh - 120px)',
+          overflowY: 'auto',
         }}>
           {/* Top bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px 0' }}>
@@ -139,7 +141,7 @@ export default function TutorialModal() {
           {/* Content */}
           <div style={{ padding: '24px 28px 20px', textAlign: 'center' }}>
             {/* Icon */}
-            <div style={{
+            <div className="tutorial-icon" style={{
               width: 72, height: 72, borderRadius: 20, background: `${M}12`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 20px',
@@ -147,10 +149,10 @@ export default function TutorialModal() {
               {current.icon}
             </div>
 
-            <h2 style={{ margin: '0 0 12px', fontSize: 18, fontWeight: 800, color: '#111827', lineHeight: 1.3 }}>
+            <h2 className="tutorial-title" style={{ margin: '0 0 12px', fontSize: 18, fontWeight: 800, color: '#111827', lineHeight: 1.3 }}>
               {current.title}
             </h2>
-            <p style={{ margin: 0, fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>
+            <p className="tutorial-body" style={{ margin: 0, fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>
               {current.body}
             </p>
           </div>

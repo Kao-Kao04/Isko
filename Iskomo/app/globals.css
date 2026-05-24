@@ -592,6 +592,13 @@ a {
   .admin-page-wrap { padding: 16px 12px !important; }
 }
 
+/* ── Tutorial modal — compact on very small phones ─────────────────────────── */
+@media (max-width: 390px) {
+  .tutorial-icon  { width: 52px !important; height: 52px !important; margin-bottom: 14px !important; }
+  .tutorial-title { font-size: 16px !important; }
+  .tutorial-body  { font-size: 12px !important; }
+}
+
 /* ── Reduced motion ────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,
