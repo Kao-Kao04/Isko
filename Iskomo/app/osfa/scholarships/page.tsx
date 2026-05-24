@@ -425,12 +425,13 @@ export default function Page() {
     const img = new window.Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const MAX = 800;
-      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-      canvas.width  = img.width  * ratio;
-      canvas.height = img.height * ratio;
+      // Fit within 1200×630 (16:9 banner), never upscale
+      const MAX_W = 1200, MAX_H = 630;
+      const ratio = Math.min(MAX_W / img.width, MAX_H / img.height, 1);
+      canvas.width  = Math.round(img.width  * ratio);
+      canvas.height = Math.round(img.height * ratio);
       canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
       setForm(prev => ({ ...prev, cover_image_url: compressed }));
       URL.revokeObjectURL(url);
     };
