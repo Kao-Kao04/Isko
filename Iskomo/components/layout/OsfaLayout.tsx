@@ -65,8 +65,8 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             </div>
           </Link>
 
-          {/* ── Center: nav — absolutely centered so it never pushes the right controls ── */}
-          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+          {/* ── Center: nav — shifted left so right controls have breathing room ── */}
+          <div style={{ position: 'absolute', left: 'calc(50% - 80px)', transform: 'translateX(-50%)' }}>
             <OsfaNav />
           </div>
 

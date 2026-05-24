@@ -9,7 +9,7 @@ export default function PhClock() {
   useEffect(() => {
     function tick() {
       const now = new Date();
-      setTime(now.toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true }));
+      setTime(now.toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
       setDate(now.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' }));
     }
     tick();
