@@ -426,6 +426,9 @@ a {
   .hide-mobile-text { display: none !important; }
 }
 
+/* Force clock visible in student header on all screen sizes */
+.student-clock .hide-tablet { display: flex !important; }
+
 @media (max-width: 900px) {
   .hide-tablet { display: none !important; }
 
