@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/lib/theme';
 
@@ -70,16 +71,19 @@ const STEPS = [
 
 const KEY = 'iskomo_tutorial_done';
 
-export default function TutorialModal() {
+export default function TutorialModal({ ready = true }: { ready?: boolean }) {
   const router = useRouter();
   const [step,    setStep]    = useState(0);
   const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem(KEY)) {
+    if (ready && typeof window !== 'undefined' && !localStorage.getItem(KEY)) {
       setVisible(true);
     }
-  }, []);
+  }, [ready]);
 
   function close() {
     localStorage.setItem(KEY, '1');
@@ -94,12 +98,12 @@ export default function TutorialModal() {
     }
   }
 
-  if (!visible) return null;
+  if (!visible || !mounted) return null;
 
   const current = STEPS[step];
   const isLast  = step === STEPS.length - 1;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -210,6 +214,7 @@ export default function TutorialModal() {
           to   { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
-    </>
+    </>,
+    document.body
   );
 }

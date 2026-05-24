@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { COLORS } from '@/lib/theme';
 
 interface ChecklistItem {
@@ -25,9 +27,11 @@ export default function ConfirmModal({
   confirmLabel = 'Confirm', cancelLabel = 'Cancel',
   onConfirm, onCancel, danger = false, checklist,
 }: Props) {
-  if (!open) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       onClick={onCancel}
       style={{
@@ -100,6 +104,7 @@ export default function ConfirmModal({
         </div>
       </div>
       <style>{`@keyframes modalIn { from { opacity:0; transform:scale(0.93); } to { opacity:1; transform:scale(1); } }`}</style>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -95,7 +95,7 @@ export default function Page() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
-      <TutorialModal />
+      <TutorialModal ready={!loading && !fetchError} />
       <style>{`
         @keyframes spin  { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
