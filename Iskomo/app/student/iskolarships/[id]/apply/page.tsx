@@ -507,8 +507,8 @@ export default function ApplyPage() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <label htmlFor="essay" style={labelStyle}>Why are you applying for this scholarship? <span style={{ color: '#dc2626' }}>*</span></label>
-              <span style={{ fontSize: 12, fontWeight: 600, color: essay.length >= 200 ? '#15803d' : essay.length > 0 ? '#dc2626' : '#9ca3af' }}>
-                {essay.length} / min. 200 chars {essay.length >= 200 ? '✓' : essay.length > 0 ? `(need ${200 - essay.length} more)` : ''}
+              <span style={{ fontSize: 12, fontWeight: 600, color: essay.trim().length >= 200 ? '#15803d' : essay.trim().length > 0 ? '#dc2626' : '#9ca3af' }}>
+                {essay.trim().length} / min. 200 chars {essay.trim().length >= 200 ? '✓' : essay.trim().length > 0 ? `(need ${200 - essay.trim().length} more)` : ''}
               </span>
             </div>
             <p style={{ margin: '0 0 8px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
@@ -525,7 +525,7 @@ export default function ApplyPage() {
               }}
               onFocus={e => { e.target.style.borderColor = ''; }}
               placeholder="e.g. I am applying for this scholarship because I want to support my family and fulfill my dream of becoming..."
-              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6, border: essay.length > 0 && essay.length < 200 ? '1.5px solid #dc2626' : undefined }} />
+              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6, border: essay.trim().length > 0 && essay.trim().length < 200 ? '1.5px solid #dc2626' : undefined }} />
           </div>
         </div>
 
