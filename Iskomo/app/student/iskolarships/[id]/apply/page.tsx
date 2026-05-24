@@ -422,13 +422,13 @@ export default function ApplyPage() {
           <div style={sectionTitle}>Essay</div>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <label htmlFor="essay" style={labelStyle}>Bakit ka nag-aaply para sa scholarship na ito? <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor="essay" style={labelStyle}>Why are you applying for this scholarship? <span style={{ color: '#dc2626' }}>*</span></label>
               <span style={{ fontSize: 12, fontWeight: 600, color: essay.length >= 200 ? '#15803d' : essay.length > 0 ? '#dc2626' : '#9ca3af' }}>
                 {essay.length} / min. 200 chars {essay.length >= 200 ? '✓' : essay.length > 0 ? `(need ${200 - essay.length} more)` : ''}
               </span>
             </div>
             <p style={{ margin: '0 0 8px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
-              Isulat ang iyong dahilan sa pag-apply. Maaari kang gumamit ng Filipino o English — gamitin ang wikang komportable ka. (Minimum 200 characters)
+              Write your reason for applying to this scholarship. You may use Filipino or English — use whichever language you are comfortable with. (Minimum 200 characters)
             </p>
             <textarea id="essay" name="essay" rows={6} required value={essay}
               onChange={e => setEssay(e.target.value)}
@@ -440,7 +440,7 @@ export default function ApplyPage() {
                 }
               }}
               onFocus={e => { e.target.style.borderColor = ''; }}
-              placeholder="Halimbawa: Nag-aaply ako dahil gusto kong matulungan ang aking pamilya at matupad ang aking pangarap na maging..."
+              placeholder="e.g. I am applying for this scholarship because I want to support my family and fulfill my dream of becoming..."
               style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6, border: essay.length > 0 && essay.length < 200 ? '1.5px solid #dc2626' : undefined }} />
           </div>
         </div>
