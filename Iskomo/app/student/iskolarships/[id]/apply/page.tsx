@@ -321,7 +321,9 @@ export default function ApplyPage() {
 
   const requiredDocs        = docsConfig.filter(d => d.required);
   const uploadedCount       = requiredDocs.filter(d => files[d.id]).length;
-  const allRequiredUploaded = uploadedCount === requiredDocs.length && essay.trim().length >= 200;
+  const MIN_WORDS           = 30;
+  const wordCount           = essay.trim() ? essay.trim().split(/\s+/).filter(w => w.length > 0).length : 0;
+  const allRequiredUploaded = uploadedCount === requiredDocs.length && wordCount >= MIN_WORDS;
 
   const profile = user?.student_profile;
   const fullName = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : '';
@@ -359,14 +361,14 @@ export default function ApplyPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Application Completeness</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: allRequiredUploaded ? '#15803d' : COLORS.maroon }}>
-            {uploadedCount}/{requiredDocs.length} docs · {essay.trim().length >= 200 ? '✓' : '✗'} essay
+            {uploadedCount}/{requiredDocs.length} docs · {wordCount >= MIN_WORDS ? '✓' : '✗'} essay
           </span>
         </div>
         <div style={{ height: 6, background: '#f3f4f6', borderRadius: 99, overflow: 'hidden' }}>
           <div style={{
             height: '100%', borderRadius: 99, transition: 'width 0.3s ease',
             background: allRequiredUploaded ? '#15803d' : COLORS.maroon,
-            width: `${Math.round(((uploadedCount + (essay.trim().length >= 200 ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%`,
+            width: `${Math.round(((uploadedCount + (wordCount >= MIN_WORDS ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%`,
           }} />
         </div>
       </div>
@@ -507,17 +509,18 @@ export default function ApplyPage() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <label htmlFor="essay" style={labelStyle}>Why are you applying for this scholarship? <span style={{ color: '#dc2626' }}>*</span></label>
-              <span style={{ fontSize: 12, fontWeight: 600, color: essay.trim().length >= 200 ? '#15803d' : essay.trim().length > 0 ? '#dc2626' : '#9ca3af' }}>
-                {essay.trim().length} / min. 200 chars {essay.trim().length >= 200 ? '✓' : essay.trim().length > 0 ? `(need ${200 - essay.trim().length} more)` : ''}
+              <span style={{ fontSize: 12, fontWeight: 600, color: wordCount >= MIN_WORDS ? '#15803d' : wordCount > 0 ? '#dc2626' : '#9ca3af' }}>
+                {wordCount} / min. {MIN_WORDS} words {wordCount >= MIN_WORDS ? '✓' : wordCount > 0 ? `(need ${MIN_WORDS - wordCount} more)` : ''}
               </span>
             </div>
             <p style={{ margin: '0 0 8px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
-              Write your reason for applying to this scholarship. You may use Filipino or English — use whichever language you are comfortable with. (Minimum 200 characters)
+              Write your reason for applying to this scholarship. You may use Filipino or English — use whichever language you are comfortable with. (Minimum 30 words)
             </p>
             <textarea id="essay" name="essay" rows={6} required value={essay}
               onChange={e => setEssay(e.target.value)}
               onBlur={e => {
-                if (e.target.value.trim().length > 0 && e.target.value.trim().length < 200) {
+                const wc = e.target.value.trim() ? e.target.value.trim().split(/\s+/).filter(w => w.length > 0).length : 0;
+                if (wc > 0 && wc < 30) {
                   e.target.style.borderColor = '#dc2626';
                 } else {
                   e.target.style.borderColor = '';
@@ -525,7 +528,7 @@ export default function ApplyPage() {
               }}
               onFocus={e => { e.target.style.borderColor = ''; }}
               placeholder="e.g. I am applying for this scholarship because I want to support my family and fulfill my dream of becoming..."
-              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6, border: essay.trim().length > 0 && essay.trim().length < 200 ? '1.5px solid #dc2626' : undefined }} />
+              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6, border: wordCount > 0 && wordCount < MIN_WORDS ? '1.5px solid #dc2626' : undefined }} />
           </div>
         </div>
 
@@ -563,7 +566,7 @@ export default function ApplyPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid ${canSubmit ? '#15803d' : COLORS.maroon}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: canSubmit ? '#15803d' : COLORS.maroon }}>
-              {Math.round(((uploadedCount + (essay.trim().length >= 200 ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%
+              {Math.round(((uploadedCount + (wordCount >= MIN_WORDS ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%
             </span>
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -571,7 +574,7 @@ export default function ApplyPage() {
               {canSubmit ? 'Ready to submit!' : 'Complete your application'}
             </div>
             <div style={{ fontSize: 11, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {uploadedCount}/{requiredDocs.length} docs · {essay.trim().length >= 200 ? '✓' : '✗'} essay · {agreed.declaration && agreed.terms ? '✓' : '✗'} agreements
+              {uploadedCount}/{requiredDocs.length} docs · {wordCount >= MIN_WORDS ? '✓' : '✗'} essay · {agreed.declaration && agreed.terms ? '✓' : '✗'} agreements
             </div>
           </div>
         </div>
@@ -608,7 +611,7 @@ export default function ApplyPage() {
         onCancel={() => setShowModal(false)}
         checklist={[
           ...docsConfig.map(d => ({ label: d.label, ok: !!files[d.id], required: d.required })),
-          { label: 'Dahilan sa pag-apply (min. 200 chars)', ok: essay.trim().length >= 200, required: true },
+          { label: 'Dahilan sa pag-apply (min. 30 words)', ok: wordCount >= MIN_WORDS, required: true },
           { label: 'Agreements checked', ok: agreed.declaration && agreed.terms, required: true },
         ]}
       />

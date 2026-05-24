@@ -943,7 +943,7 @@ export default function ApplicantProfilePage() {
                         {req.submitted_at && <div style={{ fontSize: 11, color: '#7dd3fc', marginTop: 2 }}>Submitted {new Date(req.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>}
                       </div>
                     </div>
-                    {req.file_url && (
+                    {req.file_url && isSafeUrl(req.file_url) && (
                       <a href={req.file_url} target="_blank" rel="noopener noreferrer"
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: '#0284c7', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
