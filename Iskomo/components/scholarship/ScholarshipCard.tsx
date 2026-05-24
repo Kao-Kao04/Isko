@@ -121,7 +121,7 @@ export default function ScholarshipCard({
 
       {/* Cover image if available */}
       {s.coverImage && (
-        <img src={s.coverImage} alt={s.title} style={{ width: '100%', height: 120, objectFit: 'cover' }} />
+        <img src={s.coverImage} alt={s.title} style={{ width: '100%', height: 180, objectFit: 'contain', background: '#f8fafc' }} />
       )}
 
       <div style={{ padding: '18px 18px 0' }}>
