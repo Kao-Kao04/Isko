@@ -284,7 +284,7 @@ export default function ApplyPage() {
 
   const requiredDocs        = docsConfig.filter(d => d.required);
   const uploadedCount       = requiredDocs.filter(d => files[d.id]).length;
-  const allRequiredUploaded = uploadedCount === requiredDocs.length && essay.trim().length > 0;
+  const allRequiredUploaded = uploadedCount === requiredDocs.length && essay.trim().length >= 200;
 
   const profile = user?.student_profile;
   const fullName = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : '';
@@ -322,14 +322,14 @@ export default function ApplyPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Application Completeness</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: allRequiredUploaded ? '#15803d' : COLORS.maroon }}>
-            {uploadedCount}/{requiredDocs.length} docs · {essay.trim().length > 0 ? '✓' : '✗'} essay
+            {uploadedCount}/{requiredDocs.length} docs · {essay.trim().length >= 200 ? '✓' : '✗'} essay
           </span>
         </div>
         <div style={{ height: 6, background: '#f3f4f6', borderRadius: 99, overflow: 'hidden' }}>
           <div style={{
             height: '100%', borderRadius: 99, transition: 'width 0.3s ease',
             background: allRequiredUploaded ? '#15803d' : COLORS.maroon,
-            width: `${Math.round(((uploadedCount + (essay.trim().length > 0 ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%`,
+            width: `${Math.round(((uploadedCount + (essay.trim().length >= 200 ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%`,
           }} />
         </div>
       </div>
@@ -479,7 +479,7 @@ export default function ApplyPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid ${canSubmit ? '#15803d' : COLORS.maroon}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: canSubmit ? '#15803d' : COLORS.maroon }}>
-              {Math.round(((uploadedCount + (essay.trim().length > 0 ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%
+              {Math.round(((uploadedCount + (essay.trim().length >= 200 ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%
             </span>
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -487,7 +487,7 @@ export default function ApplyPage() {
               {canSubmit ? 'Ready to submit!' : 'Complete your application'}
             </div>
             <div style={{ fontSize: 11, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {uploadedCount}/{requiredDocs.length} docs · {essay.trim().length > 0 ? '✓' : '✗'} essay · {agreed.declaration && agreed.terms ? '✓' : '✗'} agreements
+              {uploadedCount}/{requiredDocs.length} docs · {essay.trim().length >= 200 ? '✓' : '✗'} essay · {agreed.declaration && agreed.terms ? '✓' : '✗'} agreements
             </div>
           </div>
         </div>
@@ -524,7 +524,7 @@ export default function ApplyPage() {
         onCancel={() => setShowModal(false)}
         checklist={[
           ...docsConfig.map(d => ({ label: d.label, ok: !!files[d.id], required: d.required })),
-          { label: 'Dahilan sa pag-apply', ok: essay.trim().length >= 50, required: true },
+          { label: 'Dahilan sa pag-apply (min. 200 chars)', ok: essay.trim().length >= 200, required: true },
           { label: 'Agreements checked', ok: agreed.declaration && agreed.terms, required: true },
         ]}
       />

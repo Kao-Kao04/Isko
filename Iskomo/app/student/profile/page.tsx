@@ -150,6 +150,7 @@ export default function Page() {
                 reader.readAsDataURL(file);
               }}
             />
+            <p style={{ margin: '6px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.5)', textAlign: 'center', width: 80 }}>Device only</p>
           </div>
           <div style={{ flex: 1 }}>
             <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#fff' }}>
