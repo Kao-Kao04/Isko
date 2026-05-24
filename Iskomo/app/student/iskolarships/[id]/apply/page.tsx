@@ -352,15 +352,62 @@ export default function ApplyPage() {
 
         {/* Student info */}
         <div style={sectionStyle}>
-          <div style={sectionTitle}>Student Information</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
+          <div style={{ ...sectionTitle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <span>Student Information</span>
+            <a href="/student/profile" style={{ fontSize: 11, fontWeight: 600, color: COLORS.maroon, textDecoration: 'none' }}>
+              Edit in Profile →
+            </a>
+          </div>
+
+          <div style={{ marginBottom: 16, padding: '10px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, fontSize: 12, color: '#0369a1' }}>
+            This is the information OSFA will see when reviewing your application. Make sure everything is correct before submitting.
+          </div>
+
+          {/* Academic */}
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Academic</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px', marginBottom: 20 }}>
             {[
               { label: 'Full Name',        value: fullName },
-              { label: 'Email Address',    value: user?.email ?? '' },
+              { label: 'Email Address',    value: user?.email ?? '—' },
               { label: 'Student Number',   value: profile?.student_number ?? '—' },
+              { label: 'GWA',              value: profile?.gwa ?? '—' },
               { label: 'College',          value: profile?.college ?? '—' },
               { label: 'Course / Program', value: profile?.program ?? '—' },
-              { label: 'Year Level',       value: profile?.year_level ? (['1st','2nd','3rd'][profile.year_level - 1] ?? `${profile.year_level}th`) + ' Year' : '—' },
+              { label: 'Year Level',       value: profile?.year_level ? (['1st','2nd','3rd','4th'][profile.year_level - 1] ?? `${profile.year_level}th`) + ' Year' : '—' },
+            ].map(f => (
+              <div key={f.label}>
+                <label style={labelStyle}>{f.label}</label>
+                <input type="text" value={f.value} readOnly style={{ ...inputStyle, background: '#f9fafb', color: '#6b7280' }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Address */}
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Address</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px', marginBottom: 20 }}>
+            {[
+              { label: 'Street / Barangay',   value: profile?.street_barangay   ?? '—' },
+              { label: 'City / Municipality', value: profile?.city_municipality ?? '—' },
+              { label: 'Province',            value: profile?.province          ?? '—' },
+              { label: 'ZIP Code',            value: profile?.zip_code          ?? '—' },
+            ].map(f => (
+              <div key={f.label}>
+                <label style={labelStyle}>{f.label}</label>
+                <input type="text" value={f.value} readOnly style={{ ...inputStyle, background: '#f9fafb', color: '#6b7280' }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Family Background */}
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Family Background</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px' }}>
+            {[
+              { label: "Father's Name",         value: profile?.father_name       ?? '—' },
+              { label: "Father's Occupation",   value: profile?.father_occupation ?? '—' },
+              { label: "Mother's Name",         value: profile?.mother_name       ?? '—' },
+              { label: "Mother's Occupation",   value: profile?.mother_occupation ?? '—' },
+              { label: 'Income Source',         value: profile?.income_source     ?? '—' },
+              { label: 'Monthly Family Income', value: profile?.monthly_income    ?? '—' },
             ].map(f => (
               <div key={f.label}>
                 <label style={labelStyle}>{f.label}</label>
