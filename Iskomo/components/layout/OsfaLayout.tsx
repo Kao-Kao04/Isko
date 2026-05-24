@@ -39,8 +39,8 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
           maxWidth: 1400,
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: 'auto 1fr auto',
-          columnGap: 24,
+          gridTemplateColumns: '1fr auto 1fr',
+          columnGap: 16,
           alignItems: 'center',
           padding: '0 20px',
           minHeight: 62,
@@ -66,16 +66,14 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             </div>
           </Link>
 
-          {/* ── Center: nav — 1fr column, items centered within it ── */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <OsfaNav />
-          </div>
+          {/* ── Center: nav — auto column, truly centered on the page ── */}
+          <OsfaNav />
 
-          {/* ── Right: controls ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
+          {/* ── Right: controls — flex-shrink:0 on heavy items so they never compress ── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', minWidth: 0 }}>
             {deptInfo && (
               <div className="hide-tablet" style={{
-                display: 'flex', alignItems: 'center', gap: 6,
+                display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
                 padding: '5px 12px', borderRadius: 20,
                 background: deptInfo.bg, border: `1px solid ${deptInfo.color}30`,
               }}>
@@ -83,15 +81,15 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
                 <span style={{ fontSize: 12, fontWeight: 700, color: deptInfo.color }}>{deptInfo.label}</span>
               </div>
             )}
-            <PhClock />
-            <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
+            <div style={{ flexShrink: 0 }}><PhClock /></div>
+            <div style={{ width: 1, height: 20, background: '#e2e8f0', flexShrink: 0 }} />
             <NotificationBell />
-            <Link href="/osfa/profile" className="osfa-icon-btn" style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', textDecoration: 'none' }}>
+            <Link href="/osfa/profile" className="osfa-icon-btn" style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', textDecoration: 'none', flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
             </Link>
-            <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
+            <div style={{ width: 1, height: 20, background: '#e2e8f0', flexShrink: 0 }} />
             <SignOutButton />
           </div>
 
