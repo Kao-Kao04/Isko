@@ -154,15 +154,15 @@ export default function ScholarshipDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(s.requirements ?? []).map((req, i) => (
                 <div key={req.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', background: '#f9fafb', borderRadius: 8, border: '1px solid #f3f4f6' }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: req.is_required ? '#fff5f5' : '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: req.is_required ? COLORS.maroon : '#15803d' }}>{i + 1}</span>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: req.required ? '#fff5f5' : '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: req.required ? COLORS.maroon : '#15803d' }}>{i + 1}</span>
                   </div>
-                  <span style={{ fontSize: 13, color: '#374151', fontWeight: 500, flex: 1, lineHeight: 1.5 }}>{req.name}</span>
+                  <span style={{ fontSize: 13, color: '#374151', fontWeight: 500, flex: 1, lineHeight: 1.5 }}>{req.label}</span>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: req.is_required ? '#dc2626' : '#9ca3af' }}>
-                      {req.is_required ? 'REQUIRED' : 'OPTIONAL'}
+                    <span style={{ fontSize: 10, fontWeight: 700, color: req.required ? '#dc2626' : '#9ca3af' }}>
+                      {req.required ? 'REQUIRED' : 'OPTIONAL'}
                     </span>
-                    {req.description && <span style={{ fontSize: 10, color: '#9ca3af' }}>{req.description}</span>}
+                    {req.hint && <span style={{ fontSize: 10, color: '#9ca3af' }}>{req.hint}</span>}
                   </div>
                 </div>
               ))}

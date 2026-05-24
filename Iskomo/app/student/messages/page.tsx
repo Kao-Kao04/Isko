@@ -122,7 +122,7 @@ export default function StudentMessagesPage() {
             return (
               <button key={c.kind === 'application' ? `app-${c.application_id}` : `contact-${c.id}`}
                 onClick={() => {
-                  if (c.kind === 'application') router.push(`/student/applications/${c.application_id}?tab=messages`);
+                  if (c.kind === 'application') router.push(`/student/messages/${c.application_id}`);
                   else setSelected(c);
                 }}
                 style={{
