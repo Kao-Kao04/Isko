@@ -314,7 +314,15 @@ export default function Page() {
       setConfirmDelete(null);
       addToast('error', 'Scholarship permanently deleted.');
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Failed to delete scholarship.');
+      const msg = err instanceof Error ? err.message : 'Failed to delete scholarship.';
+      // Already deleted server-side — remove from list silently
+      if (msg.toLowerCase().includes('not found')) {
+        setScholarships(prev => prev.filter(s => s.id !== id));
+        setConfirmDelete(null);
+        addToast('error', 'Scholarship permanently deleted.');
+      } else {
+        setDeleteError(msg);
+      }
     }
   }
 
