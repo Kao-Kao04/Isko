@@ -40,6 +40,7 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
           margin: '0 auto',
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
+          columnGap: 20,
           alignItems: 'center',
           padding: '0 20px',
           minHeight: 62,
