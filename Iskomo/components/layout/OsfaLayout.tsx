@@ -38,16 +38,15 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
         <div style={{
           maxWidth: 1400,
           margin: '0 auto',
-          position: 'relative',
-          display: 'flex',
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
           alignItems: 'center',
-          justifyContent: 'space-between',
           padding: '0 20px',
           minHeight: 62,
         }}>
 
           {/* ── Left: logo ── */}
-          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
               background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
@@ -66,22 +65,11 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             </div>
           </Link>
 
-          {/*
-            ── Center: nav — absolutely centered on the page ──
-            This div is pulled out of the flex flow via position:absolute,
-            centered with left:50% + translateX(-50%), and pointer-events
-            are preserved so nav links remain clickable.
-          */}
-          <div style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-          }}>
-            <OsfaNav />
-          </div>
+          {/* ── Center: nav — grid column 2 (auto width, truly centered) ── */}
+          <OsfaNav />
 
           {/* ── Right: controls ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
             {deptInfo && (
               <div className="hide-tablet" style={{
                 display: 'flex', alignItems: 'center', gap: 6,
