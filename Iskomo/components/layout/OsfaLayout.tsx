@@ -40,30 +40,43 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
           margin: '0 auto',
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
+          columnGap: 32,
           alignItems: 'center',
           padding: '0 20px',
           minHeight: 62,
         }}>
 
-          {/* ── Left: logo ── */}
-          <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: `0 2px 10px ${TEAL}45`, flexShrink: 0,
-            }}>
-              <Image
-                src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png"
-                alt="IskoMo" width={20} height={20}
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.03em' }}>IskoMo</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', lineHeight: 1, marginTop: 2.5, letterSpacing: '0.08em', textTransform: 'uppercase' }}>OSFA Portal</div>
-            </div>
-          </Link>
+          {/* ── Left: logo + dept badge ── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Link href="/osfa/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: `linear-gradient(135deg, ${TEAL}, #5C0000)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: `0 2px 10px ${TEAL}45`, flexShrink: 0,
+              }}>
+                <Image
+                  src="/assets/Gemini_Generated_Image_jve2a8jve2a8jve2-removebg-preview.png"
+                  alt="IskoMo" width={20} height={20}
+                  style={{ filter: 'brightness(0) invert(1)' }}
+                />
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.03em' }}>IskoMo</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', lineHeight: 1, marginTop: 2.5, letterSpacing: '0.08em', textTransform: 'uppercase' }}>OSFA Portal</div>
+              </div>
+            </Link>
+            {deptInfo && (
+              <div className="hide-tablet" style={{
+                display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                padding: '5px 12px', borderRadius: 20,
+                background: deptInfo.bg, border: `1px solid ${deptInfo.color}30`,
+              }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: deptInfo.color }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: deptInfo.color }}>{deptInfo.label}</span>
+              </div>
+            )}
+          </div>
 
           {/* ── Center: nav — grid auto column keeps it truly centered ── */}
           <OsfaNav />
