@@ -422,6 +422,10 @@ a {
 .osfa-icon-btn:hover { background: #f3f4f6 !important; border: 1px solid #e5e7eb !important; }
 
 /* ── Tablet adjustments ────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .hide-mobile-text { display: none !important; }
+}
+
 @media (max-width: 900px) {
   .hide-tablet { display: none !important; }
 
