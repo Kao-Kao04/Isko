@@ -19,6 +19,7 @@ export default function ApplyPage() {
 
   const [scholarship,    setScholarship]    = useState<ScholarshipResponse | null>(null);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [categoryBlock,  setCategoryBlock]  = useState<string | null>(null); // category already applied to
   const [dataLoading,    setDataLoading]    = useState(true);
   const [submitError,    setSubmitError]    = useState('');
 
@@ -35,10 +36,16 @@ export default function ApplyPage() {
   useEffect(() => {
     Promise.all([
       scholarshipApi.get(Number(id)),
-      applicationApi.list(1, 50),
+      applicationApi.list(1, 100),
     ]).then(([sch, apps]) => {
       setScholarship(sch);
-      setAlreadyApplied(apps.items.some(a => a.scholarship_id === Number(id)));
+      const active = apps.items.filter(a => !['withdrawn', 'rejected'].includes(a.status));
+      setAlreadyApplied(active.some(a => a.scholarship_id === Number(id)));
+      // One-per-category rule
+      if (sch.category) {
+        const conflict = active.find(a => a.scholarship_id !== Number(id) && a.scholarship?.category === sch.category);
+        if (conflict) setCategoryBlock(sch.category);
+      }
     }).catch(() => {}).finally(() => setDataLoading(false));
   }, [id]);
 
@@ -116,6 +123,36 @@ export default function ApplyPage() {
       <div style={{ maxWidth: 860, margin: '80px auto', display: 'flex', justifyContent: 'center' }}>
         <div style={{ width: 36, height: 36, border: `3px solid #f3f4f6`, borderTop: `3px solid ${COLORS.maroon}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (categoryBlock) {
+    const label = categoryBlock === 'public' ? 'Public' : 'Private';
+    return (
+      <div style={{ maxWidth: 600, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '48px 40px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Application Limit Reached</div>
+          <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 8, lineHeight: 1.6 }}>
+            You already have an active application for a <strong>{label}</strong> scholarship.
+          </div>
+          <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 28, lineHeight: 1.6 }}>
+            Only one application per category is allowed. You can withdraw your current {label} application first if you want to apply to a different one.
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <button onClick={() => router.push('/student/applications')} style={{ background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              View My Applications
+            </button>
+            <button onClick={() => router.back()} style={{ background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 8, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              Go Back
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
