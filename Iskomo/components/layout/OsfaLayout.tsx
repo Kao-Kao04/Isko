@@ -39,8 +39,8 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
           maxWidth: 1400,
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          columnGap: 20,
+          gridTemplateColumns: 'auto 1fr auto',
+          columnGap: 24,
           alignItems: 'center',
           padding: '0 20px',
           minHeight: 62,
@@ -66,8 +66,10 @@ export default async function OsfaLayout({ children }: { children: React.ReactNo
             </div>
           </Link>
 
-          {/* ── Center: nav — grid column 2 (auto width, truly centered) ── */}
-          <OsfaNav />
+          {/* ── Center: nav — 1fr column, items centered within it ── */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <OsfaNav />
+          </div>
 
           {/* ── Right: controls ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
