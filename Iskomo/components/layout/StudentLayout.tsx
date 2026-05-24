@@ -75,15 +75,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             <StudentNav />
           </div>
 
-          {/* Right: Clock + Contact + Bell + Sign Out */}
+          {/* Right: Clock + Bell + Sign Out */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <div className="student-clock"><PhClock /></div>
-            <div style={{ width: 1, height: 20, background: '#e5e7eb' }} />
-            <Link href="/student/contact" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: `1px solid #e5e7eb`, background: '#f9fafb', textDecoration: 'none', fontSize: 12, fontWeight: 600, color: '#374151' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              <span className="hide-mobile-text">Contact OSFA</span>
-            </Link>
-            <div style={{ width: 1, height: 20, background: '#e5e7eb' }} />
+            <div className="hide-tablet" style={{ width: 1, height: 20, background: '#e5e7eb' }} />
             <NotificationBell />
             <div style={{ width: 1, height: 20, background: '#e5e7eb' }} />
             <SignOutButton />

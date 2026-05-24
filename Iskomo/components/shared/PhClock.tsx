@@ -20,9 +20,16 @@ export default function PhClock() {
   if (!time) return null;
 
   return (
-    <div className="hide-tablet" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{time}</div>
-      <div style={{ fontSize: 10, fontWeight: 500, color: '#94a3b8', letterSpacing: '0.03em' }}>{date} · PH</div>
-    </div>
+    <>
+      {/* Desktop: full clock with date — hidden on mobile */}
+      <div className="hide-tablet" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{time}</div>
+        <div style={{ fontSize: 10, fontWeight: 500, color: '#94a3b8', letterSpacing: '0.03em' }}>{date} · PH</div>
+      </div>
+      {/* Mobile: compact time only — shown via student-clock wrapper override */}
+      <div className="student-clock-mobile" style={{ fontSize: 11, fontWeight: 700, color: '#0f172a', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+        {time}
+      </div>
+    </>
   );
 }
