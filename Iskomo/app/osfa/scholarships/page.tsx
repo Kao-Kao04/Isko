@@ -520,7 +520,7 @@ export default function Page() {
 
             return (
               // overflow must be visible so the absolute dropdown isn't clipped
-              <div key={s.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', opacity: isArchived ? 0.72 : 1 }}>
+              <div key={s.id} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', opacity: isArchived ? 0.72 : 1, position: 'relative', zIndex: openMenuId === s.id ? 100 : 'auto' }}>
 
                 {/* Cover image — own overflow:hidden so border-radius clips correctly */}
                 {s.cover_image_url ? (
