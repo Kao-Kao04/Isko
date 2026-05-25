@@ -357,7 +357,7 @@ export default function Home() {
               { value: 4,    suffix: '+',   label: 'Active Scholarships',       accent: MAROON, isNum: true  },
               { value: 14,   suffix: '',    label: 'PUP Colleges Covered',       accent: MAROON, isNum: true  },
               { value: 100,  suffix: '%',   label: 'PUP Main Students Only',     accent: GOLD,   isNum: true  },
-              { value: 0,    suffix: 'OSFA', label: 'Officially Managed',        accent: TEAL,   isNum: false },
+              { value: 0,    suffix: 'OSFA', label: 'In Partnership With',        accent: TEAL,   isNum: false },
             ].map((s) => (
               <div key={s.label} style={{ textAlign:'center' }}>
                 <div style={{ fontSize:36, fontWeight:900, color:s.accent, lineHeight:1 }}>
@@ -473,7 +473,7 @@ export default function Home() {
                   </svg>
                 </div>
                 <div style={{ flex:1, minWidth:240 }}>
-                  <div style={{ fontSize:11, color:`rgba(201,160,39,0.78)`, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Officially Connected To</div>
+                  <div style={{ fontSize:11, color:`rgba(201,160,39,0.78)`, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Capstone Project Partner</div>
                   <div style={{ fontSize:20, fontWeight:800, color:'#fff', marginBottom:6 }}>
                     Polytechnic University of the Philippines
                   </div>
