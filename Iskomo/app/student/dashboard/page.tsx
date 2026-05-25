@@ -113,38 +113,11 @@ export default function Page() {
 
       {/* Pending banner */}
       {isPending && (
-        <div style={{ background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 16 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
-            <div>
-              <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 800, color: '#92400e' }}>Account Pending OSFA Verification</p>
-              <p style={{ margin: 0, fontSize: 13, color: '#b45309', lineHeight: 1.6 }}>
-                Your registration documents have been submitted and are currently being reviewed by an <strong>OSFA staff member</strong>.
-                Please wait — this typically takes <strong>2–3 business days</strong>. You will receive an email notification once your account has been verified and you can start applying for scholarships.
-              </p>
-            </div>
-          </div>
-          <div style={{ background: '#fef9c3', border: '1px solid #fde68a', borderRadius: 10, padding: '10px 14px', marginBottom: 14, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
-            <p style={{ margin: 0, fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>
-              While waiting, you can browse available scholarships — but you will only be able to apply once your account is approved by OSFA.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', border: '1px solid #fde68a' }}>
-            {[
-              { label: 'Documents Submitted', done: true },
-              { label: 'OSFA Reviewing', active: true },
-              { label: 'Approved — Full Access', done: false },
-            ].map((step, i) => (
-              <div key={i} style={{ flex: 1, padding: '9px 12px', background: step.done ? '#fef3c7' : step.active ? '#d97706' : '#fff8e6', textAlign: 'center', borderRight: i < 2 ? '1px solid #fde68a' : 'none' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: step.active ? '#fff' : step.done ? '#92400e' : '#d97706' }}>
-                  {step.done ? '✓ ' : step.active ? '⏳ ' : ''}{step.label}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 16px', marginBottom: 20 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <p style={{ margin: 0, fontSize: 13, color: '#92400e', lineHeight: 1.5 }}>
+            <strong>Account pending OSFA verification.</strong> Your documents are under review — this typically takes 2–3 business days. You can browse scholarships in the meantime.
+          </p>
         </div>
       )}
 

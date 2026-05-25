@@ -426,12 +426,12 @@ a {
   .hide-mobile-text { display: none !important; }
 }
 
-/* student-clock-mobile: compact time shown only inside the student header */
+/* student-clock-mobile: compact time shown only on mobile inside the student header */
 .student-clock-mobile { display: none; }
-.student-clock .student-clock-mobile { display: block; }
 
 @media (max-width: 900px) {
   .hide-tablet { display: none !important; }
+  .student-clock .student-clock-mobile { display: block; }
 
   .responsive-grid-3 {
     grid-template-columns: 1fr 1fr !important;
