@@ -258,7 +258,7 @@ export default function Home() {
             }}>
               <div style={{ width:7, height:7, borderRadius:'50%', background:GOLD_L }} />
               <span style={{ fontSize:11.5, fontWeight:700, color:GOLD_L, letterSpacing:'0.1em', textTransform:'uppercase' }}>
-                Official OSFA Portal · PUP Main
+                Thesis Research Project · PUP Main
               </span>
             </div>
 
@@ -276,11 +276,11 @@ export default function Home() {
               lineHeight:1.8, margin:'0 auto 16px', maxWidth:600,
               animation:'heroIn .8s cubic-bezier(.22,.61,.36,1) .45s both',
             }}>
-              IskoMo is the official scholarship management portal of the&nbsp;
+              IskoMo is a scholarship management system developed as a&nbsp;
               <span style={{ color:'rgba(255,255,255,0.9)', fontWeight:600 }}>
-                Office of Scholarship and Financial Assistance
+                thesis research project
               </span>{' '}
-              at the Polytechnic University of the Philippines – Main Campus.
+              for the Polytechnic University of the Philippines – Main Campus.
             </p>
 
             <p style={{
@@ -607,7 +607,7 @@ export default function Home() {
                 <span style={{ fontSize:18, fontWeight:800, color:'#fff' }}>IskoMo</span>
               </button>
               <p style={{ fontSize:13, lineHeight:1.75, margin:'0 0 14px', color:'rgba(255,255,255,0.40)' }}>
-                Official scholarship management portal for PUP Main students.
+                A scholarship management system for PUP Main — thesis research project.
               </p>
               <div style={{ fontSize:11, color:GOLD, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>
                 PUP Main · OSFA
