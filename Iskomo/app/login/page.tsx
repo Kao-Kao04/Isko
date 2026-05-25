@@ -200,17 +200,11 @@ function LoginPageInner() {
       padding: 24,
     }}>
       {emailVerifiedBanner && (
-        <div style={{ width: '100%', maxWidth: 820, marginBottom: 14, borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
-          <div style={{ padding: '12px 20px', background: '#f0fdf4', border: '1.5px solid #86efac', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#15803d' }}>Email verified! You can now log in.</span>
-          </div>
-          <div style={{ padding: '12px 20px', background: '#eff6ff', border: '1.5px solid #93c5fd', borderTop: 'none', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
-            <div style={{ fontSize: 13, color: '#1e40af', lineHeight: 1.6 }}>
-              <strong>What&apos;s next?</strong> After logging in, complete your registration profile and submit your documents. Your account will then be reviewed by an <strong>OSFA staff member</strong> before you can apply for scholarships — this usually takes <strong>2–3 business days</strong>. You will be notified via email once your account is approved.
-            </div>
-          </div>
+        <div style={{ width: '100%', maxWidth: 820, marginBottom: 14, padding: '12px 20px', background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
+          <span style={{ fontSize: 13, color: '#15803d', lineHeight: 1.5 }}>
+            <strong>Email verified!</strong> Log in and complete your profile to start applying for scholarships.
+          </span>
         </div>
       )}
       {linkExpiredBanner && (
