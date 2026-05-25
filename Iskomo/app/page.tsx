@@ -148,11 +148,11 @@ const CHALLENGES = [
 ];
 
 const TEAM = [
-  { name: 'Emmanuel Mutas',             role: 'Leader',     src: '/assets/photo_2025-12-27_02-41-42.jpg' },
-  { name: 'Marlo Itang',               role: 'Developer',  src: '/assets/Itang_Marlo.jpg' },
-  { name: 'Kit Jasper Palacio',         role: 'Developer',  src: '/assets/Kit Jasper Palacio.jpg' },
-  { name: 'Princess Pauline Abellera',  role: 'Researcher', src: '/assets/Abellera_Princess Pauline.jpg' },
-  { name: 'Mariel Abreu',              role: 'Researcher', src: '/assets/Abreu_Mariel I..jpg' },
+  { name: 'Emmanuel Mutas',             role: 'Leader',       src: '/assets/photo_2025-12-27_02-41-42.jpg' },
+  { name: 'Mariel Abreu',              role: 'Asst. Leader', src: '/assets/Abreu_Mariel I..jpg' },
+  { name: 'Princess Pauline Abellera',  role: 'Researcher',  src: '/assets/Abellera_Princess Pauline.jpg' },
+  { name: 'Kit Jasper Palacio',         role: 'Developer',   src: '/assets/Kit Jasper Palacio.jpg' },
+  { name: 'Marlo Itang',               role: 'Developer',   src: '/assets/Itang_Marlo.jpg' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════
