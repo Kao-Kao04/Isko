@@ -49,6 +49,14 @@ export default function TermsPage() {
           .section-card { break-inside: avoid; page-break-inside: avoid; }
           body { background: white !important; }
         }
+        @media (max-width: 700px) {
+          .terms-grid {
+            grid-template-columns: 1fr !important;
+            padding: 16px 12px 40px !important;
+          }
+          .terms-sidebar { display: none !important; }
+          .section-card { padding: 20px 16px !important; }
+        }
         .nav-link:hover { color: #800000 !important; background: #fff5f5 !important; }
         .section-card { scroll-margin-top: 88px; }
         @keyframes fadeUp {
@@ -104,7 +112,7 @@ export default function TermsPage() {
         <div className="terms-grid" style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 24px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: 28, alignItems: 'start' }}>
 
           {/* Sidebar */}
-          <aside className="no-print" style={{ position: 'sticky', top: 24, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
+          <aside className="no-print terms-sidebar" style={{ position: 'sticky', top: 24, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #f3f4f6', background: '#fafafa' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Navigation</div>
             </div>
@@ -174,7 +182,7 @@ export default function TermsPage() {
                 content: (
                   <>
                     <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.8, margin: '0 0 18px' }}>You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
                       {[
                         { title: 'Account Security', items: ['Keep your password secure and confidential', 'Notify us immediately of any unauthorized access', 'Do not share your account with others'] },
                         { title: 'Account Responsibility', items: ['You are responsible for all actions under your account', 'Ensure all information provided is accurate and current', 'Maintain one account per individual'] },
@@ -198,7 +206,7 @@ export default function TermsPage() {
                     <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.8, margin: '0 0 16px' }}>You agree to use IskoMo only for lawful purposes. The following activities are strictly prohibited:</p>
                     <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '18px 20px', marginBottom: 16 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#dc2626', marginBottom: 10 }}>Prohibited Activities</div>
-                      <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px' }}>
+                      <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '6px 24px' }}>
                         {['Submitting false or fraudulent information', 'Attempting to hack or disrupt the platform', 'Violating other users\' privacy or rights', 'Using the platform for unauthorized commercial purposes', 'Spamming, phishing, or deceptive practices', 'Uploading malicious software or viruses', 'Impersonating other users or entities', 'Collecting user data without authorization'].map(i => (
                           <li key={i} style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>{i}</li>
                         ))}
@@ -277,7 +285,7 @@ export default function TermsPage() {
                 content: (
                   <>
                     <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.8, margin: '0 0 18px' }}>We reserve the right to suspend or terminate your access to IskoMo at any time, with or without cause or notice.</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
                       {[
                         { title: 'Termination by IskoMo', items: ['Violation of these Terms & Conditions', 'Fraudulent or illegal activity', 'Abuse of platform features', 'Extended period of inactivity'] },
                         { title: 'Termination by User', items: ['You may close your account at any time', 'Contact us to request account deletion', 'Data will be deleted per our Privacy Policy', 'Outstanding applications may be cancelled'] },
@@ -299,7 +307,7 @@ export default function TermsPage() {
                 content: (
                   <>
                     <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.8, margin: '0 0 18px' }}>These Terms &amp; Conditions are governed by and construed in accordance with the laws of the Republic of the Philippines.</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
                       {[
                         { title: 'Jurisdiction', desc: 'Any disputes arising from these terms shall be subject to the exclusive jurisdiction of the courts of the Philippines.' },
                         { title: 'Compliance', desc: 'IskoMo operates in compliance with Philippine data protection laws, including the Data Privacy Act of 2012 (RA 10173).' },

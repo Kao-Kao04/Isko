@@ -23,6 +23,14 @@ const PRINT_CSS = `
   }
   .privacy-body > * { margin-bottom: 16px; }
 }
+@media (max-width: 700px) {
+  .privacy-body {
+    flex-direction: column !important;
+    padding: 16px 12px 40px !important;
+  }
+  .privacy-sidebar { display: none !important; }
+  .privacy-body > div { padding: 20px 16px !important; }
+}
 `;
 
 const SECTIONS = [
@@ -92,7 +100,7 @@ export default function PrivacyPage() {
         <div className="privacy-body" style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px 80px', display: 'flex', gap: 32, alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
 
           {/* ── Sidebar ── */}
-          <aside className="no-print" style={{ width: 240, flexShrink: 0, position: 'sticky', top: 24 }}>
+          <aside className="no-print privacy-sidebar" style={{ width: 240, flexShrink: 0, position: 'sticky', top: 24 }}>
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
               <div style={{ padding: '16px 18px', borderBottom: '1px solid #f3f4f6' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Contents</div>
