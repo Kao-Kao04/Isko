@@ -584,7 +584,7 @@ export default function ApplyPage() {
             Cancel
           </button>
           <button
-            onClick={() => { if (canSubmit) setShowModal(true); }}
+            onClick={() => { if (!submitting) setShowModal(true); }}
             disabled={submitting}
             style={{
               flex: 2, padding: '11px 0', borderRadius: 8, border: 'none',
@@ -609,6 +609,7 @@ export default function ApplyPage() {
         cancelLabel="Go Back & Check"
         onConfirm={confirmSubmit}
         onCancel={() => setShowModal(false)}
+        confirmDisabled={!canSubmit}
         checklist={[
           ...docsConfig.map(d => ({ label: d.label, ok: !!files[d.id], required: d.required })),
           { label: 'Dahilan sa pag-apply (min. 30 words)', ok: wordCount >= MIN_WORDS, required: true },

@@ -20,12 +20,13 @@ interface Props {
   onCancel: () => void;
   danger?: boolean;
   checklist?: ChecklistItem[];
+  confirmDisabled?: boolean;
 }
 
 export default function ConfirmModal({
   open, title, message,
   confirmLabel = 'Confirm', cancelLabel = 'Cancel',
-  onConfirm, onCancel, danger = false, checklist,
+  onConfirm, onCancel, danger = false, checklist, confirmDisabled = false,
 }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -97,7 +98,8 @@ export default function ConfirmModal({
           </button>
           <button
             onClick={onConfirm}
-            style={{ flex: 1, padding: '11px 0', borderRadius: 9, border: 'none', background: danger ? '#dc2626' : `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer' }}
+            disabled={confirmDisabled}
+            style={{ flex: 1, padding: '11px 0', borderRadius: 9, border: 'none', background: confirmDisabled ? '#d1d5db' : danger ? '#dc2626' : `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`, fontSize: 14, fontWeight: 700, color: confirmDisabled ? '#9ca3af' : '#fff', cursor: confirmDisabled ? 'not-allowed' : 'pointer' }}
           >
             {confirmLabel}
           </button>
