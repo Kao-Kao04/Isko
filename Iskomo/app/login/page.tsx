@@ -134,7 +134,7 @@ function LoginPageInner() {
     setLoading(true);
     try {
       const user = await login(email, password, rememberMe);
-      if (user.role === 'super_admin')    { router.push('/admin/staff');    return; }
+      if (user.role === 'super_admin')    { router.push('/admin/dashboard'); return; }
       if (user.role === 'osfa_staff')     { router.push('/osfa/dashboard'); return; }
       // Students: route based on verification / registration status
       if (user.account_status === 'unregistered' || user.account_status === 'rejected') {
