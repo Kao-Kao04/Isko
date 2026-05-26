@@ -808,6 +808,13 @@ export default function ApplicantProfilePage() {
             </div>
           )}
 
+          {app.essay_text && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px', gridColumn: '1 / -1' }}>
+              <h3 style={sectionTitle}>Student Essay</h3>
+              <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{app.essay_text}</p>
+            </div>
+          )}
+
           {app.appeal && (
             <div style={{ background: '#fff', borderRadius: 14, border: `1.5px solid ${app.appeal.status === 'pending' ? '#fcd34d' : app.appeal.status === 'approved' ? '#86efac' : '#fca5a5'}`, padding: '24px 28px', gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>

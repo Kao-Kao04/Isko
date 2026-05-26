@@ -146,6 +146,8 @@ export interface ApplicationResponse {
   rejected_docs: number[] | null;
   eval_score: EvalScore | null;
   remarks: string | null;
+  essay_text: string | null;
+  interview_notes: string | null;
   submitted_at: string;
   updated_at: string;
   appeal: AppealResponse | null;
@@ -295,10 +297,10 @@ export const applicationApi = {
   get: (id: number) =>
     apiFetch<ApplicationResponse>(`/api/applications/${id}`),
 
-  submit: (scholarshipId: number) =>
+  submit: (scholarshipId: number, essayText?: string) =>
     apiFetch<ApplicationResponse>('/api/applications', {
       method: 'POST',
-      body: JSON.stringify({ scholarship_id: scholarshipId }),
+      body: JSON.stringify({ scholarship_id: scholarshipId, essay_text: essayText ?? null }),
     }),
 
   withdraw: (id: number) =>

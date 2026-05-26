@@ -93,7 +93,7 @@ export default function ApplyPage() {
     setSubmitting(true);
     setSubmitError('');
     try {
-      const application = await applicationApi.submit(Number(id));
+      const application = await applicationApi.submit(Number(id), essay.trim() || undefined);
       // Upload each file that was attached
       const uploadPromises = docsConfig
         .filter(doc => fileObjects[doc.id])
