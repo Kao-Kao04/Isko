@@ -36,7 +36,7 @@ export default function ApplyPage() {
   useEffect(() => {
     Promise.all([
       scholarshipApi.get(Number(id)),
-      applicationApi.list(1, 100),
+      applicationApi.list(1, 10),
     ]).then(([sch, apps]) => {
       setScholarship(sch);
       const active = apps.items.filter(a => !['withdrawn', 'rejected'].includes(a.status));
@@ -94,13 +94,17 @@ export default function ApplyPage() {
     setSubmitError('');
     try {
       const application = await applicationApi.submit(Number(id), essay.trim() || undefined);
-      // Upload each file that was attached
-      const uploadPromises = docsConfig
-        .filter(doc => fileObjects[doc.id])
-        .map(doc => documentApi.upload(application.id, doc.label, fileObjects[doc.id]));
-      await Promise.allSettled(uploadPromises);
+      // Upload each attached file; track any failures to warn the user
+      const docsToUpload = docsConfig.filter(doc => fileObjects[doc.id]);
+      const uploadResults = await Promise.allSettled(
+        docsToUpload.map(doc => documentApi.upload(application.id, doc.label, fileObjects[doc.id]))
+      );
+      const failedCount = uploadResults.filter(r => r.status === 'rejected').length;
       clearDraft();
       setShowModal(false);
+      if (failedCount > 0) {
+        setSubmitError(`Application submitted, but ${failedCount} document(s) failed to upload. You can re-upload them from your application page.`);
+      }
       setSubmitted(true);
     } catch (err: unknown) {
       setShowModal(false);

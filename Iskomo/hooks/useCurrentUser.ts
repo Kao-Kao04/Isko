@@ -27,5 +27,16 @@ export function useCurrentUser() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'access_token' && e.newValue === null) {
+        clearUserCache();
+        setUser(null);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   return { user, loading };
 }

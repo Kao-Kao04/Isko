@@ -131,7 +131,7 @@ export default function ApplicationDetailPage() {
     };
     window.addEventListener('iskomo:notification', onNotif);
     return () => window.removeEventListener('iskomo:notification', onNotif);
-  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id]);
 
   async function doWfAction(fn: () => Promise<WorkflowResponse>, msg: string) {
     setWfActionLoading(true);
@@ -679,14 +679,15 @@ export default function ApplicationDetailPage() {
             }
             const docBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 
+            const OSFA_FOLDER = process.env.NEXT_PUBLIC_OSFA_FORMS_FOLDER_URL ?? 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link';
             const OSFA_FORMS = [
-              { label: 'Scholarship Agreement Form',                              href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
-              { label: 'Non-Disclosure Agreement',                                href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
-              { label: 'Personal Data Sheet (PUP-PDSA-5-OFSS-009)',              href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
-              { label: 'Request for Clearing Deficiency (with Code)',             href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
-              { label: 'Request for Clearing Deficiency (without Code)',          href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
-              { label: 'Student Assistant Endorsement Form',                      href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
-              { label: 'Student Assistant Evaluation Form',                       href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
+              { label: 'Scholarship Agreement Form',                              href: OSFA_FOLDER },
+              { label: 'Non-Disclosure Agreement',                                href: OSFA_FOLDER },
+              { label: 'Personal Data Sheet (PUP-PDSA-5-OFSS-009)',              href: OSFA_FOLDER },
+              { label: 'Request for Clearing Deficiency (with Code)',             href: OSFA_FOLDER },
+              { label: 'Request for Clearing Deficiency (without Code)',          href: OSFA_FOLDER },
+              { label: 'Student Assistant Endorsement Form',                      href: OSFA_FOLDER },
+              { label: 'Student Assistant Evaluation Form',                       href: OSFA_FOLDER },
             ];
 
             return (
@@ -707,7 +708,7 @@ export default function ApplicationDetailPage() {
                 <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                     <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>OSFA Required Forms</p>
-                    <a href="https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link" target="_blank" rel="noreferrer"
+                    <a href={OSFA_FOLDER} target="_blank" rel="noreferrer"
                       style={{ fontSize: 11, fontWeight: 600, color: COLORS.maroon, textDecoration: 'none' }}>
                       Open Folder ↗
                     </a>
