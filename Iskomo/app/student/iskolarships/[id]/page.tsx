@@ -56,7 +56,7 @@ export default function ScholarshipDetailPage() {
   const colleges  = s.colleges ?? [];
   const badge     = TYPE_BADGE[s.type] ?? TYPE_BADGE['Merit-Based'];
   const initials  = s.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const slotsLeft = (s.slots ?? 0) - (s.awarded_count ?? 0);
+  const slotsLeft = (s.slots ?? 0) - (s.awardedCount ?? 0);
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 24px' }}>
