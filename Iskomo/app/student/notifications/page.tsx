@@ -220,6 +220,8 @@ export default function StudentNotificationsPage() {
                 position: 'sticky',
                 top: 90,
                 overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               {/* Mobile drag handle */}
@@ -228,7 +230,7 @@ export default function StudentNotificationsPage() {
               </div>
 
               {/* Panel header */}
-              <div style={{ padding: '16px 18px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="notif-panel-header" style={{ padding: '16px 18px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 32, height: 32, borderRadius: 8, background: `${MAROON}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {getIcon(selected, 15, MAROON)}
@@ -242,7 +244,7 @@ export default function StudentNotificationsPage() {
               </div>
 
               {/* Panel body */}
-              <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="notif-panel-body" style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
                   <p style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: '#111827', lineHeight: 1.4 }}>{selected.title}</p>
                   <span style={{ fontSize: 11, color: '#9ca3af' }}>{formatFull(selected.created_at)}</span>
