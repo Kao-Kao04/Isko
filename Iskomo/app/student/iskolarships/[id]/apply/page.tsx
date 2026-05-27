@@ -408,7 +408,7 @@ export default function ApplyPage() {
 
           {/* Academic */}
           <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Academic</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px', marginBottom: 20 }}>
+          <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px', marginBottom: 20 }}>
             {[
               { label: 'Full Name',        value: fullName },
               { label: 'Email Address',    value: user?.email ?? '—' },
@@ -427,7 +427,7 @@ export default function ApplyPage() {
 
           {/* Address */}
           <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Address</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px', marginBottom: 20 }}>
+          <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px', marginBottom: 20 }}>
             {[
               { label: 'Street / Barangay',   value: profile?.street_barangay   ?? '—' },
               { label: 'City / Municipality', value: profile?.city_municipality ?? '—' },
@@ -443,7 +443,7 @@ export default function ApplyPage() {
 
           {/* Family Background */}
           <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Family Background</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px' }}>
+          <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px' }}>
             {[
               { label: "Father's Name",         value: profile?.father_name       ?? '—' },
               { label: "Father's Occupation",   value: profile?.father_occupation ?? '—' },
@@ -472,7 +472,7 @@ export default function ApplyPage() {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
+            <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
               {docsConfig.map(doc => {
                 const hasFile  = !!files[doc.id];
                 const hasError = !!fileErrors[doc.id];

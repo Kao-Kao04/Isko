@@ -108,7 +108,7 @@ export default function ScholarshipDetailPage() {
           {/* Key info grid */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <h2 style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Scholarship Details</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {[
                 { label: 'Amount',    value: `${s.amount} ${s.period}` },
                 { label: 'Slots Available', value: `${slotsLeft} of ${s.slots}` },
