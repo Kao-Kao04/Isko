@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getMe, type User } from '@/lib/auth';
 
 let cachedUser: User | null = null;
@@ -15,8 +15,8 @@ export function useCurrentUser() {
   const [user, setUser]       = useState<User | null>(isFresh ? cachedUser : null);
   const [loading, setLoading] = useState(!isFresh);
 
-  useEffect(() => {
-    if (cachedUser !== null && Date.now() - cacheTimestamp < CACHE_TTL) return;
+  const fetchUser = useCallback(() => {
+    setLoading(true);
     getMe()
       .then(u => {
         cachedUser = u;
@@ -26,6 +26,16 @@ export function useCurrentUser() {
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (cachedUser !== null && Date.now() - cacheTimestamp < CACHE_TTL) return;
+    fetchUser();
+  }, [fetchUser]);
+
+  const refresh = useCallback(() => {
+    clearUserCache();
+    fetchUser();
+  }, [fetchUser]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -38,5 +48,5 @@ export function useCurrentUser() {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  return { user, loading };
+  return { user, loading, refresh };
 }

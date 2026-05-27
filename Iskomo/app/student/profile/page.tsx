@@ -22,7 +22,7 @@ function yearLabel(y: number | undefined) {
 }
 
 export default function Page() {
-  const { user, loading, refresh } = useCurrentUser() as { user: any; loading: boolean; refresh?: () => void };
+  const { user, loading, refresh } = useCurrentUser();
   const [saving, setSaving]   = useState(false);
   const [saved,  setSaved]    = useState(false);
   const [err,    setErr]      = useState('');
@@ -104,7 +104,7 @@ export default function Page() {
       });
       setSaved(true); setEditing(false);
       setTimeout(() => setSaved(false), 3000);
-      if ((window as any).__refreshCurrentUser) (window as any).__refreshCurrentUser();
+      refresh();
     } catch (e) { setErr(e instanceof Error ? e.message : 'Failed to save.'); }
     finally { setSaving(false); }
   }
@@ -313,7 +313,7 @@ export default function Page() {
               await userApi.submitGwaRequest(gwaInput.trim(), gwaProof);
               setGwaSaved(true); setGwaInput(''); setGwaProof(null);
               setTimeout(() => setGwaSaved(false), 4000);
-              if ((window as any).__refreshCurrentUser) (window as any).__refreshCurrentUser();
+              refresh();
             } catch (err) { setGwaErr(err instanceof Error ? err.message : 'Failed to submit.'); }
             finally { setGwaSubmitting(false); }
           }

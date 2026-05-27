@@ -362,9 +362,14 @@ export default function RegistrationsPage() {
                     {gwaProofUrl ? 'Hide Proof' : 'View SIS Screenshot'}
                   </button>
                 {gwaProofUrl && (
-                  <a href={gwaProofUrl} target="_blank" rel="noopener noreferrer">
-                    <img src={gwaProofUrl} alt="SIS proof" style={{ width: '100%', borderRadius: 8, border: '1px solid #e5e7eb', display: 'block', marginBottom: 10 }} />
-                  </a>
+                  gwaProofUrl.split('?')[0].toLowerCase().endsWith('.pdf')
+                    ? <a href={gwaProofUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'block', marginBottom: 10, padding: '10px 14px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, color: '#2563eb', fontWeight: 600, textDecoration: 'none' }}>
+                        📄 Open PDF in new tab
+                      </a>
+                    : <a href={gwaProofUrl} target="_blank" rel="noopener noreferrer">
+                        <img src={gwaProofUrl} alt="SIS proof" style={{ width: '100%', borderRadius: 8, border: '1px solid #e5e7eb', display: 'block', marginBottom: 10 }} />
+                      </a>
                 )}
                 <input value={gwaRejectNote} onChange={e => setGwaRejectNote(e.target.value)}
                   placeholder="Rejection reason (optional)" style={{ width: '100%', border: '1px solid #e5e7eb', borderRadius: 7, padding: '7px 10px', fontSize: 12, marginBottom: 10, boxSizing: 'border-box' }} />
@@ -387,7 +392,7 @@ export default function RegistrationsPage() {
                     try {
                       const { userApi } = await import('@/lib/api-client');
                       await userApi.rejectGwaRequest(selected.id, gwaRejectNote || undefined);
-                      addToast('error', 'GWA update rejected.');
+                      addToast('success', 'GWA update rejected.');
                       setGwaProofUrl(null); setGwaRejectNote('');
                       await load();
                     } catch { addToast('error', 'Failed to reject.'); }
