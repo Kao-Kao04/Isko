@@ -40,7 +40,6 @@ export default function ScholarshipCard({
 
   const typeColor = TYPE_COLOR[s.type] ?? M;
   const catStyle  = s.category ? CAT_STYLE[s.category] : null;
-  const slotsLeft = s.slots > 0 ? Math.max(0, s.slots - s.awardedCount) : null;
   const urgentDeadline = s.urgency === 'critical' || s.urgency === 'warning';
 
   /* ── ROW VARIANT ── */
@@ -163,15 +162,6 @@ export default function ScholarshipCard({
           </div>
         </div>
 
-        {/* Award slot progress — informational only */}
-        {slotsLeft !== null && (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ height: 4, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${Math.min(100, Math.round((s.awardedCount / s.slots) * 100))}%`, background: slotsLeft === 0 ? '#dc2626' : '#22c55e', borderRadius: 99, transition: 'width 0.4s ease' }} />
-            </div>
-            <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>{s.awardedCount} of {s.slots} award slots filled</div>
-          </div>
-        )}
 
         {/* Deadline */}
         <div style={{ marginBottom: 14 }}>
