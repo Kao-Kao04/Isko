@@ -668,8 +668,6 @@ export default function Home() {
             <div style={{ maxWidth:1080, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:20 }}>
               <div style={{ display:'flex', alignItems:'center', gap:20, flexWrap:'wrap' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <img src="/assets/pup-logo.png" alt="PUP" style={{ height:32, width:'auto', opacity:0.7, filter:'brightness(0) invert(1)' }}
-                    onError={e => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
                   <span style={{ fontSize:11, color:'rgba(255,255,255,0.35)', fontWeight:600, letterSpacing:'0.04em' }}>POLYTECHNIC UNIVERSITY<br />OF THE PHILIPPINES</span>
                 </div>
                 <div style={{ width:1, height:28, background:'rgba(255,255,255,0.1)' }} />
