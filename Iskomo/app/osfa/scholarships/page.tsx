@@ -519,7 +519,8 @@ export default function Page() {
             const daysLeft = getDaysLeft(s.deadline);
             const urgency  = getUrgency(daysLeft);
             const ur = urgencyStyle[urgency];
-            const slotsFilled = (s.slots ?? 0) > 0 ? (s.applicants_count / (s.slots ?? 1)) * 100 : 0;
+            const awardedCount = s.awarded_count ?? 0;
+            const slotsFilled = (s.slots ?? 0) > 0 ? (awardedCount / (s.slots ?? 1)) * 100 : 0;
             const isArchived  = s.status === 'archived';
             const amount = s.amount_raw ? `₱${s.amount_raw.toLocaleString()}` : '—';
 
@@ -614,7 +615,7 @@ export default function Page() {
                   )}
 
                   {/* Stats row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                     <div style={{ background: '#f8fafc', borderRadius: 8, padding: '8px 10px' }}>
                       <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Deadline</div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: daysLeft <= 3 ? ur.color : '#374151' }}>
@@ -623,14 +624,20 @@ export default function Page() {
                       </div>
                     </div>
                     <div style={{ background: '#f8fafc', borderRadius: 8, padding: '8px 10px' }}>
-                      <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Slots</div>
+                      <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Applied</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>
+                        {s.applicants_count}
+                      </div>
+                    </div>
+                    <div style={{ background: '#f8fafc', borderRadius: 8, padding: '8px 10px' }}>
+                      <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Scholars</div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: slotsFilled >= 90 ? '#dc2626' : '#374151' }}>
-                        {s.applicants_count} / {s.slots ?? '∞'}
+                        {awardedCount} / {s.slots ?? '∞'}
                       </div>
                     </div>
                   </div>
 
-                  {/* Slot fill bar */}
+                  {/* Award fill bar (awarded scholars vs slot quota) */}
                   {(s.slots ?? 0) > 0 && (
                     <div style={{ height: 4, background: '#f3f4f6', borderRadius: 99, marginTop: -4 }}>
                       <div style={{ height: '100%', width: `${Math.min(slotsFilled, 100)}%`, background: slotsFilled >= 90 ? '#dc2626' : slotsFilled >= 70 ? '#d97706' : TEAL, borderRadius: 99, transition: 'width 0.3s' }} />
