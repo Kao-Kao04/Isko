@@ -564,8 +564,8 @@ export default function ApplyPage() {
       }}>
         {/* Row 1: progress info */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid ${canSubmit ? '#15803d' : COLORS.maroon}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: canSubmit ? '#15803d' : COLORS.maroon }}>
+          <div style={{ width: 44, height: 44, borderRadius: '50%', border: `3px solid ${canSubmit ? '#15803d' : COLORS.maroon}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: canSubmit ? '#15803d' : COLORS.maroon, lineHeight: 1, textAlign: 'center' }}>
               {Math.round(((uploadedCount + (wordCount >= MIN_WORDS ? 1 : 0)) / (requiredDocs.length + 1)) * 100)}%
             </span>
           </div>
