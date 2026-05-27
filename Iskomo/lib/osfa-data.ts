@@ -77,6 +77,7 @@ export interface Scholarship {
   daysLeft: number;
   urgency: 'critical' | 'warning' | 'normal';
   applicants: number;
+  awardedCount: number;
   slots: number;
   status: ScholarshipStatus;
   type: string;

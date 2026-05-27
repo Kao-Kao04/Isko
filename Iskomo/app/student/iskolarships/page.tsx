@@ -123,10 +123,8 @@ export default function IskolarshipsPage() {
 
   const active = scholarships.filter(s => s.status === 'Active');
   const withEligibility = active.map(s => {
-    const slotsFull    = s.slots > 0 && s.applicants >= s.slots;
     const deadlinePast = s.daysLeft === 0;
     const alreadyAppl  = appliedIds.has(Number(s.id));
-    if (slotsFull)    return { s, eligible: false, reason: 'Slots full' };
     if (deadlinePast) return { s, eligible: false, reason: 'Application closed' };
     if (alreadyAppl)  return { s, eligible: false, reason: 'Already applied' };
     return { s, ...checkEligibility(s, userCollege, userProgram, userYearLevel, userGwa) };
