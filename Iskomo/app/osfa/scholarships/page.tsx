@@ -317,7 +317,7 @@ export default function Page() {
       await scholarshipApi.delete(id, force);
       setScholarships(prev => prev.filter(s => s.id !== id));
       setConfirmDelete(null);
-      addToast('error', 'Scholarship permanently deleted.');
+      addToast('success', 'Scholarship permanently deleted.');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to delete scholarship.';
       const lower = msg.toLowerCase();
@@ -1089,7 +1089,7 @@ export default function Page() {
                   Delete Permanently
                 </button>
               )}
-              {deleteError?.includes('active application') && (
+              {deleteError?.includes('active application') && confirmDelete.status !== 'archived' && (
                 <button onClick={() => archiveInstead(confirmDelete.id)} style={{ flex: 1, padding: 10, background: COLORS.maroon, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#fff', minWidth: 90 }}>
                   Archive Instead
                 </button>
