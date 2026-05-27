@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { Skel } from '@/components/shared/Skeleton';
 
 const M  = COLORS.maroon;
 const MD = COLORS.maroonD;
@@ -84,6 +85,38 @@ export default function AdminDashboardPage() {
 
   const studentTotal = stats?.students.total ?? 0;
   const appTotal     = appBreakdown.reduce((a, r) => a + r.count, 0);
+
+  if (loading) return (
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+      <Skel h={30} w={220} r={8} mb={8} />
+      <Skel h={13} w={300} r={6} mb={28} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14, marginBottom: 24 }}>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px' }}>
+            <Skel h={11} w="60%" r={5} mb={10} />
+            <Skel h={32} w={60} r={6} mb={6} />
+            <Skel h={10} w="40%" r={5} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {[0,1].map(i => (
+          <div key={i} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px' }}>
+            <Skel h={14} w={140} r={6} mb={16} />
+            {[...Array(4)].map((_, j) => (
+              <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <Skel w={34} h={34} r={17} style={{ flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <Skel h={13} w="50%" r={5} mb={5} />
+                  <Skel h={11} w="65%" r={5} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px' }}>

@@ -8,6 +8,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { scholarshipApi, applicationApi } from '@/lib/api-client';
 import { mapScholarship } from '@/lib/adapters';
 import type { Scholarship } from '@/lib/osfa-data';
+import { Skel } from '@/components/shared/Skeleton';
 
 const M = COLORS.maroon;
 
@@ -313,9 +314,17 @@ export default function IskolarshipsPage() {
           )}
 
           {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
-              {[1, 2, 3].map(i => (
-                <div key={i} style={{ background: '#f9fafb', borderRadius: 14, height: 200, border: '1px solid #e5e7eb', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                  <Skel h={140} r={0} />
+                  <div style={{ padding: '14px 16px' }}>
+                    <Skel h={16} w="75%" r={6} mb={8} />
+                    <Skel h={12} w="90%" r={5} mb={4} />
+                    <Skel h={12} w="60%" r={5} mb={14} />
+                    <Skel h={34} r={8} />
+                  </div>
+                </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (

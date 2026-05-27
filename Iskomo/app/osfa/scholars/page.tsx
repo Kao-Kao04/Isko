@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { scholarApi, type ScholarResponse, type ScholarStatus } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
+import { Skel } from '@/components/shared/Skeleton';
 
 const TEAL      = COLORS.maroon;
 const TEAL_DARK = COLORS.maroonD;
@@ -179,9 +180,30 @@ export default function Page() {
   };
 
   if (loading) return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '80px 24px', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: 40, height: 40, border: `3px solid #f3f4f6`, borderTop: `3px solid ${TEAL}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+      <Skel h={28} w={220} r={8} mb={8} />
+      <Skel h={14} w={320} r={6} mb={20} />
+      {/* status filter tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+        {[...Array(7)].map((_, i) => <Skel key={i} h={60} w={100} r={10} />)}
+      </div>
+      {/* scholar rows */}
+      {[...Array(5)].map((_, i) => (
+        <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '16px 20px', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <Skel w={44} h={44} r={22} style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <Skel h={14} w="35%" r={6} mb={6} />
+              <Skel h={11} w="55%" r={5} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Skel h={30} w={80} r={8} />
+              <Skel h={30} w={100} r={8} />
+              <Skel h={30} w={110} r={8} />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 

@@ -10,6 +10,7 @@ import { applicationApi, scholarshipApi, scholarApi, notificationApi, type Appli
 import { mapScholarship } from '@/lib/adapters';
 import { STUDENT_SUB_STATUS_LABEL } from '@/lib/workflow';
 import type { Scholarship } from '@/lib/osfa-data';
+import { Skel } from '@/components/shared/Skeleton';
 
 const M       = COLORS.maroon;
 const MD      = COLORS.maroonD;
@@ -92,6 +93,36 @@ export default function Page() {
   const latestApp          = applications.filter(a => a.status !== 'withdrawn')[0];
   const approvedCount      = applications.filter(a => a.status === 'approved').length;
   const unreadCount        = notifications.filter(n => !n.is_read).length;
+
+  if (loading || userLoading) return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
+      {/* hero placeholder */}
+      <Skel h={120} r={20} mb={24} />
+      {/* stat cards row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '16px' }}>
+            <Skel h={28} w={60} r={6} mb={8} />
+            <Skel h={12} w="80%" r={5} />
+          </div>
+        ))}
+      </div>
+      {/* scholarship cards */}
+      <Skel h={18} w={160} r={6} mb={12} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+            <Skel h={100} r={0} />
+            <div style={{ padding: '12px 14px' }}>
+              <Skel h={14} w="70%" r={6} mb={6} />
+              <Skel h={11} w="90%" r={5} mb={4} />
+              <Skel h={30} r={7} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
@@ -196,8 +227,14 @@ export default function Page() {
           </div>
           <div style={{ padding: '10px 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {loading ? (
-              [1, 2, 3].map(i => (
-                <div key={i} style={{ height: 80, background: '#f9fafb', borderRadius: 10, animation: 'pulse 1.5s ease-in-out infinite' }} />
+              [...Array(3)].map((_, i) => (
+                <div key={i} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                  <Skel h={80} r={0} />
+                  <div style={{ padding: '10px 12px' }}>
+                    <Skel h={13} w="70%" r={6} mb={6} />
+                    <Skel h={10} w="90%" r={5} mb={4} />
+                  </div>
+                </div>
               ))
             ) : activeScholarships.length === 0 ? (
               <div style={{ padding: '32px 16px', textAlign: 'center' }}>

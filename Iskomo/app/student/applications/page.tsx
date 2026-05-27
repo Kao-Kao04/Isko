@@ -7,6 +7,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { applicationApi, type ApplicationResponse } from '@/lib/api-client';
 import { SUB_STATUS_LABEL } from '@/lib/workflow';
+import { Skel } from '@/components/shared/Skeleton';
 
 const M = COLORS.maroon;
 const MD = COLORS.maroonD;
@@ -84,16 +85,22 @@ export default function ApplicationsPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 36, height: 36, border: `3px solid #f3f4f6`, borderTop: `3px solid ${M}`, borderRadius: '50%', margin: '0 auto 12px', animation: 'spin 1s linear infinite' }} />
-          <p style={{ color: '#6b7280', fontSize: 14 }}>Loading applications...</p>
+  if (loading) return (
+    <div style={{ maxWidth: 700, margin: '0 auto', padding: '28px 16px' }}>
+      <Skel h={28} w={180} r={8} mb={6} />
+      <Skel h={14} w={260} r={6} mb={24} />
+      {[...Array(4)].map((_, i) => (
+        <div key={i} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+            <Skel h={16} w={200} r={6} />
+            <Skel h={20} w={70} r={20} />
+          </div>
+          <Skel h={12} w={150} r={5} mb={6} />
+          <Skel h={12} w={120} r={5} />
         </div>
-      </div>
-    );
-  }
+      ))}
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>

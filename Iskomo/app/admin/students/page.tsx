@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
+import { Skel } from '@/components/shared/Skeleton';
 
 const M = COLORS.maroon;
 const PAGE_SIZE = 20;
@@ -147,7 +148,21 @@ export default function AdminStudentsPage() {
         </div>
       </div>
 
-      {loading ? <Spin /> : displayed.length === 0 ? (
+      {loading ? (
+        <div>
+          {[...Array(6)].map((_, i) => (
+            <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '16px 20px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <Skel w={38} h={38} r={19} style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <Skel h={14} w="40%" r={6} mb={6} />
+                <Skel h={11} w="60%" r={5} />
+              </div>
+              <Skel h={22} w={70} r={20} />
+              <Skel h={30} w={80} r={8} />
+            </div>
+          ))}
+        </div>
+      ) : displayed.length === 0 ? (
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '48px 24px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No students found.</div>
       ) : (
         <>

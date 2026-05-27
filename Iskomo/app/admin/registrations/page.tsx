@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { userApi, type StudentUserResponse } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
+import { Skel } from '@/components/shared/Skeleton';
 
 const M  = COLORS.maroon;
 const MD = COLORS.maroonD;
@@ -120,7 +121,21 @@ export default function AdminRegistrationsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: selectedId ? '1fr 1.4fr' : '1fr', gap: 20 }}>
         {/* List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {loading ? <Spin /> : displayed.length === 0 ? (
+          {loading ? (
+            <div>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '16px 20px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <Skel w={36} h={36} r={18} style={{ flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <Skel h={14} w="40%" r={6} mb={6} />
+                    <Skel h={11} w="55%" r={5} />
+                  </div>
+                  <Skel h={22} w={90} r={20} />
+                  <Skel h={30} w={80} r={8} />
+                </div>
+              ))}
+            </div>
+          ) : displayed.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No students in this category.</div>
           ) : displayed.map(s => {
             const cfg        = STATUS_CFG[s.account_status as AccountStatus] ?? STATUS_CFG.unregistered;

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { applicationApi, scholarshipApi, notificationApi, dashboardApi, reportsApi, type ApplicationResponse, type ScholarshipResponse, type NotificationResponse, type DashboardStats, type CalendarEvent } from '@/lib/api-client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
+import { Skel } from '@/components/shared/Skeleton';
 
 const M      = COLORS.maroon;
 const MD     = COLORS.maroonD;
@@ -128,6 +129,45 @@ export default function Page() {
   ];
   const summaryTotal = appSummary.reduce((a, r) => a + r.count, 0);
 
+  if (loading || userLoading) return (
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+      <Skel h={32} w={240} r={8} mb={8} />
+      <Skel h={14} w={320} r={6} mb={28} />
+      {/* stat cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
+        {[...Array(5)].map((_, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '20px' }}>
+            <Skel h={12} w="60%" r={5} mb={10} />
+            <Skel h={32} w={70} r={6} mb={6} />
+            <Skel h={11} w="40%" r={5} />
+          </div>
+        ))}
+      </div>
+      {/* two-column lower section */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px' }}>
+          <Skel h={16} w={160} r={6} mb={16} />
+          {[...Array(5)].map((_, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <Skel w={36} h={36} r={18} style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <Skel h={13} w="50%" r={5} mb={5} />
+                <Skel h={11} w="70%" r={5} />
+              </div>
+              <Skel h={22} w={70} r={20} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px' }}>
+            <Skel h={14} w={140} r={6} mb={14} />
+            {[...Array(3)].map((_, i) => <Skel key={i} h={54} r={10} mb={8} />)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px' }}>
       <style>{`
@@ -239,8 +279,17 @@ export default function Page() {
             </div>
             <div>
               {loading ? (
-                <div style={{ padding: '28px', display: 'flex', justifyContent: 'center' }}>
-                  <div style={{ width: 24, height: 24, border: `2.5px solid #f3f4f6`, borderTop: `2.5px solid ${M}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <Skel w={36} h={36} r={18} style={{ flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <Skel h={13} w="50%" r={5} mb={5} />
+                        <Skel h={11} w="70%" r={5} />
+                      </div>
+                      <Skel h={22} w={70} r={20} />
+                    </div>
+                  ))}
                 </div>
               ) : applications.length === 0 ? (
                 <div style={{ padding: '32px 24px', textAlign: 'center' }}>
@@ -325,7 +374,9 @@ export default function Page() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {loading ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading…</div>
+                <div style={{ padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[...Array(3)].map((_, i) => <Skel key={i} h={54} r={10} />)}
+                </div>
               ) : upcomingInterviews.length === 0 ? (
                 <div style={{ padding: '24px 18px', textAlign: 'center' }}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -411,7 +462,9 @@ export default function Page() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {loading ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading…</div>
+                <div style={{ padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[...Array(3)].map((_, i) => <Skel key={i} h={54} r={10} />)}
+                </div>
               ) : notifications.length === 0 ? (
                 <div style={{ padding: '28px 18px', textAlign: 'center' }}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>

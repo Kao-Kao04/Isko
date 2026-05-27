@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { applicationApi, type ApplicationResponse, type ApplicationStatus } from '@/lib/api-client';
 import { COLORS } from '@/lib/theme';
+import { Skel } from '@/components/shared/Skeleton';
 
 const M = COLORS.maroon;
 
@@ -77,7 +78,20 @@ export default function AdminApplicationsPage() {
         </div>
       </div>
 
-      {loading ? <Spin /> : displayed.length === 0 ? (
+      {loading ? (
+        <div>
+          {[...Array(6)].map((_, i) => (
+            <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '16px 20px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <Skel w={36} h={36} r={18} style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <Skel h={14} w="45%" r={6} mb={6} />
+                <Skel h={11} w="65%" r={5} />
+              </div>
+              <Skel h={22} w={80} r={20} />
+            </div>
+          ))}
+        </div>
+      ) : displayed.length === 0 ? (
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '60px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
           <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6 }}>No applications found</div>

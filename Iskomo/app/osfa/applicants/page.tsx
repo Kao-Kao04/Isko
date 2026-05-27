@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { applicationApi, type ApplicationResponse, type ApplicationStatus } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
+import { Skel } from '@/components/shared/Skeleton';
 
 const TEAL = COLORS.maroon;
 const TEAL_DARK = COLORS.maroonD;
@@ -245,17 +246,28 @@ function ApplicantsContent() {
     cursor: 'pointer', userSelect: 'none', background: '#f8fafc',
   });
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: `3px solid #f3f4f6`, borderTop: `3px solid ${TEAL}`, borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
-          <p style={{ color: '#6b7280', fontSize: 14 }}>Loading applicants...</p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
+  if (loading) return (
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+      <Skel h={28} w={200} r={8} mb={8} />
+      <Skel h={14} w={300} r={6} mb={24} />
+      {/* filter bar */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {[...Array(5)].map((_, i) => <Skel key={i} h={34} w={90} r={8} />)}
       </div>
-    );
-  }
+      {/* list items */}
+      {[...Array(6)].map((_, i) => (
+        <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '16px 20px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Skel w={40} h={40} r={20} style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <Skel h={14} w="40%" r={6} mb={6} />
+            <Skel h={11} w="60%" r={5} />
+          </div>
+          <Skel h={24} w={80} r={20} />
+          <Skel h={30} w={90} r={8} />
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
