@@ -333,12 +333,17 @@ export default function ApplyPage() {
     { keywords: ['clearing deficiency'],                                        label: 'Request for Clearing Deficiency',           href: OSFA_FOLDER },
   ];
 
-  // Find which requirements have a matching downloadable OSFA form
-  const osformsNeeded = docsConfig.flatMap(doc => {
-    const lower = doc.label.toLowerCase();
-    const match = OSFA_FORM_MAP.find(f => f.keywords.some(k => lower.includes(k)));
-    return match ? [{ ...match, reqLabel: doc.label }] : [];
-  });
+  // Find which requirements have a matching downloadable OSFA form (deduplicated by form label)
+  const osformsNeeded = (() => {
+    const seen = new Set<string>();
+    return docsConfig.flatMap(doc => {
+      const lower = doc.label.toLowerCase();
+      const match = OSFA_FORM_MAP.find(f => f.keywords.some(k => lower.includes(k)));
+      if (!match || seen.has(match.label)) return [];
+      seen.add(match.label);
+      return [{ ...match, reqLabel: doc.label }];
+    });
+  })();
 
   const requiredDocs        = docsConfig.filter(d => d.required);
   const uploadedCount       = requiredDocs.filter(d => files[d.id]).length;

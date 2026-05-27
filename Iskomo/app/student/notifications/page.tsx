@@ -263,7 +263,7 @@ export default function StudentNotificationsPage() {
                     onClick={() => router.push(actionRoute)}
                     style={{ width: '100%', padding: '11px', background: `linear-gradient(135deg, ${MAROON}, #5C0000)`, border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
-                    {selected.application_id ? 'View Application' : selected.route === '/profile' ? 'View Profile' : 'View Scholarships'}
+                    {selected.application_id ? 'View Application' : selected.route === '/profile' ? 'View Profile' : selected.route === '/registrations' ? 'View GWA Request' : 'View Scholarships'}
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </button>
                 )}
