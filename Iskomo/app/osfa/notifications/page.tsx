@@ -184,6 +184,18 @@ export default function Page() {
     setBroadcastOk('');
     try {
       const { notificationApi } = await import('@/lib/api-client');
+      const { apiFetch } = await import('@/lib/api');
+
+      // Upload base64 image to storage first to get a proper HTTPS URL
+      let imageUrl: string | undefined;
+      if (broadcastImage) {
+        const blob = await fetch(broadcastImage).then(r => r.blob());
+        const fd = new FormData();
+        fd.append('file', blob, 'announcement.jpg');
+        const uploaded = await apiFetch<{ url: string }>('/api/notifications/media/upload', { method: 'POST', body: fd });
+        imageUrl = uploaded.url;
+      }
+
       const payload: Parameters<typeof notificationApi.announce>[0] = {
         title: broadcastTitle.trim(),
         body:  broadcastBody.trim(),
@@ -191,8 +203,8 @@ export default function Page() {
         ...(announceTarget === 'by_scholarship' && announceScholarshipId
           ? { scholarship_id: Number(announceScholarshipId) }
           : {}),
-        ...(broadcastLink.trim()  ? { link:      broadcastLink.trim() }  : {}),
-        ...(broadcastImage        ? { image_url: broadcastImage }        : {}),
+        ...(broadcastLink.trim() ? { link:      broadcastLink.trim() } : {}),
+        ...(imageUrl             ? { image_url: imageUrl }            : {}),
       };
       const data = await notificationApi.announce(payload);
       setBroadcastOk(data.message);
@@ -428,14 +440,19 @@ export default function Page() {
     {/* Send Announcement Modal */}
     {showBroadcast && (
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowBroadcast(false)}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 500, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
-          <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Send Announcement</h2>
-          <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>Send a notification to students based on your target selection.</p>
+        <div style={{ background: '#fff', borderRadius: 16, maxWidth: 500, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', maxHeight: '90vh', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
 
-          {broadcastErr && <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626', marginBottom: 14 }}>{broadcastErr}</div>}
-          {broadcastOk  && <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, color: '#15803d', marginBottom: 14 }}>{broadcastOk}</div>}
+          {/* Fixed header */}
+          <div style={{ padding: '24px 28px 0', flexShrink: 0 }}>
+            <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 700, color: '#111827' }}>Send Announcement</h2>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: '#6b7280' }}>Send a notification to students based on your target selection.</p>
+            {broadcastErr && <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626', marginBottom: 12 }}>{broadcastErr}</div>}
+            {broadcastOk  && <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, color: '#15803d', marginBottom: 12 }}>{broadcastOk}</div>}
+          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Scrollable body */}
+          <div style={{ padding: '0 28px', overflowY: 'auto', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Target</label>
               <select value={announceTarget} onChange={e => setAnnounceTarget(e.target.value as typeof announceTarget)}
@@ -486,8 +503,10 @@ export default function Page() {
               )}
             </div>
           </div>
+          </div>
 
-          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+          {/* Fixed footer */}
+          <div style={{ padding: '16px 28px 24px', flexShrink: 0, borderTop: '1px solid #f3f4f6', display: 'flex', gap: 10 }}>
             <button onClick={() => setShowBroadcast(false)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
             <button onClick={sendBroadcast} disabled={broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()} style={{ flex: 1, padding: 10, background: (broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()) ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, #5C0000)`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: (broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()) ? 'not-allowed' : 'pointer', color: '#fff' }}>
               {broadcasting ? 'Sending…' : 'Send Announcement'}
