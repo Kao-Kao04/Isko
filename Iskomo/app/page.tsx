@@ -171,6 +171,16 @@ export default function Home() {
     }
   }, [router]);
 
+  /* Live scholarship count from backend */
+  const [activeScholarships, setActiveScholarships] = useState<number>(4);
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+    fetch(`${base}/api/public/stats`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.active_scholarships != null) setActiveScholarships(d.active_scholarships); })
+      .catch(() => {});
+  }, []);
+
   /* Hero parallax on scroll */
   const [scrollY, setScrollY] = useState(0);
   const onScroll = useCallback(() => setScrollY(window.scrollY), []);
@@ -354,14 +364,14 @@ export default function Home() {
         <div style={{ background:'#fff', borderBottom:'1px solid #f0f0f0', boxShadow:'0 4px 20px rgba(0,0,0,0.07)' }}>
           <div style={{ maxWidth:960, margin:'0 auto', display:'flex', justifyContent:'space-around', flexWrap:'wrap', padding:'36px 24px', gap:24 }}>
             {[
-              { value: 4,    suffix: '+',   label: 'Active Scholarships',       accent: MAROON, isNum: true  },
+              { value: activeScholarships, suffix: activeScholarships > 0 ? '+' : '', label: 'Active Scholarships', accent: MAROON, isNum: true  },
               { value: 14,   suffix: '',    label: 'PUP Colleges Covered',       accent: MAROON, isNum: true  },
               { value: 100,  suffix: '%',   label: 'PUP Main Students Only',     accent: GOLD,   isNum: true  },
               { value: 0,    suffix: 'OSFA', label: 'In Partnership With',        accent: TEAL,   isNum: false },
             ].map((s) => (
               <div key={s.label} style={{ textAlign:'center' }}>
                 <div style={{ fontSize:36, fontWeight:900, color:s.accent, lineHeight:1 }}>
-                  {s.isNum ? <CountUp end={s.value} suffix={s.suffix} /> : <span>{s.suffix}</span>}
+                  {s.isNum ? <CountUp key={s.value} end={s.value} suffix={s.suffix} /> : <span>{s.suffix}</span>}
                 </div>
                 <div style={{ fontSize:13, color:'#6b7280', marginTop:6, fontWeight:500 }}>{s.label}</div>
               </div>
