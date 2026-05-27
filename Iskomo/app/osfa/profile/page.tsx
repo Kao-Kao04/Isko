@@ -47,13 +47,16 @@ export default function Page() {
     }
   }
 
-  const initials  = user?.email ? user.email.slice(0, 2).toUpperCase() : 'OS';
-  const deptLabel = user?.department === 'public'  ? 'Public Scholarships'
-                  : user?.department === 'private' ? 'Private Scholarships'
-                  : 'OSFA';
-  const deptColor = user?.department === 'private'
-    ? { bg: '#fdf4ff', text: '#7e22ce' }
-    : { bg: '#f0fdf4', text: '#15803d' };
+  const initials   = user?.email ? user.email.slice(0, 2).toUpperCase() : 'OS';
+  const isSuperAdmin = user?.role === 'super_admin';
+  const roleLabel  = isSuperAdmin ? 'Super Admin' : 'OSFA Staff';
+  const deptLabel  = isSuperAdmin                  ? 'All Departments'
+                   : user?.department === 'public'  ? 'Public Scholarships'
+                   : user?.department === 'private' ? 'Private Scholarships'
+                   : 'OSFA';
+  const deptColor  = isSuperAdmin                  ? { bg: '#fdf2f8', text: '#9d174d' }
+                   : user?.department === 'private' ? { bg: '#fdf4ff', text: '#7e22ce' }
+                   : { bg: '#f0fdf4', text: '#15803d' };
 
   const TABS: ProfileTab[] = ['Personal', 'Security'];
 
@@ -96,7 +99,7 @@ export default function Page() {
             </h1>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 11px', borderRadius: 20, background: '#eff6ff', color: '#1d4ed8' }}>
-                OSFA Staff
+                {roleLabel}
               </span>
               <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 11px', borderRadius: 20, background: deptColor.bg, color: deptColor.text }}>
                 {deptLabel}
@@ -172,7 +175,7 @@ export default function Page() {
                       Role
                     </label>
                     <div style={{ padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 9, fontSize: 13, color: '#64748b', fontWeight: 500 }}>
-                      OSFA Staff
+                      {roleLabel}
                     </div>
                   </div>
                   <div>
@@ -268,7 +271,7 @@ export default function Page() {
             </div>
             <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[
-                { label: 'Role',         value: 'OSFA Staff',    highlight: false },
+                { label: 'Role',         value: roleLabel,       highlight: false },
                 { label: 'Department',   value: deptLabel,       highlight: false },
                 { label: 'Status',       value: user?.is_active ? 'Active' : 'Inactive', highlight: true, ok: user?.is_active },
                 { label: 'Verified',     value: user?.is_verified ? 'Verified' : 'Unverified', highlight: true, ok: user?.is_verified },
