@@ -18,7 +18,7 @@ interface Student {
   student_profile: {
     first_name: string; last_name: string; student_number: string; college: string; program: string; year_level: number;
     gwa: string | null; pending_gwa: string | null; gwa_request_status: string | null;
-    gwa_rejection_remarks: string | null; gwa_proof_path: string | null;
+    gwa_rejection_remarks: string | null;
   } | null;
 }
 
@@ -65,6 +65,7 @@ export default function RegistrationsPage() {
 
   async function openDocs(student: Student) {
     setSelectedId(student.id);
+    setGwaProofUrl(null); setGwaRejectNote('');
     setSelectedDocs([]);
     setDocsLoading(true);
     try {
@@ -348,8 +349,7 @@ export default function RegistrationsPage() {
                   <div><span style={{ color: '#9ca3af' }}>Current: </span><strong>{selected.student_profile.gwa ?? '—'}</strong></div>
                   <div><span style={{ color: '#9ca3af' }}>Requested: </span><strong style={{ color: '#d97706' }}>{selected.student_profile.pending_gwa}</strong></div>
                 </div>
-                {selected.student_profile.gwa_proof_path && (
-                  <button
+                <button
                     onClick={async () => {
                       if (gwaProofUrl) { setGwaProofUrl(null); return; }
                       try {
@@ -361,7 +361,6 @@ export default function RegistrationsPage() {
                     style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 7, padding: '5px 12px', cursor: 'pointer', marginBottom: 10 }}>
                     {gwaProofUrl ? 'Hide Proof' : 'View SIS Screenshot'}
                   </button>
-                )}
                 {gwaProofUrl && (
                   <a href={gwaProofUrl} target="_blank" rel="noopener noreferrer">
                     <img src={gwaProofUrl} alt="SIS proof" style={{ width: '100%', borderRadius: 8, border: '1px solid #e5e7eb', display: 'block', marginBottom: 10 }} />
