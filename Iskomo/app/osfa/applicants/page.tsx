@@ -376,9 +376,16 @@ function ApplicantsContent() {
                     <td style={{ padding: '12px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{ width: 32, height: 32, borderRadius: '50%', background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <div style={{ fontWeight: 600, color: '#111827' }}>{name}</div>
                           <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>{a.student?.email ?? ''}</div>
+                          {a.essay_text ? (
+                            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                              "{a.essay_text}"
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 11, color: '#d1d5db', marginTop: 3 }}>No essay submitted</div>
+                          )}
                         </div>
                       </div>
                     </td>
