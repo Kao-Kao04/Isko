@@ -31,6 +31,7 @@ export interface ScholarshipResponse {
   eligibility_text: string | null;
   cover_image_url: string | null;
   applicants_count: number;
+  awarded_count: number;
   requirements: RequirementResponse[];
   max_semesters: number | null;
   requires_thank_you_letter: boolean;

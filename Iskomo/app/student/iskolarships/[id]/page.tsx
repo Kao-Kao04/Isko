@@ -56,7 +56,7 @@ export default function ScholarshipDetailPage() {
   const colleges  = s.colleges ?? [];
   const badge     = TYPE_BADGE[s.type] ?? TYPE_BADGE['Merit-Based'];
   const initials  = s.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const slotsLeft = s.slots - s.applicants;
+  const slotsLeft = (s.slots ?? 0) - (s.awarded_count ?? 0);
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 24px' }}>
@@ -198,12 +198,12 @@ export default function ScholarshipDetailPage() {
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Slots Left</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Award Slots Left</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: slotsLeft < 5 ? '#dc2626' : '#374151' }}>{slotsLeft}</span>
               </div>
             </div>
 
-            {s.status === 'Active' && slotsLeft > 0 ? (
+            {s.status === 'Active' ? (
               <Link href={`/student/iskolarships/${s.id}/apply`} style={{
                 display: 'block', width: '100%', padding: '13px 0', textAlign: 'center',
                 background: `linear-gradient(135deg, ${COLORS.maroon}, ${COLORS.maroonD})`,
@@ -215,7 +215,7 @@ export default function ScholarshipDetailPage() {
               </Link>
             ) : (
               <button disabled style={{ width: '100%', padding: '13px 0', background: '#9ca3af', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'not-allowed' }}>
-                {slotsLeft <= 0 ? 'No Slots Available' : 'Applications Closed'}
+                Applications Closed
               </button>
             )}
 

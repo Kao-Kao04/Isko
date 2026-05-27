@@ -332,7 +332,7 @@ export default function ApplyPage() {
   const profile = user?.student_profile;
   const fullName = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : '';
 
-  const slotsLeft = (scholarship.slots ?? 0) - scholarship.applicants_count;
+  const slotsLeft = (scholarship.slots ?? 0) - (scholarship.awarded_count ?? 0);
   const deadline = scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set';
 
   const canSubmit = allRequiredUploaded && agreed.declaration && agreed.terms && !submitting;
@@ -388,7 +388,7 @@ export default function ApplyPage() {
             <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
               {scholarship.amount_raw && <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.maroon }}>₱{scholarship.amount_raw.toLocaleString()} {scholarship.period}</span>}
               <span style={{ fontSize: 13, color: '#6b7280' }}>Deadline: {deadline}</span>
-              <span style={{ fontSize: 13, color: slotsLeft < 5 ? '#dc2626' : '#6b7280' }}>{slotsLeft} slots left</span>
+              <span style={{ fontSize: 13, color: slotsLeft < 5 ? '#dc2626' : '#6b7280' }}>{slotsLeft} award slots left</span>
             </div>
           </div>
         </div>
