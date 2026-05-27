@@ -55,6 +55,7 @@ export default function Page() {
   const [monthlyIncome,  setMonthlyIncome]  = useState('');
 
   const p = user?.student_profile;
+  const isAcademicLocked = user?.account_status === 'pending_verification' || user?.account_status === 'verified';
   const colleges = Object.keys(PUP_COLLEGE_PROGRAMS);
   const programs = college ? (PUP_COLLEGE_PROGRAMS as Record<string, string[]>)[college] ?? [] : [];
 
@@ -87,8 +88,10 @@ export default function Page() {
         body: JSON.stringify({
           first_name: firstName || undefined, last_name: lastName || undefined,
           middle_name: middleName || undefined, student_number: studentNumber || undefined,
-          college: college || undefined, program: program || undefined,
-          year_level: yearLevel ? Number(yearLevel) : undefined,
+          ...(isAcademicLocked ? {} : {
+            college: college || undefined, program: program || undefined,
+            year_level: yearLevel ? Number(yearLevel) : undefined,
+          }),
           street_barangay: street || undefined, city_municipality: city || undefined,
           province: province || undefined, zip_code: zip || undefined,
           father_name: fatherName || undefined, father_occupation: fatherOcc || undefined,
@@ -169,7 +172,14 @@ export default function Page() {
       </div>
 
       <form onSubmit={handleSave}>
-        {err && <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 9, fontSize: 13, color: '#dc2626' }}>{err}</div>}
+        {isAcademicLocked && editing && (
+          <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 9, fontSize: 13, color: '#92400e' }}>
+            College, program, and year level are locked once verification has started. Contact OSFA to request changes.
+          </div>
+        )}
+        {err && !err.includes('college') && !err.includes('program') && !err.includes('year_level') && (
+          <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 9, fontSize: 13, color: '#dc2626' }}>{err}</div>
+        )}
 
         {/* Personal Info */}
         <div style={{ background: '#fff', borderRadius: 16, border: `1.5px solid ${editing ? M + '40' : '#e2e8f0'}`, overflow: 'hidden', marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', transition: 'border-color 0.2s' }}>
@@ -193,8 +203,8 @@ export default function Page() {
               </div>
             ))}
             <div>
-              <label style={lbl}>College *</label>
-              {editing
+              <label style={lbl}>College * {isAcademicLocked && <span style={{ fontSize: 10, color: '#d97706', fontWeight: 600 }}>🔒 Locked</span>}</label>
+              {editing && !isAcademicLocked
                 ? <select className="prof-inp" style={sel} value={college} onChange={e => { setCollege(e.target.value); setProgram(''); }}>
                     <option value="">Select college…</option>
                     {colleges.map(c => <option key={c} value={c}>{c}</option>)}
@@ -203,8 +213,8 @@ export default function Page() {
               }
             </div>
             <div>
-              <label style={lbl}>Program *</label>
-              {editing
+              <label style={lbl}>Program * {isAcademicLocked && <span style={{ fontSize: 10, color: '#d97706', fontWeight: 600 }}>🔒 Locked</span>}</label>
+              {editing && !isAcademicLocked
                 ? <select className="prof-inp" style={sel} value={program} onChange={e => setProgram(e.target.value)} disabled={!college}>
                     <option value="">Select program…</option>
                     {programs.map(pr => <option key={pr} value={pr}>{pr}</option>)}
@@ -213,8 +223,8 @@ export default function Page() {
               }
             </div>
             <div>
-              <label style={lbl}>Year Level *</label>
-              {editing
+              <label style={lbl}>Year Level * {isAcademicLocked && <span style={{ fontSize: 10, color: '#d97706', fontWeight: 600 }}>🔒 Locked</span>}</label>
+              {editing && !isAcademicLocked
                 ? <select className="prof-inp" style={sel} value={yearLevel} onChange={e => setYearLevel(e.target.value)}>
                     <option value="">Select year…</option>
                     {['1st Year','2nd Year','3rd Year','4th Year','5th Year'].map((y, i) => <option key={i+1} value={i+1}>{y}</option>)}
