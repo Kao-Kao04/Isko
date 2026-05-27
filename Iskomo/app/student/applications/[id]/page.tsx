@@ -377,6 +377,71 @@ export default function ApplicationDetailPage() {
             )}
           </div>
 
+          {/* Generate Documents — available at COMPLETION stage (shown before actions so student sees forms first) */}
+          {workflow?.main_status === 'completion' && (() => {
+            async function openDoc(type: 'confirmation-letter' | 'terms') {
+              try {
+                const { apiFetch } = await import('@/lib/api');
+                const html = await apiFetch<string>(`/api/applications/${app!.id}/documents/${type}`, {}, 'text');
+                const blob = new Blob([html], { type: 'text/html' });
+                window.open(URL.createObjectURL(blob), '_blank');
+              } catch {
+                alert('Failed to generate document. Please try again.');
+              }
+            }
+            const docBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+
+            const OSFA_FOLDER = process.env.NEXT_PUBLIC_OSFA_FORMS_FOLDER_URL ?? 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link';
+            const OSFA_FORMS = [
+              { label: 'Scholarship Agreement Form',                              href: OSFA_FOLDER },
+              { label: 'Non-Disclosure Agreement',                                href: OSFA_FOLDER },
+              { label: 'Personal Data Sheet (PUP-PDSA-5-OFSS-009)',              href: OSFA_FOLDER },
+              { label: 'Request for Clearing Deficiency (with Code)',             href: OSFA_FOLDER },
+              { label: 'Request for Clearing Deficiency (without Code)',          href: OSFA_FOLDER },
+              { label: 'Student Assistant Endorsement Form',                      href: OSFA_FOLDER },
+              { label: 'Student Assistant Evaluation Form',                       href: OSFA_FOLDER },
+            ];
+
+            return (
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate Documents</h3>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
+                  <button onClick={() => openDoc('confirmation-letter')} style={docBtn}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Confirmation Letter
+                  </button>
+                  <button onClick={() => openDoc('terms')} style={docBtn}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Terms & Conditions
+                  </button>
+                </div>
+
+                {/* OSFA Required Forms */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>OSFA Required Forms</p>
+                    <a href={OSFA_FOLDER} target="_blank" rel="noreferrer"
+                      style={{ fontSize: 11, fontWeight: 600, color: COLORS.maroon, textDecoration: 'none' }}>
+                      Open Folder ↗
+                    </a>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {OSFA_FORMS.map((form, i) => (
+                      <a key={i} href={form.href} target="_blank" rel="noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fafafa', textDecoration: 'none', color: '#374151', fontSize: 12, fontWeight: 500, transition: 'background 0.12s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f0f9ff'; (e.currentTarget as HTMLElement).style.borderColor = '#bfdbfe'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#fafafa'; (e.currentTarget as HTMLElement).style.borderColor = '#e5e7eb'; }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span style={{ flex: 1 }}>{form.label}</span>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Workflow student actions */}
           {workflow && !isTerminal(workflow.main_status ?? '', workflow.sub_status ?? '') && (() => {
             const ms = workflow.main_status ?? '';
@@ -661,71 +726,6 @@ export default function ApplicationDetailPage() {
                   style={{ width: '100%', padding: '11px 0', background: resubmitting ? '#9ca3af' : '#ea580c', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#fff', cursor: resubmitting ? 'not-allowed' : 'pointer' }}>
                   {resubmitting ? 'Uploading & Resubmitting…' : '↩ Resubmit Application'}
                 </button>
-              </div>
-            );
-          })()}
-
-          {/* Generate Documents — available at COMPLETION stage */}
-          {workflow?.main_status === 'completion' && (() => {
-            async function openDoc(type: 'confirmation-letter' | 'terms') {
-              try {
-                const { apiFetch } = await import('@/lib/api');
-                const html = await apiFetch<string>(`/api/applications/${app!.id}/documents/${type}`, {}, 'text');
-                const blob = new Blob([html], { type: 'text/html' });
-                window.open(URL.createObjectURL(blob), '_blank');
-              } catch {
-                alert('Failed to generate document. Please try again.');
-              }
-            }
-            const docBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' };
-
-            const OSFA_FOLDER = process.env.NEXT_PUBLIC_OSFA_FORMS_FOLDER_URL ?? 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link';
-            const OSFA_FORMS = [
-              { label: 'Scholarship Agreement Form',                              href: OSFA_FOLDER },
-              { label: 'Non-Disclosure Agreement',                                href: OSFA_FOLDER },
-              { label: 'Personal Data Sheet (PUP-PDSA-5-OFSS-009)',              href: OSFA_FOLDER },
-              { label: 'Request for Clearing Deficiency (with Code)',             href: OSFA_FOLDER },
-              { label: 'Request for Clearing Deficiency (without Code)',          href: OSFA_FOLDER },
-              { label: 'Student Assistant Endorsement Form',                      href: OSFA_FOLDER },
-              { label: 'Student Assistant Evaluation Form',                       href: OSFA_FOLDER },
-            ];
-
-            return (
-              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate Documents</h3>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
-                  <button onClick={() => openDoc('confirmation-letter')} style={docBtn}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Confirmation Letter
-                  </button>
-                  <button onClick={() => openDoc('terms')} style={docBtn}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Terms & Conditions
-                  </button>
-                </div>
-
-                {/* OSFA Required Forms */}
-                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>OSFA Required Forms</p>
-                    <a href={OSFA_FOLDER} target="_blank" rel="noreferrer"
-                      style={{ fontSize: 11, fontWeight: 600, color: COLORS.maroon, textDecoration: 'none' }}>
-                      Open Folder ↗
-                    </a>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {OSFA_FORMS.map((form, i) => (
-                      <a key={i} href={form.href} target="_blank" rel="noreferrer"
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fafafa', textDecoration: 'none', color: '#374151', fontSize: 12, fontWeight: 500, transition: 'background 0.12s' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f0f9ff'; (e.currentTarget as HTMLElement).style.borderColor = '#bfdbfe'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#fafafa'; (e.currentTarget as HTMLElement).style.borderColor = '#e5e7eb'; }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span style={{ flex: 1 }}>{form.label}</span>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      </a>
-                    ))}
-                  </div>
-                </div>
               </div>
             );
           })()}
