@@ -323,6 +323,23 @@ export default function ApplyPage() {
     accept:   '.pdf,.jpg,.jpeg,.png,.doc,.docx',
   }));
 
+  const OSFA_FOLDER = 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link';
+  const OSFA_FORM_MAP = [
+    { keywords: ['personal data sheet', 'application form', 'pds'],            label: 'Personal Data Sheet (PUP-PDSA-5-OFSS-009)', href: OSFA_FOLDER },
+    { keywords: ['non-disclosure', 'nda'],                                      label: 'Non-Disclosure Agreement',                  href: OSFA_FOLDER },
+    { keywords: ['scholarship agreement'],                                       label: 'Scholarship Agreement Form',                href: OSFA_FOLDER },
+    { keywords: ['student assistant endorsement', 'endorsement form'],          label: 'Student Assistant Endorsement Form',        href: OSFA_FOLDER },
+    { keywords: ['student assistant evaluation', 'evaluation form'],            label: 'Student Assistant Evaluation Form',         href: OSFA_FOLDER },
+    { keywords: ['clearing deficiency'],                                        label: 'Request for Clearing Deficiency',           href: OSFA_FOLDER },
+  ];
+
+  // Find which requirements have a matching downloadable OSFA form
+  const osformsNeeded = docsConfig.flatMap(doc => {
+    const lower = doc.label.toLowerCase();
+    const match = OSFA_FORM_MAP.find(f => f.keywords.some(k => lower.includes(k)));
+    return match ? [{ ...match, reqLabel: doc.label }] : [];
+  });
+
   const requiredDocs        = docsConfig.filter(d => d.required);
   const uploadedCount       = requiredDocs.filter(d => files[d.id]).length;
   const MIN_WORDS           = 30;
@@ -359,6 +376,56 @@ export default function ApplyPage() {
           </div>
         )}
       </div>
+
+      {/* What You'll Need — prepare documents before uploading */}
+      {docsConfig.length > 0 && (
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, padding: '20px 24px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: `${COLORS.maroon}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={COLORS.maroon} strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Prepare These Documents First</p>
+              <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>Ihanda ang mga sumusunod bago ka mag-upload at mag-submit.</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: osformsNeeded.length > 0 ? 16 : 0 }}>
+            {docsConfig.map((doc, i) => (
+              <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: '#f9fafb', borderRadius: 8, border: '1px solid #f3f4f6' }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: doc.required ? `${COLORS.maroon}15` : '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: doc.required ? COLORS.maroon : '#15803d' }}>{i + 1}</span>
+                </div>
+                <span style={{ fontSize: 13, color: '#374151', flex: 1, lineHeight: 1.4 }}>{doc.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: doc.required ? '#dc2626' : '#9ca3af', flexShrink: 0 }}>
+                  {doc.required ? 'REQUIRED' : 'OPTIONAL'}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {osformsNeeded.length > 0 && (
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 16px' }}>
+              <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#92400e' }}>
+                📥 Download &amp; fill out these OSFA forms before uploading:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {osformsNeeded.map((form, i) => (
+                  <a key={i} href={form.href} target="_blank" rel="noreferrer"
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#fff', border: '1px solid #fde68a', borderRadius: 8, textDecoration: 'none', color: '#374151', fontSize: 12, fontWeight: 500 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span style={{ flex: 1 }}>{form.label}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </a>
+                ))}
+              </div>
+              <p style={{ margin: '10px 0 0', fontSize: 11, color: '#92400e' }}>
+                For: <em>{osformsNeeded.map(f => f.reqLabel).join(', ')}</em>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Progress bar */}
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 24px', marginBottom: 20 }}>

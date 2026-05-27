@@ -54,12 +54,7 @@ const COMMON_REQS = [
   'Personal Data Sheet or Application Form',
   'Student Application Form (from OSFA)',
   'Certificate of Good Moral Character',
-  'CFWP Profile Form / Beneficiary Agreement',
   'Parental Consent (Age 15–17)',
-  '2×2 Picture (white background)',
-  'Community Service Documentation',
-  'Letter of Endorsement',
-  'Proof of Graduation',
 ];
 
 type FormReq = { tempId: string; name: string; description?: string; is_required: boolean };
