@@ -561,6 +561,22 @@ export const userApi = {
 
   sendRegistrationReminders: () =>
     apiFetch<{ sent: number; failed: number; total: number }>('/api/users/send-registration-reminders', { method: 'POST' }),
+
+  submitGwaRequest: (gwa: string, proof: File) => {
+    const fd = new FormData();
+    fd.append('gwa', gwa);
+    fd.append('proof', proof);
+    return apiFetch<StudentUserResponse>('/api/users/me/gwa-request', { method: 'POST', body: fd });
+  },
+
+  approveGwaRequest: (userId: number) =>
+    apiFetch<{ status: string; gwa: string }>(`/api/users/${userId}/gwa-request/approve`, { method: 'PATCH' }),
+
+  rejectGwaRequest: (userId: number, remarks?: string) =>
+    apiFetch<{ status: string }>(`/api/users/${userId}/gwa-request/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify({ remarks: remarks || null }),
+    }),
 };
 
 // ─── Registration API ─────────────────────────────────────────────────────────

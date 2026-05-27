@@ -15,7 +15,11 @@ interface RegDoc { id: number; doc_type: string; filename: string; url: string; 
 interface Student {
   id: number; email: string; account_status: AccountStatus; rejection_remarks: string | null;
   created_at: string;
-  student_profile: { first_name: string; last_name: string; student_number: string; college: string; program: string; year_level: number; } | null;
+  student_profile: {
+    first_name: string; last_name: string; student_number: string; college: string; program: string; year_level: number;
+    gwa: string | null; pending_gwa: string | null; gwa_request_status: string | null;
+    gwa_rejection_remarks: string | null; gwa_proof_path: string | null;
+  } | null;
 }
 
 const STATUS_CFG: Record<AccountStatus, { bg: string; color: string; dot: string; label: string }> = {
@@ -42,6 +46,9 @@ export default function RegistrationsPage() {
   const [checkedIds,     setCheckedIds]     = useState<Set<number>>(new Set());
   const [bulkSaving,     setBulkSaving]     = useState(false);
   const [reminding,      setReminding]      = useState(false);
+  const [gwaProofUrl,    setGwaProofUrl]    = useState<string | null>(null);
+  const [gwaReviewing,   setGwaReviewing]   = useState(false);
+  const [gwaRejectNote,  setGwaRejectNote]  = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -330,6 +337,66 @@ export default function RegistrationsPage() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* GWA Request Review */}
+            {selected.student_profile?.gwa_request_status === 'pending' && (
+              <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>GWA Update Request</div>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 10, fontSize: 13 }}>
+                  <div><span style={{ color: '#9ca3af' }}>Current: </span><strong>{selected.student_profile.gwa ?? '—'}</strong></div>
+                  <div><span style={{ color: '#9ca3af' }}>Requested: </span><strong style={{ color: '#d97706' }}>{selected.student_profile.pending_gwa}</strong></div>
+                </div>
+                {selected.student_profile.gwa_proof_path && (
+                  <button
+                    onClick={async () => {
+                      if (gwaProofUrl) { setGwaProofUrl(null); return; }
+                      try {
+                        const { apiFetch } = await import('@/lib/api');
+                        const res = await apiFetch<{ url: string }>(`/api/users/${selected.id}/gwa-proof`);
+                        setGwaProofUrl(res.url);
+                      } catch { addToast('error', 'Could not load proof.'); }
+                    }}
+                    style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 7, padding: '5px 12px', cursor: 'pointer', marginBottom: 10 }}>
+                    {gwaProofUrl ? 'Hide Proof' : 'View SIS Screenshot'}
+                  </button>
+                )}
+                {gwaProofUrl && (
+                  <a href={gwaProofUrl} target="_blank" rel="noopener noreferrer">
+                    <img src={gwaProofUrl} alt="SIS proof" style={{ width: '100%', borderRadius: 8, border: '1px solid #e5e7eb', display: 'block', marginBottom: 10 }} />
+                  </a>
+                )}
+                <input value={gwaRejectNote} onChange={e => setGwaRejectNote(e.target.value)}
+                  placeholder="Rejection reason (optional)" style={{ width: '100%', border: '1px solid #e5e7eb', borderRadius: 7, padding: '7px 10px', fontSize: 12, marginBottom: 10, boxSizing: 'border-box' }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button disabled={gwaReviewing} onClick={async () => {
+                    setGwaReviewing(true);
+                    try {
+                      const { userApi } = await import('@/lib/api-client');
+                      await userApi.approveGwaRequest(selected.id);
+                      addToast('success', 'GWA update approved.');
+                      setGwaProofUrl(null); setGwaRejectNote('');
+                      await load();
+                    } catch { addToast('error', 'Failed to approve.'); }
+                    finally { setGwaReviewing(false); }
+                  }} style={{ flex: 1, padding: '8px', background: '#059669', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ✓ Approve
+                  </button>
+                  <button disabled={gwaReviewing} onClick={async () => {
+                    setGwaReviewing(true);
+                    try {
+                      const { userApi } = await import('@/lib/api-client');
+                      await userApi.rejectGwaRequest(selected.id, gwaRejectNote || undefined);
+                      addToast('error', 'GWA update rejected.');
+                      setGwaProofUrl(null); setGwaRejectNote('');
+                      await load();
+                    } catch { addToast('error', 'Failed to reject.'); }
+                    finally { setGwaReviewing(false); }
+                  }} style={{ flex: 1, padding: '8px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ✗ Reject
+                  </button>
+                </div>
               </div>
             )}
 
