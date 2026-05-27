@@ -108,6 +108,7 @@ export default function Page() {
   const canAnnounce  = user?.role === 'super_admin' || user?.role === 'osfa_staff';
   const [announceTarget, setAnnounceTarget] = useState<'all' | 'by_scholarship' | 'by_status'>('all');
   const [announceScholarshipId, setAnnounceScholarshipId] = useState('');
+  const [announceStatusFilter, setAnnounceStatusFilter] = useState('pending');
   const [notifications, setNotifications] = useState<DisplayNotif[]>([]);
   const [loading, setLoading]             = useState(true);
   const [activeFilter, setActiveFilter]   = useState<NotifFilter>('All');
@@ -203,16 +204,17 @@ export default function Page() {
         ...(announceTarget === 'by_scholarship' && announceScholarshipId
           ? { scholarship_id: Number(announceScholarshipId) }
           : {}),
+        ...(announceTarget === 'by_status'
+          ? { status_filter: announceStatusFilter }
+          : {}),
         ...(broadcastLink.trim() ? { link:      broadcastLink.trim() } : {}),
         ...(imageUrl             ? { image_url: imageUrl }            : {}),
       };
       const data = await notificationApi.announce(payload);
       setBroadcastOk(data.message);
-      setBroadcastTitle('');
-      setBroadcastBody('');
-      setBroadcastLink('');
-      setBroadcastImage(null);
-      setAnnounceTarget('all');
+      setBroadcastTitle(''); setBroadcastBody(''); setBroadcastLink('');
+      setBroadcastImage(null); setAnnounceTarget('all');
+      setAnnounceScholarshipId(''); setAnnounceStatusFilter('pending');
       setTimeout(() => { setShowBroadcast(false); setBroadcastOk(''); }, 2000);
     } catch (err) {
       setBroadcastErr(err instanceof Error ? err.message : 'Failed to send.');
@@ -267,7 +269,7 @@ export default function Page() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {canAnnounce && (
-            <button onClick={() => setShowBroadcast(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: `linear-gradient(135deg, ${TEAL}, #5C0000)`, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => { setShowBroadcast(true); setBroadcastErr(''); setBroadcastOk(''); setBroadcastTitle(''); setBroadcastBody(''); setBroadcastLink(''); setBroadcastImage(null); setAnnounceTarget('all'); setAnnounceScholarshipId(''); setAnnounceStatusFilter('pending'); }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', background: `linear-gradient(135deg, ${TEAL}, #5C0000)`, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3h20a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3zm-8 4H10"/></svg>
               Send Announcement
             </button>
@@ -467,6 +469,18 @@ export default function Page() {
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Scholarship ID</label>
                 <input type="number" value={announceScholarshipId} onChange={e => setAnnounceScholarshipId(e.target.value)}
                   placeholder="Enter scholarship ID" style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            )}
+            {announceTarget === 'by_status' && (
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Application Status</label>
+                <select value={announceStatusFilter} onChange={e => setAnnounceStatusFilter(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
+                  <option value="pending">Pending (submitted, awaiting review)</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select>
               </div>
             )}
             <div>
