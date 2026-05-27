@@ -163,7 +163,7 @@ export default function CalendarPage() {
 
           {/* This month summary */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>This Month</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{MONTHS[month]} {year}</div>
             <div style={{ fontSize: 28, fontWeight: 800, color: TEAL, lineHeight: 1, marginBottom: 4 }}>
               {events.filter(e => { const d = new Date(e.interview_datetime); return d.getFullYear() === year && d.getMonth() === month; }).length}
             </div>

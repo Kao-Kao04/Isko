@@ -9,7 +9,7 @@ const TEAL      = COLORS.maroon;
 const TEAL_DARK = COLORS.maroonD;
 const TEAL_L    = COLORS.maroonL;
 
-type AccountStatus = 'pending_verification' | 'verified' | 'rejected';
+type AccountStatus = 'pending_verification' | 'verified' | 'rejected' | 'unregistered';
 
 interface RegDoc { id: number; doc_type: string; filename: string; url: string; uploaded_at: string; }
 interface Student {
@@ -22,6 +22,7 @@ const STATUS_CFG: Record<AccountStatus, { bg: string; color: string; dot: string
   pending_verification: { bg: '#fffbeb', color: '#d97706', dot: '#f59e0b', label: 'Pending Review' },
   verified:             { bg: '#f0fdf4', color: '#059669', dot: '#10b981', label: 'Verified'       },
   rejected:             { bg: '#fef2f2', color: '#dc2626', dot: '#dc2626', label: 'Rejected'       },
+  unregistered:         { bg: '#f3f4f6', color: '#6b7280', dot: '#d1d5db', label: 'Not Submitted'  },
 };
 
 export default function RegistrationsPage() {
@@ -199,7 +200,7 @@ export default function RegistrationsPage() {
           ) : filtered.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No students in this category.</div>
           ) : filtered.map(s => {
-            const cfg  = STATUS_CFG[s.account_status] ?? STATUS_CFG.pending_verification;
+            const cfg  = STATUS_CFG[s.account_status] ?? STATUS_CFG.unregistered;
             const name = studentName(s);
             const isSelected = selectedId === s.id;
             const isChecked  = checkedIds.has(s.id);
@@ -321,6 +322,12 @@ export default function RegistrationsPage() {
                   style={{ flex: 1, padding: '11px', background: saving ? '#9ca3af' : '#dc2626', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
                   ✗ Reject
                 </button>
+              </div>
+            )}
+
+            {selected.account_status === 'unregistered' && (
+              <div style={{ padding: '12px 16px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, color: '#6b7280', textAlign: 'center' }}>
+                This student has not submitted registration documents yet.
               </div>
             )}
 

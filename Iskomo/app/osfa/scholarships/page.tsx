@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { scholarshipApi, type ScholarshipResponse, type ScholarshipStatus, type ComplianceDocType } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
@@ -106,12 +107,16 @@ function capitalize(s: string) {
 }
 
 export default function Page() {
+  const searchParams = useSearchParams();
   const { toasts, addToast, removeToast } = useToast();
   const { user } = useCurrentUser();
   const isOsfaStaff = user?.role === 'osfa_staff';
   const [scholarships, setScholarships]   = useState<ScholarshipResponse[]>([]);
   const [loading, setLoading]             = useState(true);
-  const [filterStatus, setFilterStatus]   = useState<'All' | ScholarshipStatus>('All');
+  const [filterStatus, setFilterStatus]   = useState<'All' | ScholarshipStatus>(() => {
+    const s = searchParams.get('status');
+    return (s === 'active' || s === 'draft' || s === 'archived' || s === 'closed') ? s : 'All';
+  });
   const [searchQuery, setSearchQuery]     = useState('');
   const [openMenuId, setOpenMenuId]       = useState<number | null>(null);
   const [formLoading, setFormLoading]     = useState(false);

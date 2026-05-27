@@ -19,7 +19,7 @@ const STATUS_CFG: Record<ScholarStatus, { bg: string; color: string; dot: string
   graduated:    { bg: '#f5f3ff', color: '#7c3aed', dot: '#8b5cf6', label: 'Graduated'    },
 };
 
-const ALL_STATUSES: ScholarStatus[] = ['active', 'probationary', 'under_review', 'on_leave', 'suspended', 'terminated', 'graduated'];
+const ALL_STATUSES: ScholarStatus[] = ['active', 'probationary', 'under_review', 'suspended', 'terminated', 'graduated'];
 const REASON_REQUIRED: ScholarStatus[] = ['terminated', 'suspended'];
 
 function fmtDate(iso: string) {

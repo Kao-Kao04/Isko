@@ -222,6 +222,11 @@ export default function StudentNotificationsPage() {
                 overflow: 'hidden',
               }}
             >
+              {/* Mobile drag handle */}
+              <div className="notif-drag-handle" style={{ display: 'none', justifyContent: 'center', paddingTop: 10, paddingBottom: 4 }}>
+                <div style={{ width: 36, height: 4, borderRadius: 99, background: '#e5e7eb' }} />
+              </div>
+
               {/* Panel header */}
               <div style={{ padding: '16px 18px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { applicationApi, scholarshipApi, notificationApi, dashboardApi, type ApplicationResponse, type ScholarshipResponse, type NotificationResponse, type DashboardStats } from '@/lib/api-client';
+import { applicationApi, scholarshipApi, notificationApi, dashboardApi, reportsApi, type ApplicationResponse, type ScholarshipResponse, type NotificationResponse, type DashboardStats, type CalendarEvent } from '@/lib/api-client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
@@ -45,19 +45,22 @@ export default function Page() {
   const [scholarships,   setScholarships]   = useState<ScholarshipResponse[]>([]);
   const [notifications,  setNotifications]  = useState<NotificationResponse[]>([]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    const [statsRes, appsRes, scholRes, notifsRes] = await Promise.allSettled([
+    const [statsRes, appsRes, scholRes, notifsRes, calRes] = await Promise.allSettled([
       dashboardApi.stats(),
       applicationApi.list(1, 50),
       scholarshipApi.list(1, 100),
       notificationApi.list(1, 10),
+      reportsApi.calendar(),
     ]);
     if (statsRes.status  === 'fulfilled') setDashboardStats(statsRes.value);
     if (appsRes.status   === 'fulfilled') setApplications(appsRes.value.items ?? []);
     if (scholRes.status  === 'fulfilled') setScholarships(scholRes.value.items ?? []);
     if (notifsRes.status === 'fulfilled') setNotifications(notifsRes.value.items ?? []);
+    if (calRes.status    === 'fulfilled') setCalendarEvents(calRes.value.events ?? []);
     setLoading(false);
   }, []);
 
@@ -78,6 +81,11 @@ export default function Page() {
   const inReviewCount   = applications.filter(a => a.eval_status === 'in_review').length;
   const activeScholarships = scholarships.filter(sc => sc.status === 'active');
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  const now = Date.now();
+  const upcomingInterviews = calendarEvents
+    .filter(e => new Date(e.interview_datetime).getTime() >= now)
+    .sort((a, b) => new Date(a.interview_datetime).getTime() - new Date(b.interview_datetime).getTime())
+    .slice(0, 5);
 
   const statCards = [
     {
@@ -305,6 +313,52 @@ export default function Page() {
 
         {/* RIGHT column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+          {/* Upcoming Interviews */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Upcoming Interviews</h3>
+              <Link href="/osfa/calendar" style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: M, textDecoration: 'none', padding: '3px 10px', background: M_LIGHT, borderRadius: 20 }}>View Calendar →</Link>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {loading ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading…</div>
+              ) : upcomingInterviews.length === 0 ? (
+                <div style={{ padding: '24px 18px', textAlign: 'center' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{ display: 'block', margin: '0 auto 8px' }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>No upcoming interviews scheduled.</p>
+                </div>
+              ) : upcomingInterviews.map((ev, idx) => {
+                const dt = new Date(ev.interview_datetime);
+                const isToday = dt.toDateString() === new Date().toDateString();
+                const isTomorrow = dt.toDateString() === new Date(Date.now() + 86400000).toDateString();
+                const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : dt.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+                const timeLabel = dt.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true });
+                return (
+                  <Link key={ev.application_id} href={`/osfa/applicants/${ev.application_id}`}
+                    style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderBottom: idx < upcomingInterviews.length - 1 ? '1px solid #f3f4f6' : 'none', transition: 'background 0.12s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: isToday ? '#f0fdf4' : '#f8fafc', border: `1px solid ${isToday ? '#86efac' : '#e5e7eb'}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: isToday ? '#059669' : '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>{dt.toLocaleDateString('en-PH', { month: 'short' })}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: isToday ? '#059669' : '#374151', lineHeight: 1.1 }}>{dt.getDate()}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.student_name}</div>
+                      <div style={{ fontSize: 11, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.scholarship_name}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? '#059669' : '#374151' }}>{dateLabel}</div>
+                      <div style={{ fontSize: 10, color: '#9ca3af' }}>{timeLabel}</div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Upcoming Deadlines */}
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>

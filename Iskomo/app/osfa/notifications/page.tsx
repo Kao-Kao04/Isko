@@ -20,9 +20,11 @@ interface DisplayNotif {
   title: string;
   message: string;
   time: string;
+  fullDate: string;
   group: NotifGroup;
   isRead: boolean;
   applicationId: number | null;
+  imageUrl?: string;
   actionLabel?: string;
   actionHref?: string;
 }
@@ -68,10 +70,20 @@ function classifyOsfaType(n: NotificationResponse): string {
   return 'info';
 }
 
+function formatFullDate(d: string) {
+  return new Date(d).toLocaleDateString('en-PH', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
 function mapNotif(n: NotificationResponse): DisplayNotif {
-  // Backend _derive_route uses /applications/{id} (student path).
-  // OSFA needs /applicants/{id} — replace it so the link is correct.
-  const route = n.route?.replace(/^\/applications\//, '/applicants/') ?? null;
+  // Normalise the route: strip any /osfa prefix already in the stored route,
+  // then convert student /applications/{id} path to OSFA /applicants/{id}.
+  const route = n.route
+    ?.replace(/^\/osfa/, '')
+    .replace(/^\/applications\//, '/applicants/')
+    ?? null;
   const href = route ? `/osfa${route}` : (n.application_id ? `/osfa/applicants/${n.application_id}` : undefined);
   return {
     id:            n.id,
@@ -79,10 +91,12 @@ function mapNotif(n: NotificationResponse): DisplayNotif {
     title:         n.title,
     message:       n.body,
     time:          formatTime(n.created_at),
+    fullDate:      formatFullDate(n.created_at),
     group:         getGroup(n.created_at),
     isRead:        n.is_read,
     applicationId: n.application_id,
-    actionLabel:   href ? 'View Details' : undefined,
+    imageUrl:      n.image_url ?? undefined,
+    actionLabel:   'View Details',
     actionHref:    href,
   };
 }
@@ -105,6 +119,7 @@ export default function Page() {
   const [broadcasting,      setBroadcasting]      = useState(false);
   const [broadcastOk,       setBroadcastOk]       = useState('');
   const [broadcastErr,      setBroadcastErr]      = useState('');
+  const [selectedNotif,     setSelectedNotif]     = useState<DisplayNotif | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -132,6 +147,15 @@ export default function Page() {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch { /* ignore */ }
   };
+
+  function handleNotifAction(n: DisplayNotif) {
+    markAsRead(n.id);
+    if (n.applicationId && n.actionHref) {
+      router.push(n.actionHref);
+    } else {
+      setSelectedNotif({ ...n, isRead: true });
+    }
+  }
 
   function handleBroadcastImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -287,9 +311,9 @@ export default function Page() {
                     const ts = typeStyle[n.type] ?? typeStyle.info;
                     return (
                       <div key={n.id}
-                        onClick={() => { if (n.actionHref) { markAsRead(n.id); router.push(n.actionHref); } else { markAsRead(n.id); } }}
-                        style={{ background: n.isRead ? '#fff' : '#fafffe', borderRadius: 12, border: n.isRead ? '1px solid #e5e7eb' : `1px solid ${TEAL}30`, padding: '16px 20px', display: 'flex', gap: 14, alignItems: 'flex-start', position: 'relative', cursor: n.actionHref ? 'pointer' : 'default', transition: 'background 0.12s' }}
-                        onMouseEnter={e => { if (n.actionHref) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                        onClick={() => handleNotifAction(n)}
+                        style={{ background: n.isRead ? '#fff' : '#fafffe', borderRadius: 12, border: n.isRead ? '1px solid #e5e7eb' : `1px solid ${TEAL}30`, padding: '16px 20px', display: 'flex', gap: 14, alignItems: 'flex-start', position: 'relative', cursor: 'pointer', transition: 'background 0.12s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.isRead ? '#fff' : '#fafffe'; }}
                       >
                         {!n.isRead && <div style={{ position: 'absolute', top: 16, right: 16, width: 8, height: 8, borderRadius: '50%', background: TEAL }} />}
@@ -305,9 +329,12 @@ export default function Page() {
                           </div>
                           <p style={{ margin: '0 0 12px', fontSize: 13, color: '#4b5563', lineHeight: 1.5 }}>{n.message}</p>
                           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} onClick={e => e.stopPropagation()}>
-                            {n.actionLabel && n.actionHref && (
-                              <Link href={n.actionHref} onClick={() => markAsRead(n.id)} style={{ fontSize: 12, fontWeight: 700, color: TEAL, textDecoration: 'none', padding: '5px 12px', background: TEAL_LIGHT, borderRadius: 7, border: '1px solid #fca5a5' }}>{n.actionLabel}</Link>
-                            )}
+                            <button
+                              onClick={() => handleNotifAction(n)}
+                              style={{ fontSize: 12, fontWeight: 700, color: TEAL, background: TEAL_LIGHT, border: `1px solid ${TEAL}40`, borderRadius: 7, padding: '5px 12px', cursor: 'pointer' }}
+                            >
+                              {n.applicationId ? 'View Details' : 'View Announcement'}
+                            </button>
                             {!n.isRead && (
                               <button onClick={() => markAsRead(n.id)} style={{ fontSize: 12, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 0', fontWeight: 500 }}>Mark as read</button>
                             )}
@@ -364,6 +391,39 @@ export default function Page() {
         </div>
       </div>
     </div>
+
+    {/* Notification Detail Modal */}
+    {selectedNotif && !selectedNotif.applicationId && (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setSelectedNotif(null)}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 0, maxWidth: 520, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', overflow: 'hidden', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+          {/* Modal header */}
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: `${TEAL}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEAL }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3h20a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3zm-8 4H10"/></svg>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Announcement</span>
+            </div>
+            <button onClick={() => setSelectedNotif(null)} style={{ background: '#f3f4f6', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: 16 }}>×</button>
+          </div>
+          {/* Modal body */}
+          <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <p style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 700, color: '#111827', lineHeight: 1.4 }}>{selectedNotif.title}</p>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>{selectedNotif.fullDate}</span>
+            </div>
+            {selectedNotif.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={selectedNotif.imageUrl} alt="announcement" style={{ width: '100%', borderRadius: 10, objectFit: 'cover', maxHeight: 220, display: 'block' }} />
+            )}
+            <div style={{ background: '#f8fafc', borderRadius: 10, padding: '14px 16px', border: '1px solid #f1f5f9' }}>
+              <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{selectedNotif.message}</p>
+            </div>
+            <button onClick={() => setSelectedNotif(null)} style={{ width: '100%', padding: '10px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* Send Announcement Modal */}
     {showBroadcast && (

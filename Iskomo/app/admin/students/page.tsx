@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
@@ -39,11 +40,12 @@ function Spin() {
 }
 
 export default function AdminStudentsPage() {
+  const searchParams = useSearchParams();
   const { toasts, addToast, removeToast } = useToast();
   const [students, setStudents]           = useState<AdminStudent[]>([]);
   const [page, setPage]                   = useState(1);
   const [total, setTotal]                 = useState(0);
-  const [filter, setFilter]               = useState('all');
+  const [filter, setFilter]               = useState(() => searchParams.get('account_status') ?? 'all');
   const [search, setSearch]               = useState('');
   const [loading, setLoading]             = useState(false);
 

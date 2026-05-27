@@ -76,6 +76,9 @@ export default function ApplicationDetailPage() {
   const [compliance,    setCompliance]    = useState<ComplianceSubmission[]>([]);
   const [complianceLoading, setComplianceLoading] = useState(false);
   const [complianceDocs,    setComplianceDocs]    = useState<{ id: number; name: string; is_required: boolean }[]>([]);
+  const [complianceFiles,       setComplianceFiles]       = useState<Record<string, File>>({});
+  const [complianceFileNames,   setComplianceFileNames]   = useState<Record<string, string>>({});
+  const [complianceItemLoading, setComplianceItemLoading] = useState<string | null>(null);
 
   const DOC_LIMIT = 20;
 
@@ -192,6 +195,25 @@ export default function ApplicationDetailPage() {
     } finally {
       setResubmitting(false);
     }
+  }
+
+  async function submitComplianceDoc(docName: string, file?: File) {
+    setComplianceItemLoading(docName);
+    try {
+      let fileUrl: string | undefined;
+      if (file) {
+        const uploaded = await documentApi.upload(app!.id, docName, file);
+        fileUrl = uploaded.file_url;
+      }
+      const sub = await applicationApi.submitCompliance(app!.id, {
+        requirement_type: docName,
+        ...(fileUrl ? { file_url: fileUrl } : {}),
+      });
+      setCompliance(prev => [...prev.filter(c => c.requirement_type !== docName), sub]);
+      setComplianceFiles(prev => { const n = { ...prev }; delete n[docName]; return n; });
+      setComplianceFileNames(prev => { const n = { ...prev }; delete n[docName]; return n; });
+    } catch { /* silent */ }
+    finally { setComplianceItemLoading(null); }
   }
 
   if (loading) {
@@ -314,7 +336,12 @@ export default function ApplicationDetailPage() {
                         {isPublic ? 'Submission Deadline' : 'Interview Scheduled'}
                       </div>
                       <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}><strong>{isPublic ? 'Submit documents by:' : 'Date & Time:'}</strong> {formatInterviewDt(workflow.interview_datetime)}</div>
-                      {workflow.interview_location && <div style={{ fontSize: 13, color: '#374151' }}><strong>{isPublic ? 'Submit to:' : 'Location:'}</strong> {workflow.interview_location}</div>}
+                      {workflow.interview_location && <div style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}><strong>{isPublic ? 'Submit to:' : 'Location:'}</strong> {workflow.interview_location}</div>}
+                      {workflow.interview_instructions && (
+                        <div style={{ marginTop: 8, padding: '8px 12px', background: '#fff', borderRadius: 7, border: '1px solid #fde68a', fontSize: 13, color: '#92400e', lineHeight: 1.5 }}>
+                          <strong>Instructions:</strong> {workflow.interview_instructions}
+                        </div>
+                      )}
                     </div>
                   )}
                   {/* Public: OSFA hasn't set the deadline yet */}
@@ -355,8 +382,8 @@ export default function ApplicationDetailPage() {
             const ms = workflow.main_status ?? '';
             const ss = workflow.sub_status  ?? '';
             const inp: React.CSSProperties = { width: '100%', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' };
-            const showSchedule   = ms === 'interview' && ss === 'not_scheduled' && !isPublic;
-            const showReschedule = ms === 'interview' && (ss === 'scheduled' || ss === 'rescheduled') && !isPublic;
+            const showSchedule   = ms === 'interview' && ss === 'not_scheduled';
+            const showReschedule = ms === 'interview' && (ss === 'scheduled' || ss === 'rescheduled');
             const showSubmitReqs = ms === 'completion' && ss === 'pending_requirements';
             const showWithdraw   = !isTerminal(ms, ss) && ms !== 'completion';
             if (!showSchedule && !showReschedule && !showWithdraw && !showSubmitReqs) return null;
@@ -368,13 +395,13 @@ export default function ApplicationDetailPage() {
                 {/* Schedule Interview (only when not yet scheduled) */}
                 {showSchedule && wfDialog !== 'schedule' && (
                   <button onClick={() => setWfDialog('schedule')} style={{ padding: '9px 18px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 10, display: 'block' }}>
-                    Schedule Interview
+                    {isPublic ? 'Request Schedule' : 'Schedule Interview'}
                   </button>
                 )}
 
                 {wfDialog === 'schedule' && (
                   <div style={{ background: '#f8fafc', borderRadius: 10, padding: '16px', marginBottom: 12 }}>
-                    <h4 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827' }}>Schedule Interview</h4>
+                    <h4 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827' }}>{isPublic ? 'Request Schedule' : 'Schedule Interview'}</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
                       <div>
                         <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Preferred Date & Time</label>
@@ -403,13 +430,13 @@ export default function ApplicationDetailPage() {
                 {/* Request Reschedule (when already scheduled or rescheduled) */}
                 {showReschedule && wfDialog !== 'reschedule' && (
                   <button onClick={() => setWfDialog('reschedule')} style={{ padding: '9px 18px', background: '#fff', color: COLORS.maroon, border: `1px solid ${COLORS.maroon}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 10, display: 'block' }}>
-                    Request Reschedule
+                    {isPublic ? 'Request Reschedule / Extension' : 'Request Reschedule'}
                   </button>
                 )}
 
                 {wfDialog === 'reschedule' && (
                   <div style={{ background: '#f8fafc', borderRadius: 10, padding: '16px', marginBottom: 12, border: `1px solid ${COLORS.maroon}30` }}>
-                    <h4 style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: '#111827' }}>Request Reschedule</h4>
+                    <h4 style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: '#111827' }}>{isPublic ? 'Request Reschedule / Extension' : 'Request Reschedule'}</h4>
                     <div style={{ marginBottom: 12 }}>
                       <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Reason for rescheduling (required)</label>
                       <textarea value={rescheduleReason} onChange={e => setRescheduleReason(e.target.value)} placeholder="e.g. I have a class conflict on that day..." rows={3} style={{ ...inp, resize: 'vertical' }} />
@@ -651,10 +678,21 @@ export default function ApplicationDetailPage() {
               }
             }
             const docBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+
+            const OSFA_FORMS = [
+              { label: 'Scholarship Agreement Form',                              href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
+              { label: 'Non-Disclosure Agreement',                                href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
+              { label: 'Personal Data Sheet (PUP-PDSA-5-OFSS-009)',              href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
+              { label: 'Request for Clearing Deficiency (with Code)',             href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
+              { label: 'Request for Clearing Deficiency (without Code)',          href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
+              { label: 'Student Assistant Endorsement Form',                      href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
+              { label: 'Student Assistant Evaluation Form',                       href: 'https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link' },
+            ];
+
             return (
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Generate Documents</h3>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
                   <button onClick={() => openDoc('confirmation-letter')} style={docBtn}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     Confirmation Letter
@@ -663,6 +701,29 @@ export default function ApplicationDetailPage() {
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     Terms & Conditions
                   </button>
+                </div>
+
+                {/* OSFA Required Forms */}
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>OSFA Required Forms</p>
+                    <a href="https://drive.google.com/drive/folders/10rzE2Lej8tQ70PUXBAGknmss2UnkR7FR?usp=drive_link" target="_blank" rel="noreferrer"
+                      style={{ fontSize: 11, fontWeight: 600, color: COLORS.maroon, textDecoration: 'none' }}>
+                      Open Folder ↗
+                    </a>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {OSFA_FORMS.map((form, i) => (
+                      <a key={i} href={form.href} target="_blank" rel="noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fafafa', textDecoration: 'none', color: '#374151', fontSize: 12, fontWeight: 500, transition: 'background 0.12s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f0f9ff'; (e.currentTarget as HTMLElement).style.borderColor = '#bfdbfe'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#fafafa'; (e.currentTarget as HTMLElement).style.borderColor = '#e5e7eb'; }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span style={{ flex: 1 }}>{form.label}</span>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               </div>
             );
@@ -699,38 +760,75 @@ export default function ApplicationDetailPage() {
                     {complianceDocs.map(docType => {
                       const submitted = compliance.find(c => c.requirement_type === docType.name);
                       const isVerified = submitted?.is_verified;
+                      const isItemLoading = complianceItemLoading === docType.name;
+                      const selectedFile = complianceFiles[docType.name];
+                      const selectedFileName = complianceFileNames[docType.name];
                       return (
-                        <div key={docType.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 9, border: `1px solid ${isVerified ? '#bbf7d0' : submitted ? '#bfdbfe' : '#e5e7eb'}`, background: isVerified ? '#f0fdf4' : submitted ? '#eff6ff' : '#fafafa' }}>
-                          <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: isVerified ? '#dcfce7' : submitted ? '#dbeafe' : '#f3f4f6' }}>
-                            {isVerified
-                              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                              : submitted
-                              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
-                              {docType.name}
-                              {docType.is_required && <span style={{ marginLeft: 5, fontSize: 10, color: '#9ca3af' }}>Required</span>}
+                        <div key={docType.id} style={{ borderRadius: 9, border: `1px solid ${isVerified ? '#bbf7d0' : submitted ? '#bfdbfe' : '#e5e7eb'}`, background: isVerified ? '#f0fdf4' : submitted ? '#eff6ff' : '#fafafa', overflow: 'hidden' }}>
+                          {/* Header row */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px' }}>
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: isVerified ? '#dcfce7' : submitted ? '#dbeafe' : '#f3f4f6' }}>
+                              {isVerified
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                : submitted
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>}
                             </div>
-                            <div style={{ fontSize: 11, color: isVerified ? '#15803d' : submitted ? '#1d4ed8' : '#9ca3af', marginTop: 2 }}>
-                              {isVerified ? `Verified by OSFA${submitted?.verified_at ? ` · ${new Date(submitted.verified_at).toLocaleDateString()}` : ''}` : submitted ? 'Submitted — awaiting verification' : 'Not submitted yet'}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+                                {docType.name}
+                                {docType.is_required && <span style={{ marginLeft: 5, fontSize: 10, color: '#9ca3af' }}>Required</span>}
+                              </div>
+                              <div style={{ fontSize: 11, color: isVerified ? '#15803d' : submitted ? '#1d4ed8' : '#9ca3af', marginTop: 2 }}>
+                                {isVerified
+                                  ? `Verified by OSFA${submitted?.verified_at ? ` · ${new Date(submitted.verified_at).toLocaleDateString()}` : ''}`
+                                  : submitted
+                                  ? `Submitted — awaiting OSFA verification${submitted.file_url ? ' (with file)' : ' (physical)'}`
+                                  : 'Not yet submitted'}
+                              </div>
                             </div>
                           </div>
+
+                          {/* Upload / submit row — only when not yet submitted */}
                           {!submitted && (
-                            <button
-                              disabled={complianceLoading}
-                              onClick={async () => {
-                                setComplianceLoading(true);
-                                try {
-                                  const sub = await applicationApi.submitCompliance(app.id, { requirement_type: docType.name });
-                                  setCompliance(prev => [...prev.filter(c => c.requirement_type !== docType.name), sub]);
-                                } catch { /* toast would be better but keeping it simple */ }
-                                finally { setComplianceLoading(false); }
-                              }}
-                              style={{ padding: '6px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-                              Mark Submitted
-                            </button>
+                            <div style={{ padding: '10px 14px 12px', borderTop: '1px solid #f0f0f0', background: '#fff' }}>
+                              <p style={{ margin: '0 0 8px', fontSize: 11, color: '#6b7280' }}>
+                                Bring the original to the OSFA office, or attach a scanned copy below.
+                              </p>
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                {/* File picker */}
+                                <label htmlFor={`compliance-${docType.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', border: `1px dashed ${selectedFile ? COLORS.maroon : '#d1d5db'}`, borderRadius: 7, background: selectedFile ? '#fff5f5' : '#fafafa', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: selectedFile ? COLORS.maroon : '#6b7280', flexShrink: 0 }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                  <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFileName ?? 'Attach file'}</span>
+                                  <input id={`compliance-${docType.id}`} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
+                                    onChange={e => {
+                                      const f = e.target.files?.[0];
+                                      if (f) {
+                                        setComplianceFiles(prev => ({ ...prev, [docType.name]: f }));
+                                        setComplianceFileNames(prev => ({ ...prev, [docType.name]: f.name }));
+                                      }
+                                    }} />
+                                </label>
+
+                                {/* Upload & Submit — only shown when a file is selected */}
+                                {selectedFile && (
+                                  <button
+                                    disabled={isItemLoading}
+                                    onClick={() => submitComplianceDoc(docType.name, selectedFile)}
+                                    style={{ padding: '6px 14px', border: 'none', borderRadius: 7, background: isItemLoading ? '#9ca3af' : COLORS.maroon, color: '#fff', fontSize: 12, fontWeight: 600, cursor: isItemLoading ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+                                    {isItemLoading ? 'Uploading…' : 'Upload & Submit'}
+                                  </button>
+                                )}
+
+                                {/* Mark as physically submitted (no file) */}
+                                <button
+                                  disabled={isItemLoading}
+                                  onClick={() => submitComplianceDoc(docType.name)}
+                                  style={{ padding: '6px 14px', border: '1px solid #e5e7eb', borderRadius: 7, background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, cursor: isItemLoading ? 'not-allowed' : 'pointer', flexShrink: 0, opacity: isItemLoading ? 0.6 : 1 }}>
+                                  {isItemLoading ? 'Submitting…' : 'Mark as Submitted'}
+                                </button>
+                              </div>
+                            </div>
                           )}
                         </div>
                       );

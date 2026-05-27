@@ -671,6 +671,7 @@ export interface WorkflowResponse {
   interview_scheduled_at:  string | null;
   interview_datetime:      string | null;
   interview_location:      string | null;
+  interview_instructions:  string | null;
   interview_completed_at:  string | null;
   evaluated_at:            string | null;
   decision_released_at:    string | null;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { applicationApi, type ApplicationResponse, type ApplicationStatus } from '@/lib/api-client';
 import { COLORS } from '@/lib/theme';
 
@@ -24,10 +25,11 @@ function Spin() {
 function fmt(d: string) { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
 
 export default function AdminApplicationsPage() {
+  const searchParams = useSearchParams();
   const [items,   setItems]   = useState<ApplicationResponse[]>([]);
   const [total,   setTotal]   = useState(0);
   const [page,    setPage]    = useState(1);
-  const [status,  setStatus]  = useState<string>('all');
+  const [status,  setStatus]  = useState<string>(() => searchParams.get('status') ?? 'all');
   const [search,  setSearch]  = useState('');
   const [loading, setLoading] = useState(true);
 
