@@ -569,14 +569,14 @@ export default function Page() {
                           <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setOpenMenuId(null)} />
                           <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 180, overflow: 'hidden' }}>
                             {[
-                              { label: 'Edit',                color: '#374151', show: true,                  action: () => openEdit(s) },
-                              { label: 'Download Report',     color: '#2563eb', show: true,                  action: () => { setOpenMenuId(null); window.open(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'}/api/scholarships/${s.id}/report`, '_blank'); } },
-                              { label: 'Duplicate',           color: '#374151', show: true,                  action: () => duplicateScholarship(s) },
-                              { label: 'Publish',             color: TEAL,      show: s.status === 'draft',  action: () => { setOpenMenuId(null); setTimeout(() => setConfirmPublish(s), 50); } },
-                              { label: 'Reopen Applications', color: '#2563eb', show: s.status === 'closed', action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
-                              { label: 'Close Applications',  color: '#ea580c', show: s.status === 'active', action: () => { setOpenMenuId(null); setTimeout(() => setConfirmClose(s), 50); } },
-                              { label: 'Archive',             color: '#dc2626', show: s.status === 'draft' || s.status === 'closed', action: () => { setOpenMenuId(null); setTimeout(() => { setConfirmArchive(s); setArchiveConfirmText(''); }, 50); } },
-                              { label: 'Delete',              color: '#dc2626', show: true,                  action: () => { setOpenMenuId(null); setTimeout(() => setConfirmDelete(s), 50); } },
+                              { label: 'Edit',                color: '#374151', show: s.status !== 'archived',  action: () => openEdit(s) },
+                              { label: 'Download Report',     color: '#2563eb', show: true,                   action: () => { setOpenMenuId(null); window.open(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'}/api/scholarships/${s.id}/report`, '_blank'); } },
+                              { label: 'Duplicate',           color: '#374151', show: true,                   action: () => duplicateScholarship(s) },
+                              { label: 'Publish',             color: TEAL,      show: s.status === 'draft',   action: () => { setOpenMenuId(null); setTimeout(() => setConfirmPublish(s), 50); } },
+                              { label: 'Reopen Applications', color: '#2563eb', show: s.status === 'closed',  action: () => { publishScholarship(s.id); setOpenMenuId(null); } },
+                              { label: 'Close Applications',  color: '#ea580c', show: s.status === 'active',  action: () => { setOpenMenuId(null); setTimeout(() => setConfirmClose(s), 50); } },
+                              { label: 'Archive',             color: '#dc2626', show: s.status !== 'archived', action: () => { setOpenMenuId(null); setTimeout(() => { setConfirmArchive(s); setArchiveConfirmText(''); }, 50); } },
+                              { label: 'Delete',              color: '#dc2626', show: true,                   action: () => { setOpenMenuId(null); setTimeout(() => setConfirmDelete(s), 50); } },
                             ].filter(item => item.show).map(item => (
                               // onMouseDown fires before the trigger button's blur, so the menu
                               // is still mounted when the action runs.
