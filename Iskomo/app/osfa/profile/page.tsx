@@ -68,45 +68,49 @@ export default function Page() {
       </div>
 
       {/* ── Hero card ── */}
-      <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+      <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #e5e7eb', marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', overflow: 'visible' }}>
         {/* Banner */}
-        <div style={{ height: 120, background: `linear-gradient(135deg, ${TEAL} 0%, ${TEAL_DARK} 55%, #C9A027 100%)`, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ height: 110, background: `linear-gradient(135deg, ${TEAL} 0%, ${TEAL_DARK} 55%, #C9A027 100%)`, borderRadius: '18px 18px 0 0', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -40, right: -40,  width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
           <div style={{ position: 'absolute', bottom: -60, right: 80, width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
         </div>
 
-        {/* Avatar row */}
-        <div style={{ padding: '0 32px 28px', display: 'flex', alignItems: 'flex-end', gap: 24, marginTop: -36, flexWrap: 'wrap' }}>
+        {/* Avatar + info row */}
+        <div style={{ padding: '0 28px 22px', display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap' }}>
+          {/* Avatar — overlaps banner */}
           <div style={{
-            width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
+            width: 82, height: 82, borderRadius: '50%', flexShrink: 0,
             background: `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 28, fontWeight: 800,
-            border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            color: '#fff', fontSize: 26, fontWeight: 800,
+            border: '4px solid #fff', boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+            marginTop: -41, position: 'relative', zIndex: 1,
           }}>
             {userLoading ? '…' : initials}
           </div>
 
-          <div style={{ flex: 1, paddingTop: 44, minWidth: 200 }}>
-            <h1 style={{ margin: '0 0 8px', fontSize: 19, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>
+          {/* Name + badges */}
+          <div style={{ flex: 1, minWidth: 200, paddingBottom: 2 }}>
+            <h1 style={{ margin: '0 0 7px', fontSize: 18, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>
               {userLoading ? 'Loading…' : form.email}
             </h1>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: '#eff6ff', color: '#1d4ed8', letterSpacing: '0.02em' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 11px', borderRadius: 20, background: '#eff6ff', color: '#1d4ed8' }}>
                 OSFA Staff
               </span>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: deptColor.bg, color: deptColor.text, letterSpacing: '0.02em' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 11px', borderRadius: 20, background: deptColor.bg, color: deptColor.text }}>
                 {deptLabel}
               </span>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: TEAL_LIGHT, color: TEAL, letterSpacing: '0.02em' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 11px', borderRadius: 20, background: TEAL_LIGHT, color: TEAL }}>
                 ✓ Verified Staff
               </span>
             </div>
           </div>
 
-          <div style={{ paddingTop: 44 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 12, color: '#64748b', fontWeight: 500 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          {/* Managed by Admin */}
+          <div style={{ paddingBottom: 2 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 12, color: '#64748b', fontWeight: 500 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               Managed by Admin
             </span>
           </div>
