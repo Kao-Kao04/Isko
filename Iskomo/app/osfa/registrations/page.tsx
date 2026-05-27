@@ -41,6 +41,7 @@ export default function RegistrationsPage() {
   const [saving,         setSaving]         = useState(false);
   const [checkedIds,     setCheckedIds]     = useState<Set<number>>(new Set());
   const [bulkSaving,     setBulkSaving]     = useState(false);
+  const [reminding,      setReminding]      = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -135,9 +136,30 @@ export default function RegistrationsPage() {
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#111827' }}>Student Registrations</h1>
-        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Review submitted documents and verify student accounts.</p>
+      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#111827' }}>Student Registrations</h1>
+          <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Review submitted documents and verify student accounts.</p>
+        </div>
+        <button
+          onClick={async () => {
+            if (reminding) return;
+            setReminding(true);
+            try {
+              const res = await userApi.sendRegistrationReminders();
+              addToast('success', `Reminder sent to ${res.sent} student${res.sent !== 1 ? 's' : ''}.${res.failed > 0 ? ` ${res.failed} failed.` : ''}`);
+            } catch {
+              addToast('error', 'Failed to send reminders. Please try again.');
+            } finally {
+              setReminding(false);
+            }
+          }}
+          disabled={reminding}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', background: reminding ? '#f3f4f6' : '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, color: reminding ? '#9ca3af' : '#374151', cursor: reminding ? 'not-allowed' : 'pointer' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          {reminding ? 'Sending…' : 'Remind Unregistered'}
+        </button>
       </div>
 
       {/* Filter tabs */}

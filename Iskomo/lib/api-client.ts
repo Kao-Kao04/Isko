@@ -558,6 +558,9 @@ export const userApi = {
       method: 'PATCH',
       body: JSON.stringify({ remarks }),
     }),
+
+  sendRegistrationReminders: () =>
+    apiFetch<{ sent: number; failed: number; total: number }>('/api/users/send-registration-reminders', { method: 'POST' }),
 };
 
 // ─── Registration API ─────────────────────────────────────────────────────────
