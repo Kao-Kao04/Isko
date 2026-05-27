@@ -677,7 +677,7 @@ export default function Home() {
               </div>
               <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
                 <p style={{ fontSize:11, color:'rgba(255,255,255,0.20)', margin:0 }}>
-                  &copy; 2025 IskoMo. All rights reserved.
+                  &copy; 2026 IskoMo. All rights reserved.
                 </p>
                 <p style={{ fontSize:11, color:'rgba(255,255,255,0.20)', margin:0 }}>
                   Made For Students, Made By Students.
