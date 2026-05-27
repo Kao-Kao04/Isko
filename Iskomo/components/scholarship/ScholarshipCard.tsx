@@ -148,17 +148,19 @@ export default function ScholarshipCard({
           <p style={{ margin: '0 0 14px', fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>{s.eligibility}</p>
         )}
 
-        {/* Amount + slots */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, padding: '10px 12px', background: '#f8fafc', borderRadius: 9, border: '1px solid #f1f5f9' }}>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: M, letterSpacing: '-0.03em', lineHeight: 1 }}>{s.amount}</div>
-            <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.period}</div>
+        {/* Amount | Applied | Slots */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', marginBottom: 12, background: '#f8fafc', borderRadius: 9, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
+          <div style={{ padding: '10px 12px' }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: M, letterSpacing: '-0.03em', lineHeight: 1 }}>{s.amount}</div>
+            <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.period || '—'}</div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', lineHeight: 1 }}>
-              {s.applicants}
-            </div>
+          <div style={{ padding: '10px 12px', borderLeft: '1px solid #f1f5f9', textAlign: 'center' }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.applicants}</div>
             <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Applied</div>
+          </div>
+          <div style={{ padding: '10px 12px', borderLeft: '1px solid #f1f5f9', textAlign: 'center' }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.slots > 0 ? s.slots : '∞'}</div>
+            <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Slots</div>
           </div>
         </div>
 
