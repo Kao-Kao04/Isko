@@ -499,8 +499,13 @@ export default function ApplicantProfilePage() {
                   <strong>{isPublic ? 'Submit documents by:' : 'Date & Time:'}</strong> {formatInterviewDt(wf.interview_datetime)}
                 </div>
                 {wf.interview_location && (
-                  <div style={{ fontSize: 14, color: '#374151' }}>
+                  <div style={{ fontSize: 14, color: '#374151', marginBottom: 6 }}>
                     <strong>{isPublic ? 'Submit to:' : 'Location:'}</strong> {wf.interview_location}
+                  </div>
+                )}
+                {wf.interview_instructions && (
+                  <div style={{ fontSize: 14, color: '#374151' }}>
+                    <strong>Note:</strong> {wf.interview_instructions}
                   </div>
                 )}
               </div>

@@ -148,7 +148,7 @@ export default function RegistrationsPage() {
           ['rejected',             'Rejected'],
           ['all',                  'All'],
         ] as const).map(([key, label]) => (
-          <button key={key} onClick={() => { setFilter(key); setSelectedId(null); }}
+          <button key={key} onClick={() => { setFilter(key); setSelectedId(null); setAppFilter(undefined); }}
             style={{ padding: '8px 18px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: filter === key ? TEAL : '#f3f4f6', color: filter === key ? '#fff' : '#374151', transition: 'all 0.15s' }}>
             {label}
           </button>
