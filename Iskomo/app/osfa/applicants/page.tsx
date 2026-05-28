@@ -67,6 +67,8 @@ function ApplicantsContent() {
   const [statusFilter, setStatusFilter]   = useState<typeof STATUS_FILTERS[number]>(
     (searchParams.get('status') as typeof STATUS_FILTERS[number]) || 'all'
   );
+  const scholarshipIdParam = searchParams.get('scholarship');
+  const scholarshipIdFilter = scholarshipIdParam ? Number(scholarshipIdParam) : undefined;
   const [selectedRows, setSelectedRows]   = useState<Set<number>>(new Set());
   const [currentPage, setCurrentPage]     = useState(1);
   const [perPage, setPerPage]             = useState(10);
@@ -104,6 +106,7 @@ function ApplicantsContent() {
         page, size,
         status !== 'all' ? status : undefined,
         search || undefined,
+        scholarshipIdFilter,
       );
       setApplications(result.items ?? []);
       setServerTotal(result.total ?? 0);

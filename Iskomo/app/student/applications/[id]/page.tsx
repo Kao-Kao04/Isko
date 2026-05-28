@@ -476,8 +476,10 @@ export default function ApplicationDetailPage() {
                         <input type="datetime-local" value={scheduleForm.datetime} onChange={e => setScheduleForm(f => ({ ...f, datetime: e.target.value }))} style={inp} />
                       </div>
                       <div>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Location</label>
-                        <input type="text" value={scheduleForm.location} onChange={e => setScheduleForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Room 301" style={inp} />
+                        <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>
+                          {isPublic ? 'Preferred Submission Location (optional)' : 'Location'}
+                        </label>
+                        <input type="text" value={scheduleForm.location} onChange={e => setScheduleForm(f => ({ ...f, location: e.target.value }))} placeholder={isPublic ? 'e.g. OSFA Office' : 'e.g. Room 301'} style={inp} />
                       </div>
                       <div>
                         <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Note (optional)</label>
@@ -485,7 +487,7 @@ export default function ApplicationDetailPage() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button disabled={wfActionLoading || !scheduleForm.datetime || !scheduleForm.location}
+                      <button disabled={wfActionLoading || !scheduleForm.datetime || (!isPublic && !scheduleForm.location)}
                         onClick={() => doWfAction(() => workflowApi.scheduleInterview(Number(id), { interview_datetime: new Date(scheduleForm.datetime).toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) }), 'Interview scheduled.')}
                         style={{ padding: '8px 16px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: wfActionLoading ? 'not-allowed' : 'pointer', opacity: wfActionLoading ? 0.7 : 1 }}>
                         {wfActionLoading ? 'Submitting…' : 'Submit'}

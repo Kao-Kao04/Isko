@@ -282,7 +282,7 @@ export default function Page() {
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>Recent Applications</h2>
-                  <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>Latest applications across all scholarships</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>{dept ? `${DEPT_LABEL[dept]} Department` : 'Latest applications across all scholarships'}</p>
                 </div>
               </div>
               <Link href="/osfa/applicants" style={{ fontSize: 12, fontWeight: 700, color: M, textDecoration: 'none', padding: '6px 14px', background: M_LIGHT, borderRadius: 20, border: `1px solid ${M}30`, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -382,7 +382,7 @@ export default function Page() {
               <div style={{ width: 28, height: 28, borderRadius: 8, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </div>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Upcoming Interviews</h3>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>{dept === 'public' ? 'Upcoming Submission Deadlines' : 'Upcoming Interviews'}</h3>
               <Link href="/osfa/calendar" style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: M, textDecoration: 'none', padding: '3px 10px', background: M_LIGHT, borderRadius: 20 }}>View Calendar →</Link>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>

@@ -274,10 +274,11 @@ export const scholarshipApi = {
 // ─── Application API ──────────────────────────────────────────────────────────
 
 export const applicationApi = {
-  list: (page = 1, pageSize = 20, status?: string, search?: string) => {
+  list: (page = 1, pageSize = 20, status?: string, search?: string, scholarshipId?: number) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     if (status && status !== 'all') params.set('status', status);
     if (search) params.set('search', search);
+    if (scholarshipId) params.set('scholarship_id', String(scholarshipId));
     return apiFetch<PaginatedResponse<ApplicationResponse>>(`/api/applications?${params}`);
   },
 
