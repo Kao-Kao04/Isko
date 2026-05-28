@@ -188,6 +188,18 @@ export default function ApplicantProfilePage() {
   // Public scholarships use a paper-submission flow instead of a live interview
   const isPublic  = scholarship?.category === 'public';
 
+  const publicSubStatusOverride: Record<string, string> = {
+    not_scheduled:       'Submission Not Yet Scheduled',
+    scheduled:           'Submission Deadline Set',
+    rescheduled:         'Submission Date Changed',
+    interview_completed: 'Documents Received',
+    evaluated:           'Documents Evaluated',
+  };
+  const subStatusLabel = (sub: string) =>
+    isPublic ? (publicSubStatusOverride[sub] ?? SUB_STATUS_LABEL[sub] ?? sub) : (SUB_STATUS_LABEL[sub] ?? sub);
+  const stageLabel = (stage: string) =>
+    stage === 'interview' && isPublic ? 'Submission' : (STAGE_LABEL[stage] ?? stage);
+
   useEffect(() => {
     const numId = Number(id);
     Promise.all([
@@ -458,7 +470,7 @@ export default function ApplicantProfilePage() {
                           : active ? <div style={{ width: 11, height: 11, borderRadius: '50%', background: TEAL }} />
                           : <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#d1d5db' }} />}
                         </div>
-                        <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color, textAlign: 'center', maxWidth: 60 }}>{STAGE_LABEL[stage]}</span>
+                        <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color, textAlign: 'center', maxWidth: 60 }}>{stageLabel(stage)}</span>
                       </div>
                       {i < MAIN_STAGES.length - 1 && <div style={{ flex: 1, height: 2, background: done ? '#059669' : '#e5e7eb', margin: '0 6px', marginBottom: 22 }} />}
                     </div>
@@ -470,7 +482,7 @@ export default function ApplicantProfilePage() {
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 20, background: terminal ? '#fef2f2' : '#f0fdf4', border: `1px solid ${terminal ? '#fca5a5' : '#86efac'}` }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: terminal ? '#dc2626' : TEAL }} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: terminal ? '#dc2626' : '#15803d' }}>
-                  {SUB_STATUS_LABEL[ss] ?? ss}
+                  {subStatusLabel(ss)}
                 </span>
               </div>
 
@@ -743,10 +755,10 @@ export default function ApplicantProfilePage() {
                     <div key={log.id} style={{ position: 'relative', marginBottom: i < wf.logs.length - 1 ? 20 : 0 }}>
                       <div style={{ position: 'absolute', left: -20, top: 4, width: 10, height: 10, borderRadius: '50%', background: i === 0 ? TEAL : '#d1d5db', border: `2px solid ${i === 0 ? TEAL : '#e5e7eb'}` }} />
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
-                        {log.from_main ? `${STAGE_LABEL[log.from_main] ?? log.from_main} → ` : ''}{STAGE_LABEL[log.to_main] ?? log.to_main}
+                        {log.from_main ? `${stageLabel(log.from_main)} → ` : ''}{stageLabel(log.to_main)}
                       </div>
                       <div style={{ fontSize: 12, color: '#6b7280', marginTop: 1 }}>
-                        {SUB_STATUS_LABEL[log.to_sub] ?? log.to_sub}
+                        {subStatusLabel(log.to_sub)}
                       </div>
                       {log.note && <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic', marginTop: 2 }}>{log.note}</div>}
                       <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{new Date(log.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
