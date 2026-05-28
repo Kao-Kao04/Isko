@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { reportsApi, type CalendarEvent } from '@/lib/api-client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
 const TEAL = COLORS.maroon;
@@ -14,6 +15,8 @@ function formatTime(iso: string) {
 }
 
 export default function CalendarPage() {
+  const { user }              = useCurrentUser();
+  const isPublic              = user?.department === 'public';
   const [events,  setEvents]  = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [today]               = useState(new Date());
@@ -66,10 +69,10 @@ export default function CalendarPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <Link href="/osfa/dashboard" style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>Dashboard</Link>
             <span style={{ fontSize: 12, color: '#d1d5db' }}>/</span>
-            <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>Interview Calendar</span>
+            <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>{isPublic ? 'Submission Calendar' : 'Interview Calendar'}</span>
           </div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#111827' }}>Interview Calendar</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>All scheduled interviews — click a date to see details</p>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#111827' }}>{isPublic ? 'Submission Calendar' : 'Interview Calendar'}</h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{isPublic ? 'All scheduled submission deadlines — click a date to see details' : 'All scheduled interviews — click a date to see details'}</p>
         </div>
         <button onClick={fetchEvents} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 9, background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-1"/></svg>
@@ -145,10 +148,10 @@ export default function CalendarPage() {
               {selected ? `${MONTHS[selected.getMonth()]} ${selected.getDate()}` : 'Select a Date'}
             </div>
             {!selected && (
-              <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>Click on a date to see scheduled interviews.</p>
+              <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>{isPublic ? 'Click on a date to see scheduled submission deadlines.' : 'Click on a date to see scheduled interviews.'}</p>
             )}
             {selected && selectedEvents().length === 0 && (
-              <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>No interviews scheduled on this date.</p>
+              <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>{isPublic ? 'No submissions scheduled on this date.' : 'No interviews scheduled on this date.'}</p>
             )}
             {selectedEvents().map((ev, i) => (
               <div key={i} style={{ padding: '12px 14px', background: '#fafafa', borderRadius: 10, border: '1px solid #f3f4f6', marginBottom: 8 }}>
@@ -167,7 +170,7 @@ export default function CalendarPage() {
             <div style={{ fontSize: 28, fontWeight: 800, color: TEAL, lineHeight: 1, marginBottom: 4 }}>
               {events.filter(e => { const d = new Date(e.interview_datetime); return d.getFullYear() === year && d.getMonth() === month; }).length}
             </div>
-            <div style={{ fontSize: 13, color: '#6b7280' }}>interviews scheduled</div>
+            <div style={{ fontSize: 13, color: '#6b7280' }}>{isPublic ? 'submissions scheduled' : 'interviews scheduled'}</div>
           </div>
         </div>
       </div>

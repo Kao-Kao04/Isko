@@ -246,6 +246,15 @@ export default function ApplicationDetailPage() {
   const badge           = STATUS_BADGE[app.status] ?? STATUS_BADGE.pending;
   const isPublic        = app.scholarship?.category === 'public';
 
+  const publicSubLabels: Record<string, string> = {
+    not_scheduled:       'Awaiting submission deadline',
+    scheduled:           'Submission deadline set — see details below',
+    rescheduled:         'Submission deadline changed — see new details below',
+    interview_completed: 'Documents submitted',
+  };
+  const subStatusText = (sub: string) =>
+    isPublic ? (publicSubLabels[sub] ?? STUDENT_SUB_STATUS_LABEL[sub] ?? sub) : (STUDENT_SUB_STATUS_LABEL[sub] ?? sub);
+
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 16px' }}>
       {/* Breadcrumb */}
@@ -317,7 +326,7 @@ export default function ApplicationDetailPage() {
                               : active ? <div style={{ width: 11, height: 11, borderRadius: '50%', background: MAROON }} />
                               : <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#d1d5db' }} />}
                             </div>
-                            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color, textAlign: 'center', lineHeight: 1.3, maxWidth: 58 }}>{STAGE_LABEL[stage]}</span>
+                            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color, textAlign: 'center', lineHeight: 1.3, maxWidth: 58 }}>{stage === 'interview' && isPublic ? 'Submission' : STAGE_LABEL[stage]}</span>
                           </div>
                           {i < MAIN_STAGES.length - 1 && <div style={{ flex: 1, height: 2, background: done ? MAROON : '#e5e7eb', margin: '0 4px', marginBottom: 22 }} />}
                         </div>
@@ -327,7 +336,7 @@ export default function ApplicationDetailPage() {
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 20, background: terminal ? '#fef2f2' : `${MAROON}10`, border: `1.5px solid ${terminal ? '#fca5a5' : `${MAROON}40`}` }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: terminal ? '#dc2626' : MAROON }} />
                     <span style={{ fontSize: 12, fontWeight: 600, color: terminal ? '#dc2626' : MAROON }}>
-                      {terminal && ms === 'rejected' ? 'Not Selected' : terminal && ms === 'withdrawn' ? 'Application Withdrawn' : (STUDENT_SUB_STATUS_LABEL[ss] ?? ss)}
+                      {terminal && ms === 'rejected' ? 'Not Selected' : terminal && ms === 'withdrawn' ? 'Application Withdrawn' : subStatusText(ss)}
                     </span>
                   </div>
 
@@ -488,7 +497,7 @@ export default function ApplicationDetailPage() {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button disabled={wfActionLoading || !scheduleForm.datetime || (!isPublic && !scheduleForm.location)}
-                        onClick={() => doWfAction(() => workflowApi.scheduleInterview(Number(id), { interview_datetime: new Date(scheduleForm.datetime).toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) }), 'Interview scheduled.')}
+                        onClick={() => doWfAction(() => workflowApi.scheduleInterview(Number(id), { interview_datetime: new Date(scheduleForm.datetime).toISOString(), location: scheduleForm.location, ...(scheduleForm.note ? { note: scheduleForm.note } : {}) }), isPublic ? 'Submission date requested.' : 'Interview scheduled.')}
                         style={{ padding: '8px 16px', background: COLORS.maroon, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: wfActionLoading ? 'not-allowed' : 'pointer', opacity: wfActionLoading ? 0.7 : 1 }}>
                         {wfActionLoading ? 'Submitting…' : 'Submit'}
                       </button>
