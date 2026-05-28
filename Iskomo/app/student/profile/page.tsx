@@ -293,96 +293,6 @@ export default function Page() {
           </div>
         </div>
 
-        {/* GWA */}
-        {(() => {
-          const gwaStatus = p?.gwa_request_status;
-          const statusBadge =
-            gwaStatus === 'pending'  ? { label: '⏳ Pending Verification', bg: '#fffbeb', color: '#d97706', border: '#fcd34d' } :
-            gwaStatus === 'approved' ? { label: '✓ Verified',             bg: '#f0fdf4', color: '#15803d', border: '#86efac' } :
-            gwaStatus === 'rejected' ? { label: '✗ Not Approved',         bg: '#fef2f2', color: '#dc2626', border: '#fca5a5' } :
-            null;
-
-          async function submitGwaRequest(e: React.FormEvent) {
-            e.preventDefault();
-            if (!gwaInput.trim() || !gwaProof) { setGwaErr('Please enter your GWA and upload your SIS screenshot.'); return; }
-            const val = parseFloat(gwaInput);
-            if (isNaN(val) || val < 1.0 || val > 5.0) { setGwaErr('GWA must be between 1.0 and 5.0.'); return; }
-            setGwaErr(''); setGwaSubmitting(true);
-            try {
-              const { userApi } = await import('@/lib/api-client');
-              await userApi.submitGwaRequest(gwaInput.trim(), gwaProof);
-              setGwaSaved(true); setGwaInput(''); setGwaProof(null);
-              setTimeout(() => setGwaSaved(false), 4000);
-              refresh();
-            } catch (err) { setGwaErr(err instanceof Error ? err.message : 'Failed to submit.'); }
-            finally { setGwaSubmitting(false); }
-          }
-
-          return (
-            <div style={{ background: '#fff', borderRadius: 16, border: '1.5px solid #e2e8f0', overflow: 'hidden', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <div style={{ background: '#f8fafc', padding: '14px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>General Weighted Average (GWA)</h3>
-              </div>
-              <div style={{ padding: '20px' }}>
-                {/* Current GWA */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Current GWA</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#111827' }}>{p?.gwa ?? '—'}</div>
-                  </div>
-                  {statusBadge && (
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: statusBadge.bg, color: statusBadge.color, border: `1px solid ${statusBadge.border}` }}>
-                      {statusBadge.label}
-                    </span>
-                  )}
-                </div>
-
-                {gwaStatus === 'pending' && (
-                  <div style={{ padding: '10px 14px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 9, fontSize: 13, color: '#92400e', marginBottom: 14 }}>
-                    GWA update to <strong>{p?.pending_gwa}</strong> is pending OSFA verification.
-                  </div>
-                )}
-                {gwaStatus === 'rejected' && p?.gwa_rejection_remarks && (
-                  <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 9, fontSize: 13, color: '#dc2626', marginBottom: 14 }}>
-                    <strong>Rejected:</strong> {p.gwa_rejection_remarks}
-                  </div>
-                )}
-
-                {/* Submit new GWA request (hide if pending) */}
-                {gwaStatus !== 'pending' && (
-                  <form onSubmit={submitGwaRequest}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 10 }}>
-                      {gwaStatus === 'rejected' ? 'Resubmit GWA Update' : 'Submit GWA Update'}
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 10, marginBottom: 10 }}>
-                      <div>
-                        <label style={lbl}>New GWA</label>
-                        <input type="number" step="0.01" min="1.0" max="5.0"
-                          style={inp} value={gwaInput} onChange={e => setGwaInput(e.target.value)} placeholder="e.g. 1.75" />
-                      </div>
-                      <div>
-                        <label style={lbl}>SIS Screenshot <span style={{ color: M }}>*</span></label>
-                        <input type="file" accept="image/*,application/pdf"
-                          onChange={e => setGwaProof(e.target.files?.[0] ?? null)}
-                          style={{ ...inp, padding: '6px 10px', fontSize: 12 }} />
-                      </div>
-                    </div>
-                    <p style={{ margin: '0 0 10px', fontSize: 11, color: '#94a3b8', lineHeight: 1.5 }}>
-                      Upload a screenshot of your grades from PUP SIS. OSFA will verify before updating your GWA.
-                    </p>
-                    {gwaErr && <p style={{ margin: '0 0 10px', fontSize: 12, color: '#dc2626' }}>{gwaErr}</p>}
-                    {gwaSaved && <p style={{ margin: '0 0 10px', fontSize: 12, color: '#15803d', fontWeight: 600 }}>✓ Submitted! Waiting for OSFA verification.</p>}
-                    <button type="submit" disabled={gwaSubmitting}
-                      style={{ padding: '9px 20px', background: gwaSubmitting ? '#9ca3af' : M, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: gwaSubmitting ? 'not-allowed' : 'pointer' }}>
-                      {gwaSubmitting ? 'Submitting…' : 'Submit for Verification'}
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
         {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {editing ? (
@@ -397,16 +307,10 @@ export default function Page() {
               </button>
             </>
           ) : (
-            <>
-              <button type="submit" disabled={saving}
-                style={{ padding: '11px 28px', background: saving ? '#9ca3af' : `linear-gradient(135deg, ${M}, ${MD})`, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', boxShadow: saving ? 'none' : `0 3px 12px ${M}40` }}>
-                {saving ? 'Saving…' : 'Update GWA'}
-              </button>
-              <button type="button" onClick={() => setEditing(true)}
-                style={{ padding: '11px 20px', background: '#fff', border: `1.5px solid ${M}`, color: M, borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-                Edit Profile
-              </button>
-            </>
+            <button type="button" onClick={() => setEditing(true)}
+              style={{ padding: '11px 20px', background: '#fff', border: `1.5px solid ${M}`, color: M, borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+              Edit Profile
+            </button>
           )}
           {saved && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#15803d', background: '#f0fdf4', padding: '8px 16px', borderRadius: 8, border: '1px solid #bbf7d0' }}>
@@ -416,6 +320,96 @@ export default function Page() {
           )}
         </div>
       </form>
+
+      {/* GWA — outside the profile form so the two forms don't nest */}
+      {(() => {
+        const gwaStatus = p?.gwa_request_status;
+        const statusBadge =
+          gwaStatus === 'pending'  ? { label: '⏳ Pending Verification', bg: '#fffbeb', color: '#d97706', border: '#fcd34d' } :
+          gwaStatus === 'approved' ? { label: '✓ Verified',             bg: '#f0fdf4', color: '#15803d', border: '#86efac' } :
+          gwaStatus === 'rejected' ? { label: '✗ Not Approved',         bg: '#fef2f2', color: '#dc2626', border: '#fca5a5' } :
+          null;
+
+        async function submitGwaRequest(e: React.FormEvent) {
+          e.preventDefault();
+          if (!gwaInput.trim() || !gwaProof) { setGwaErr('Please enter your GWA and upload your SIS screenshot.'); return; }
+          const val = parseFloat(gwaInput);
+          if (isNaN(val) || val < 1.0 || val > 5.0) { setGwaErr('GWA must be between 1.0 and 5.0.'); return; }
+          setGwaErr(''); setGwaSubmitting(true);
+          try {
+            const { userApi } = await import('@/lib/api-client');
+            await userApi.submitGwaRequest(gwaInput.trim(), gwaProof);
+            setGwaSaved(true); setGwaInput(''); setGwaProof(null);
+            setTimeout(() => setGwaSaved(false), 4000);
+            refresh();
+          } catch (err) { setGwaErr(err instanceof Error ? err.message : 'Failed to submit.'); }
+          finally { setGwaSubmitting(false); }
+        }
+
+        return (
+          <div style={{ background: '#fff', borderRadius: 16, border: '1.5px solid #e2e8f0', overflow: 'hidden', marginBottom: 20, marginTop: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ background: '#f8fafc', padding: '14px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>General Weighted Average (GWA)</h3>
+            </div>
+            <div style={{ padding: '20px' }}>
+              {/* Current GWA */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Current GWA</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#111827' }}>{p?.gwa ?? '—'}</div>
+                </div>
+                {statusBadge && (
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: statusBadge.bg, color: statusBadge.color, border: `1px solid ${statusBadge.border}` }}>
+                    {statusBadge.label}
+                  </span>
+                )}
+              </div>
+
+              {gwaStatus === 'pending' && (
+                <div style={{ padding: '10px 14px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 9, fontSize: 13, color: '#92400e', marginBottom: 14 }}>
+                  GWA update to <strong>{p?.pending_gwa}</strong> is pending OSFA verification.
+                </div>
+              )}
+              {gwaStatus === 'rejected' && p?.gwa_rejection_remarks && (
+                <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 9, fontSize: 13, color: '#dc2626', marginBottom: 14 }}>
+                  <strong>Rejected:</strong> {p.gwa_rejection_remarks}
+                </div>
+              )}
+
+              {/* Submit new GWA request (hide if pending) */}
+              {gwaStatus !== 'pending' && (
+                <form onSubmit={submitGwaRequest}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 10 }}>
+                    {gwaStatus === 'rejected' ? 'Resubmit GWA Update' : 'Submit GWA Update'}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <label style={lbl}>New GWA</label>
+                      <input type="number" step="0.01" min="1.0" max="5.0"
+                        style={inp} value={gwaInput} onChange={e => setGwaInput(e.target.value)} placeholder="e.g. 1.75" />
+                    </div>
+                    <div>
+                      <label style={lbl}>SIS Screenshot <span style={{ color: M }}>*</span></label>
+                      <input type="file" accept="image/*,application/pdf"
+                        onChange={e => setGwaProof(e.target.files?.[0] ?? null)}
+                        style={{ ...inp, padding: '6px 10px', fontSize: 12 }} />
+                    </div>
+                  </div>
+                  <p style={{ margin: '0 0 10px', fontSize: 11, color: '#94a3b8', lineHeight: 1.5 }}>
+                    Upload a screenshot of your grades from PUP SIS. OSFA will verify before updating your GWA.
+                  </p>
+                  {gwaErr && <p style={{ margin: '0 0 10px', fontSize: 12, color: '#dc2626' }}>{gwaErr}</p>}
+                  {gwaSaved && <p style={{ margin: '0 0 10px', fontSize: 12, color: '#15803d', fontWeight: 600 }}>✓ Submitted! Waiting for OSFA verification.</p>}
+                  <button type="submit" disabled={gwaSubmitting}
+                    style={{ padding: '9px 20px', background: gwaSubmitting ? '#9ca3af' : M, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: gwaSubmitting ? 'not-allowed' : 'pointer' }}>
+                    {gwaSubmitting ? 'Submitting…' : 'Submit for Verification'}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

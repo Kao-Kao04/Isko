@@ -207,10 +207,25 @@ export interface StudentUserResponse {
   student_profile: {
     first_name: string;
     last_name: string;
+    middle_name: string | null;
     student_number: string;
     college: string;
     program: string;
     year_level: number;
+    gwa: string | null;
+    pending_gwa: string | null;
+    gwa_request_status: string | null;
+    gwa_rejection_remarks: string | null;
+    street_barangay: string | null;
+    city_municipality: string | null;
+    province: string | null;
+    zip_code: string | null;
+    father_name: string | null;
+    father_occupation: string | null;
+    mother_name: string | null;
+    mother_occupation: string | null;
+    income_source: string | null;
+    monthly_income: string | null;
   } | null;
 }
 

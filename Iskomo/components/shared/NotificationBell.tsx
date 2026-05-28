@@ -81,12 +81,17 @@ export default function NotificationBell() {
 
       ws.onmessage = (e) => {
         try {
-          const notif = JSON.parse(e.data) as NotificationResponse;
-          setNotifs(prev => [notif, ...prev.filter(n => n.id !== notif.id)]);
-          setWsAlert(notif.title);
+          const data = JSON.parse(e.data) as NotificationResponse;
+          // Broadcasts sent via bulk INSERT have no id — re-fetch rather than insert a fake entry
+          if (!data.id) {
+            fetchNotifs();
+          } else {
+            setNotifs(prev => [data, ...prev.filter(n => n.id !== data.id)]);
+          }
+          setWsAlert(data.title);
           setTimeout(() => setWsAlert(null), 4000);
           // Broadcast so other pages (e.g. Messages) can react without their own WS
-          window.dispatchEvent(new CustomEvent('iskomo:notification', { detail: notif }));
+          window.dispatchEvent(new CustomEvent('iskomo:notification', { detail: data }));
         } catch { /* ignore malformed frames */ }
       };
 

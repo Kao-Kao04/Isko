@@ -559,7 +559,7 @@ a {
     top: auto !important;
     width: 100% !important;
     border-radius: 20px 20px 0 0 !important;
-    z-index: 300 !important;
+    z-index: 1500 !important;
     max-height: 85vh !important;
     overflow: hidden !important;
     display: flex !important;

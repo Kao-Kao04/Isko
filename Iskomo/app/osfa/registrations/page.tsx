@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { userApi } from '@/lib/api-client';
+import { userApi, type StudentUserResponse } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
 
@@ -10,17 +10,9 @@ const TEAL_DARK = COLORS.maroonD;
 const TEAL_L    = COLORS.maroonL;
 
 type AccountStatus = 'pending_verification' | 'verified' | 'rejected' | 'unregistered';
+type Student = StudentUserResponse;
 
 interface RegDoc { id: number; doc_type: string; filename: string; url: string; uploaded_at: string; }
-interface Student {
-  id: number; email: string; account_status: AccountStatus; rejection_remarks: string | null;
-  created_at: string;
-  student_profile: {
-    first_name: string; last_name: string; student_number: string; college: string; program: string; year_level: number;
-    gwa: string | null; pending_gwa: string | null; gwa_request_status: string | null;
-    gwa_rejection_remarks: string | null;
-  } | null;
-}
 
 const STATUS_CFG: Record<AccountStatus, { bg: string; color: string; dot: string; label: string }> = {
   pending_verification: { bg: '#fffbeb', color: '#d97706', dot: '#f59e0b', label: 'Pending Review' },
@@ -33,7 +25,7 @@ export default function RegistrationsPage() {
   const { toasts, addToast, removeToast } = useToast();
   const [students,       setStudents]       = useState<Student[]>([]);
   const [loading,        setLoading]        = useState(true);
-  const [filter,         setFilter]         = useState<'pending_verification' | 'verified' | 'rejected' | 'all'>('all');
+  const [filter,         setFilter]         = useState<'pending_verification' | 'verified' | 'rejected' | 'all' | 'gwa_pending'>('all');
   const [appFilter,      setAppFilter]      = useState<'' | 'with_application' | 'no_application'>();
   const [search,         setSearch]         = useState('');
   const [selectedId,     setSelectedId]     = useState<number | null>(null);
@@ -53,9 +45,9 @@ export default function RegistrationsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const statusParam = filter === 'all' ? undefined : filter;
+      const statusParam = (filter === 'all' || filter === 'gwa_pending') ? undefined : filter;
       const res = await userApi.list(1, 100, statusParam, appFilter || undefined);
-      setStudents(res.items as Student[]);
+      setStudents(res.items);
     } catch { /* silent */ } finally {
       setLoading(false);
     }
@@ -104,8 +96,11 @@ export default function RegistrationsPage() {
     } finally { setSaving(false); }
   }
 
-  const studentName = (s: Student) =>
-    s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}` : s.email;
+  const studentName = (s: Student) => {
+    if (!s.student_profile) return s.email;
+    const { first_name, middle_name, last_name } = s.student_profile;
+    return [first_name, middle_name, last_name].filter(Boolean).join(' ');
+  };
 
   async function bulkApprove() {
     if (!checkedIds.size) return;
@@ -131,7 +126,12 @@ export default function RegistrationsPage() {
     });
   }
 
-  const baseFiltered = filter === 'all' ? students : students.filter(s => s.account_status === filter);
+  const gwaPendingCount = students.filter(s => s.student_profile?.gwa_request_status === 'pending').length;
+  const baseFiltered = filter === 'all'
+    ? students
+    : filter === 'gwa_pending'
+      ? students.filter(s => s.student_profile?.gwa_request_status === 'pending')
+      : students.filter(s => s.account_status === filter);
   const filtered = search.trim()
     ? baseFiltered.filter(s => {
         const q = search.toLowerCase();
@@ -183,6 +183,15 @@ export default function RegistrationsPage() {
             {label}
           </button>
         ))}
+        <button onClick={() => { setFilter('gwa_pending'); setSelectedId(null); setAppFilter(undefined); }}
+          style={{ padding: '8px 18px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: filter === 'gwa_pending' ? '#d97706' : '#fff7ed', color: filter === 'gwa_pending' ? '#fff' : '#d97706', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}>
+          GWA Requests
+          {gwaPendingCount > 0 && (
+            <span style={{ background: filter === 'gwa_pending' ? 'rgba(255,255,255,0.3)' : '#d97706', color: '#fff', borderRadius: 20, fontSize: 11, fontWeight: 700, padding: '1px 7px', lineHeight: 1.5 }}>
+              {gwaPendingCount}
+            </span>
+          )}
+        </button>
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         {([
@@ -256,10 +265,17 @@ export default function RegistrationsPage() {
                       </div>
                     )}
                   </div>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot }} />
-                    {cfg.label}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', flexShrink: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color, fontSize: 11, fontWeight: 700 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot }} />
+                      {cfg.label}
+                    </span>
+                    {s.student_profile?.gwa_request_status === 'pending' && (
+                      <span style={{ padding: '3px 9px', borderRadius: 20, background: '#fff7ed', color: '#d97706', fontSize: 10, fontWeight: 700, border: '1px solid #fed7aa' }}>
+                        GWA Pending
+                      </span>
+                    )}
+                  </div>
                 </button>
               </div>
             );
@@ -276,21 +292,51 @@ export default function RegistrationsPage() {
               </div>
               <button onClick={() => setSelectedId(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#9ca3af', padding: 4 }}>✕</button>
             </div>
-            {selected.student_profile && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', padding: '12px 14px', background: '#f8fafc', borderRadius: 10, marginBottom: 16, fontSize: 12 }}>
-                {[
-                  ['Student No.', selected.student_profile.student_number],
-                  ['College', selected.student_profile.college],
-                  ['Program', selected.student_profile.program],
-                  ['Year Level', `Year ${selected.student_profile.year_level}`],
-                ].map(([k, v]) => (
-                  <div key={k}>
-                    <span style={{ color: '#9ca3af', fontWeight: 600 }}>{k}: </span>
-                    <span style={{ color: '#111827', fontWeight: 500 }}>{v}</span>
+            {selected.student_profile && (() => {
+              const p = selected.student_profile;
+              const row = (label: string, value: string | number | null | undefined) =>
+                value ? (
+                  <div key={label}>
+                    <span style={{ color: '#9ca3af', fontWeight: 600 }}>{label}: </span>
+                    <span style={{ color: '#111827', fontWeight: 500 }}>{value}</span>
                   </div>
-                ))}
-              </div>
-            )}
+                ) : null;
+              const sectionTitle = (title: string) => (
+                <div key={title} style={{ gridColumn: '1 / -1', fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 8, marginBottom: 2 }}>{title}</div>
+              );
+              const address = [p.street_barangay, p.city_municipality, p.province, p.zip_code].filter(Boolean).join(', ');
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 16px', padding: '12px 14px', background: '#f8fafc', borderRadius: 10, marginBottom: 16, fontSize: 12 }}>
+                  {sectionTitle('Academic')}
+                  {row('Student No.', p.student_number)}
+                  {row('Middle Name', p.middle_name)}
+                  {row('College', p.college)}
+                  {row('Program', p.program)}
+                  {row('Year Level', `Year ${p.year_level}`)}
+                  {row('GWA', p.gwa)}
+
+                  {address && <>{sectionTitle('Address')}<div style={{ gridColumn: '1 / -1', color: '#111827', fontWeight: 500 }}>{address}</div></>}
+
+                  {(p.father_name || p.mother_name) && sectionTitle('Family Background')}
+                  {p.father_name && (
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <span style={{ color: '#9ca3af', fontWeight: 600 }}>Father: </span>
+                      <span style={{ color: '#111827', fontWeight: 500 }}>{p.father_name}{p.father_occupation ? ` · ${p.father_occupation}` : ''}</span>
+                    </div>
+                  )}
+                  {p.mother_name && (
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <span style={{ color: '#9ca3af', fontWeight: 600 }}>Mother: </span>
+                      <span style={{ color: '#111827', fontWeight: 500 }}>{p.mother_name}{p.mother_occupation ? ` · ${p.mother_occupation}` : ''}</span>
+                    </div>
+                  )}
+
+                  {(p.income_source || p.monthly_income) && sectionTitle('Financial')}
+                  {row('Income Source', p.income_source)}
+                  {row('Monthly Income', p.monthly_income ? (isNaN(Number(p.monthly_income)) ? p.monthly_income : `₱${Number(p.monthly_income).toLocaleString()}`) : null)}
+                </div>
+              );
+            })()}
 
             {/* Rejection remarks (if any) */}
             {selected.rejection_remarks && (
@@ -381,6 +427,7 @@ export default function RegistrationsPage() {
                       await userApi.approveGwaRequest(selected.id);
                       addToast('success', 'GWA update approved.');
                       setGwaProofUrl(null); setGwaRejectNote('');
+                      setSelectedId(null);
                       await load();
                     } catch { addToast('error', 'Failed to approve.'); }
                     finally { setGwaReviewing(false); }
@@ -394,6 +441,7 @@ export default function RegistrationsPage() {
                       await userApi.rejectGwaRequest(selected.id, gwaRejectNote || undefined);
                       addToast('success', 'GWA update rejected.');
                       setGwaProofUrl(null); setGwaRejectNote('');
+                      setSelectedId(null);
                       await load();
                     } catch { addToast('error', 'Failed to reject.'); }
                     finally { setGwaReviewing(false); }

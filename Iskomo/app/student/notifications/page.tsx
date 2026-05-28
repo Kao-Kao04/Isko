@@ -204,7 +204,7 @@ export default function StudentNotificationsPage() {
             {/* Mobile backdrop */}
             <div
               onClick={() => setSelected(null)}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'none' }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1100, display: 'none' }}
               className="notif-backdrop"
             />
 

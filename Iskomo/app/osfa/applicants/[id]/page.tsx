@@ -539,8 +539,11 @@ export default function ApplicantProfilePage() {
                 <div style={{ fontSize: 15, fontWeight: 700, color: ss === 'completed' ? '#15803d' : '#0369a1', marginBottom: 6 }}>
                   {ss === 'completed' ? '✓ Scholar Onboarded — Completed' : ss === 'requirements_submitted' ? 'Documents Submitted — Ready to Finalize' : '⏳ Awaiting Completion Documents from Scholar'}
                 </div>
-                <div style={{ fontSize: 13, color: '#374151' }}>
+                <div style={{ fontSize: 13, color: '#374151', marginBottom: 10 }}>
                   {ss === 'completed' ? 'The scholar has been fully onboarded.' : ss === 'requirements_submitted' ? 'The scholar has submitted their completion documents. Review and finalize to complete onboarding.' : 'The applicant has been approved. Waiting for them to submit their completion documents before finalization.'}
+                </div>
+                <div style={{ fontSize: 12, color: '#374151', background: 'rgba(255,255,255,0.6)', borderRadius: 8, padding: '10px 14px', borderLeft: `3px solid ${ss === 'completed' ? '#86efac' : '#93c5fd'}`, lineHeight: 1.6 }}>
+                  <strong>Note:</strong> Scholarship benefit/allowance releases are handled by the <strong>Accounting Office</strong>, not OSFA. The student will be notified via their <strong>PUP webmail</strong> and <strong>IskoMo account</strong> once their benefits are released.
                 </div>
               </div>
             )}

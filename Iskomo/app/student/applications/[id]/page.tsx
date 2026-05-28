@@ -379,6 +379,13 @@ export default function ApplicationDetailPage() {
                       Action required: Please submit your completion requirements to finalize your scholarship.
                     </div>
                   )}
+
+                  {ms === 'completion' && (
+                    <div style={{ marginTop: 16, padding: '14px 16px', background: '#eff6ff', borderRadius: 10, border: '1px solid #bfdbfe', fontSize: 13, color: '#1e40af', lineHeight: 1.6 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>ℹ️ About Your Scholarship Benefits</div>
+                      Your scholarship benefits/allowance will be processed and released by the <strong>Accounting Office</strong> — this is handled separately from OSFA. You will be notified via your <strong>PUP webmail</strong> and your <strong>IskoMo account notifications</strong> once your benefits are released. For inquiries about the release schedule, please coordinate directly with the Accounting Office.
+                    </div>
+                  )}
                 </>
               );
             })() : (

@@ -21,12 +21,12 @@ const STATUS_CFG: Record<AccountStatus, { bg: string; color: string; dot: string
   unregistered:         { bg: '#f3f4f6', color: '#6b7280', dot: '#d1d5db', label: 'Not Submitted' },
 };
 
-function Spin() {
-  return <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div style={{ width: 36, height: 36, border: '3px solid #f3f4f6', borderTop: `3px solid ${M}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
-}
 
-const studentName = (s: StudentUserResponse) =>
-  s.student_profile ? `${s.student_profile.first_name} ${s.student_profile.last_name}` : s.email;
+const studentName = (s: StudentUserResponse) => {
+  if (!s.student_profile) return s.email;
+  const { first_name, middle_name, last_name } = s.student_profile;
+  return [first_name, middle_name, last_name].filter(Boolean).join(' ');
+};
 
 export default function AdminRegistrationsPage() {
   const { toasts, addToast, removeToast } = useToast();
@@ -74,20 +74,23 @@ export default function AdminRegistrationsPage() {
     setSaving(true);
     try {
       await userApi.rejectStudent(selected.id, rejectRemarks.trim());
-      addToast('error', `${studentName(selected)} rejected.`);
+      addToast('warning', `${studentName(selected)} rejected.`);
       setShowReject(false); setRejectRemarks('');
       await load(); setSelectedId(null);
     } catch (err) { addToast('error', err instanceof Error ? err.message : 'Failed.'); }
     finally { setSaving(false); }
   }
 
-  const selected  = students.find(s => s.id === selectedId) ?? null;
+  const selected      = students.find(s => s.id === selectedId) ?? null;
+  const baseFiltered  = filter === 'all'
+    ? students
+    : students.filter(s => s.account_status === filter);
   const displayed = search.trim()
-    ? students.filter(s => {
+    ? baseFiltered.filter(s => {
         const q = search.toLowerCase();
         return studentName(s).toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.student_profile?.student_number ?? '').toLowerCase().includes(q);
       })
-    : students;
+    : baseFiltered;
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
@@ -169,18 +172,44 @@ export default function AdminRegistrationsPage() {
               <button onClick={() => setSelectedId(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#9ca3af', padding: 4 }}>✕</button>
             </div>
 
-            {selected.student_profile && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', padding: '12px 14px', background: '#f8fafc', borderRadius: 10, marginBottom: 16, fontSize: 12 }}>
-                {[
-                  ['Student No.', selected.student_profile.student_number],
-                  ['College', selected.student_profile.college],
-                  ['Program', selected.student_profile.program],
-                  ['Year Level', `Year ${selected.student_profile.year_level}`],
-                ].map(([k, v]) => (
-                  <div key={k}><span style={{ color: '#9ca3af', fontWeight: 600 }}>{k}: </span><span style={{ color: '#111827', fontWeight: 500 }}>{v ?? '—'}</span></div>
-                ))}
-              </div>
-            )}
+            {selected.student_profile && (() => {
+              const p = selected.student_profile;
+              const row = (label: string, val: string | number | null | undefined) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '4px 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <span style={{ color: '#6b7280', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{label}</span>
+                  <span style={{ color: '#111827', fontSize: 12, fontWeight: 500, textAlign: 'right' }}>{val ?? '—'}</span>
+                </div>
+              );
+              const sec = (title: string) => (
+                <div key={title} style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 10, marginBottom: 2 }}>{title}</div>
+              );
+              return (
+                <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 10, marginBottom: 16 }}>
+                  {sec('Academic')}
+                  {row('Student No.', p.student_number)}
+                  {row('College', p.college)}
+                  {row('Program', p.program)}
+                  {row('Year Level', p.year_level ? `Year ${p.year_level}` : null)}
+                  {sec('Address')}
+                  {row('Street / Barangay', p.street_barangay)}
+                  {row('City / Municipality', p.city_municipality)}
+                  {row('Province', p.province)}
+                  {row('Zip Code', p.zip_code)}
+                  {sec('Family Background')}
+                  {row("Father's Name", p.father_name)}
+                  {row("Father's Occupation", p.father_occupation)}
+                  {row("Mother's Name", p.mother_name)}
+                  {row("Mother's Occupation", p.mother_occupation)}
+                  {sec('Financial')}
+                  {row('Income Source', p.income_source)}
+                  {row('Monthly Income', (() => {
+                    const v = p.monthly_income;
+                    if (!v) return null;
+                    return isNaN(Number(v)) ? v : `₱${Number(v).toLocaleString()}`;
+                  })())}
+                </div>
+              );
+            })()}
 
             {selected.rejection_remarks && (
               <div style={{ padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 9, marginBottom: 16, fontSize: 13, color: '#dc2626' }}>
@@ -245,8 +274,8 @@ export default function AdminRegistrationsPage() {
               <div style={{ padding: '12px 16px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 9, fontSize: 13, color: '#15803d', fontWeight: 600, textAlign: 'center' }}>✓ This student is verified.</div>
             )}
             {selected.account_status === 'rejected' && (
-              <button onClick={() => approve(selected)} disabled={saving}
-                style={{ width: '100%', padding: '11px', background: saving ? '#9ca3af' : '#059669', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
+              <button onClick={() => approve(selected)} disabled={saving || docsLoading}
+                style={{ width: '100%', padding: '11px', background: saving || docsLoading ? '#9ca3af' : '#059669', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: saving || docsLoading ? 'not-allowed' : 'pointer' }}>
                 Re-approve this student
               </button>
             )}

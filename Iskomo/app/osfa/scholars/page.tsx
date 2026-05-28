@@ -20,8 +20,10 @@ const STATUS_CFG: Record<ScholarStatus, { bg: string; color: string; dot: string
   graduated:    { bg: '#f5f3ff', color: '#7c3aed', dot: '#8b5cf6', label: 'Graduated'    },
 };
 
-const ALL_STATUSES: ScholarStatus[] = ['active', 'probationary', 'under_review', 'suspended', 'terminated', 'graduated'];
-const REASON_REQUIRED: ScholarStatus[] = ['terminated', 'suspended'];
+const ALL_STATUSES: ScholarStatus[] = ['active', 'probationary', 'under_review', 'on_leave', 'suspended', 'terminated', 'graduated'];
+// suspended is excluded from the modal — no API transition leads TO suspended (only from suspended → active/terminated)
+const MODAL_STATUSES: ScholarStatus[] = ['active', 'probationary', 'under_review', 'on_leave', 'terminated', 'graduated'];
+const REASON_REQUIRED: ScholarStatus[] = ['terminated'];
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -310,7 +312,7 @@ export default function Page() {
                     style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     + Sem Record
                   </button>
-                  <button onClick={() => { setStatusModal(scholar); setNewStatus(scholar.status); setStatusReason(''); setStatusError(''); }}
+                  <button onClick={() => { setStatusModal(scholar); setNewStatus(MODAL_STATUSES.includes(scholar.status) ? scholar.status : 'active'); setStatusReason(''); setStatusError(''); }}
                     style={{ padding: '7px 14px', border: `1px solid ${TEAL}33`, borderRadius: 8, background: '#fff5f5', color: TEAL, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     Update Status
                   </button>
@@ -444,7 +446,7 @@ export default function Page() {
 
             <label style={labelStyle}>New Status</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 20 }}>
-              {ALL_STATUSES.map(key => {
+              {MODAL_STATUSES.map(key => {
                 const cfg = STATUS_CFG[key];
                 return (
                   <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 13px', borderRadius: 9, border: `1.5px solid ${newStatus === key ? cfg.dot : '#e5e7eb'}`, background: newStatus === key ? cfg.bg : '#fff', cursor: 'pointer' }}>

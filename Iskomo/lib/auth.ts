@@ -12,6 +12,9 @@ export interface StudentProfile {
   program: string;
   year_level: number;
   gwa: string | null;
+  pending_gwa:           string | null;
+  gwa_request_status:    string | null;
+  gwa_rejection_remarks: string | null;
   street_barangay:   string | null;
   city_municipality: string | null;
   province:          string | null;
