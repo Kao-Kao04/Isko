@@ -710,7 +710,7 @@ export default function ApplicantProfilePage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.evaluate(Number(id), { ...(evalForm.score ? { eval_score: { score: Number(evalForm.score) } } : {}), ...(evalForm.notes ? { note: evalForm.notes } : {}) }), 'Evaluation submitted.')}>Submit</button>
+                  <button style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.evaluate(Number(id), { ...(evalForm.notes ? { note: evalForm.notes } : {}) }), 'Evaluation submitted.')}>Submit</button>
                   <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setEvalForm({ score: '', notes: '' }); }}>Cancel</button>
                 </div>
               </div>
