@@ -78,13 +78,22 @@ function formatFullDate(d: string) {
 }
 
 function mapNotif(n: NotificationResponse): DisplayNotif {
-  // Normalise the route: strip any /osfa prefix already in the stored route,
-  // then convert student /applications/{id} path to OSFA /applicants/{id}.
-  const route = n.route
-    ?.replace(/^\/osfa/, '')
-    .replace(/^\/applications\//, '/applicants/')
-    ?? null;
-  const href = route ? `/osfa${route}` : (n.application_id ? `/osfa/applicants/${n.application_id}` : undefined);
+  // Derive a safe OSFA-scoped href from the notification metadata.
+  // Prefer application_id when available for direct deep-linking.
+  let href: string | undefined;
+  if (n.application_id) {
+    href = `/osfa/applicants/${n.application_id}`;
+  } else if (n.route) {
+    // Strip any leading /osfa or /student prefix stored in the route field,
+    // then map known student paths to their OSFA equivalents.
+    const bare = n.route.replace(/^\/(osfa|student)/, '');
+    const routeMap: Record<string, string> = {
+      '/iskolarships': '/osfa/scholarships',
+      '/registrations': '/osfa/registrations',
+      '/profile': '/osfa/notifications',
+    };
+    href = routeMap[bare] ?? `/osfa${bare.replace(/^\/applications\/(\d+)/, '/applicants/$1')}`;
+  }
   return {
     id:            n.id,
     type:          classifyOsfaType(n),

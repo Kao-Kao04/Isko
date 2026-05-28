@@ -67,8 +67,21 @@ export default function Page() {
 
   async function handleNotifClick(n: NotificationResponse) {
     try { await notificationApi.markRead(n.id); setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x)); } catch {}
-    const route = n.route?.replace(/^\/applications\//, '/applicants/') ?? null;
-    router.push(route ? `/osfa${route}` : '/osfa/notifications');
+    if (n.application_id) {
+      router.push(`/osfa/applicants/${n.application_id}`);
+      return;
+    }
+    if (n.route) {
+      const bare = n.route.replace(/^\/(osfa|student)/, '');
+      const routeMap: Record<string, string> = {
+        '/iskolarships': '/osfa/scholarships',
+        '/registrations': '/osfa/registrations',
+      };
+      const dest = routeMap[bare] ?? `/osfa${bare.replace(/^\/applications\/(\d+)/, '/applicants/$1')}`;
+      router.push(dest);
+      return;
+    }
+    router.push('/osfa/notifications');
   }
 
   useEffect(() => { fetchData(); }, [fetchData]);

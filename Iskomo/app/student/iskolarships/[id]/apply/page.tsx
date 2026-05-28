@@ -34,9 +34,11 @@ export default function ApplyPage() {
   const [hasDraft,   setHasDraft]   = useState(false);
 
   useEffect(() => {
+    // Fetch up to 100 applications so the already-applied and one-per-category
+    // guards are never bypassed by students with many applications.
     Promise.all([
       scholarshipApi.get(Number(id)),
-      applicationApi.list(1, 10),
+      applicationApi.list(1, 100),
     ]).then(([sch, apps]) => {
       setScholarship(sch);
       const active = apps.items.filter(a => !['withdrawn', 'rejected'].includes(a.status));

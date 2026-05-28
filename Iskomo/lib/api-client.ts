@@ -516,7 +516,7 @@ export const notificationApi = {
     ),
 
   markRead: (id: number) =>
-    apiFetch<void>(`/api/notifications/${id}/read`, { method: 'PATCH' }),
+    apiFetch<NotificationResponse>(`/api/notifications/${id}/read`, { method: 'PATCH' }),
 
   markAllRead: () =>
     apiFetch<void>('/api/notifications/read-all', { method: 'PATCH' }),
@@ -732,7 +732,7 @@ export const workflowApi = {
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/complete-interview`, {
       method: 'POST', body: JSON.stringify({ notes }),
     }),
-  evaluate: (id: number, data: { score?: number; notes?: string }) =>
+  evaluate: (id: number, data: { eval_score?: Record<string, unknown>; note?: string }) =>
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/evaluate`, {
       method: 'POST', body: JSON.stringify(data),
     }),
@@ -752,8 +752,9 @@ export const workflowApi = {
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/schedule-interview`, {
       method: 'POST', body: JSON.stringify(data),
     }),
+  // OSFA sets a new datetime/location — uses schedule-interview (same endpoint as initial scheduling)
   rescheduleInterview: (id: number, data: { interview_datetime: string; location: string; note?: string }) =>
-    apiFetch<WorkflowResponse>(`/api/workflow/${id}/reschedule-interview`, {
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/schedule-interview`, {
       method: 'POST', body: JSON.stringify(data),
     }),
   withdraw: (id: number, reason: string) =>
@@ -761,7 +762,7 @@ export const workflowApi = {
       method: 'POST', body: JSON.stringify({ reason }),
     }),
 
-  // Student reschedule — only sends reason; OSFA sets the new datetime
+  // Student reschedule — only sends reason; OSFA sets the new datetime via rescheduleInterview
   requestReschedule: (id: number, reason: string) =>
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/reschedule-interview`, {
       method: 'POST', body: JSON.stringify({ reason }),

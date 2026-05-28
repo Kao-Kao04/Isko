@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { scholarshipApi, type ScholarshipResponse, type ScholarshipStatus, type ComplianceDocType } from '@/lib/api-client';
+import { apiFetch } from '@/lib/api';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -115,6 +116,8 @@ export default function Page() {
   const [searchQuery, setSearchQuery]     = useState('');
   const [openMenuId, setOpenMenuId]       = useState<number | null>(null);
   const [formLoading, setFormLoading]     = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState('');
 
   // Modals
   const [showForm, setShowForm]                       = useState(false);
@@ -418,24 +421,25 @@ export default function Page() {
     });
   }
 
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const canvas = document.createElement('canvas');
-    const img = new window.Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      // Fit within 1200×630 (16:9 banner), never upscale
-      const MAX_W = 1200, MAX_H = 630;
-      const ratio = Math.min(MAX_W / img.width, MAX_H / img.height, 1);
-      canvas.width  = Math.round(img.width  * ratio);
-      canvas.height = Math.round(img.height * ratio);
-      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const compressed = canvas.toDataURL('image/jpeg', 0.7);
-      setForm(prev => ({ ...prev, cover_image_url: compressed }));
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
+    setImageUploadError('');
+    setImageUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const result = await apiFetch<{ url: string }>('/api/notifications/media/upload', {
+        method: 'POST',
+        body: fd,
+      });
+      setForm(prev => ({ ...prev, cover_image_url: result.url }));
+    } catch (err: unknown) {
+      setImageUploadError(err instanceof Error ? err.message : 'Image upload failed. Please try again.');
+    } finally {
+      setImageUploading(false);
+      e.target.value = '';
+    }
   }
 
   const inputStyle: React.CSSProperties = {
@@ -927,11 +931,15 @@ export default function Page() {
 
               <div>
                 <label style={labelStyle}>Scholarship Poster / Cover Image <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400 }}>(optional)</span></label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {imageUploadError && (
+                  <p style={{ margin: 0, fontSize: 12, color: '#b91c1c' }}>{imageUploadError}</p>
+                )}
                 <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', border: '1.5px dashed #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 13, color: '#6b7280', background: '#f9fafb', flexShrink: 0 }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', border: '1.5px dashed #d1d5db', borderRadius: 8, cursor: imageUploading ? 'not-allowed' : 'pointer', fontSize: 13, color: '#6b7280', background: '#f9fafb', flexShrink: 0, opacity: imageUploading ? 0.6 : 1 }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    {form.cover_image_url ? 'Change Image' : 'Upload Image'}
-                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+                    {imageUploading ? 'Uploading…' : form.cover_image_url ? 'Change Image' : 'Upload Image'}
+                    <input type="file" accept="image/*" disabled={imageUploading} onChange={handleImageUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: imageUploading ? 'not-allowed' : 'pointer', width: '100%', height: '100%' }} />
                   </div>
                   {form.cover_image_url && (
                     <div style={{ position: 'relative' }}>
@@ -942,6 +950,7 @@ export default function Page() {
                       </button>
                     </div>
                   )}
+                </div>
                 </div>
               </div>
             </div>

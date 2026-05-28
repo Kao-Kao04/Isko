@@ -76,6 +76,7 @@ export default function ApplicationDetailPage() {
   const [compliance,    setCompliance]    = useState<ComplianceSubmission[]>([]);
   const [complianceLoading, setComplianceLoading] = useState(false);
   const [complianceDocs,    setComplianceDocs]    = useState<{ id: number; name: string; is_required: boolean }[]>([]);
+  const [complianceError,       setComplianceError]       = useState('');
   const [complianceFiles,       setComplianceFiles]       = useState<Record<string, File>>({});
   const [complianceFileNames,   setComplianceFileNames]   = useState<Record<string, string>>({});
   const [complianceItemLoading, setComplianceItemLoading] = useState<string | null>(null);
@@ -199,6 +200,7 @@ export default function ApplicationDetailPage() {
 
   async function submitComplianceDoc(docName: string, file?: File) {
     setComplianceItemLoading(docName);
+    setComplianceError('');
     try {
       let fileUrl: string | undefined;
       if (file) {
@@ -212,8 +214,9 @@ export default function ApplicationDetailPage() {
       setCompliance(prev => [...prev.filter(c => c.requirement_type !== docName), sub]);
       setComplianceFiles(prev => { const n = { ...prev }; delete n[docName]; return n; });
       setComplianceFileNames(prev => { const n = { ...prev }; delete n[docName]; return n; });
-    } catch { /* silent */ }
-    finally { setComplianceItemLoading(null); }
+    } catch (err: unknown) {
+      setComplianceError(err instanceof Error ? err.message : 'Failed to submit document. Please try again.');
+    } finally { setComplianceItemLoading(null); }
   }
 
   if (loading) {
@@ -751,6 +754,12 @@ export default function ApplicationDetailPage() {
                     {allVerified ? 'All Verified ✓' : `${totalRequired - verifiedCount} remaining`}
                   </div>
                 </div>
+
+                {complianceError && (
+                  <div style={{ padding: '10px 14px', background: '#fee2e2', borderRadius: 8, border: '1px solid #fca5a5', fontSize: 13, color: '#b91c1c', marginBottom: 10 }}>
+                    {complianceError}
+                  </div>
+                )}
 
                 {allVerified ? (
                   <div style={{ padding: '12px 16px', background: '#f0fdf4', borderRadius: 9, border: '1px solid #bbf7d0', fontSize: 13, color: '#166534', lineHeight: 1.5 }}>
