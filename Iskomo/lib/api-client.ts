@@ -789,4 +789,8 @@ export const workflowApi = {
     apiFetch<WorkflowResponse>(`/api/workflow/${id}/submit-requirements`, {
       method: 'POST', body: JSON.stringify({ requirements }),
     }),
+
+  // OSFA-only: record physical/in-person requirement submission on behalf of student
+  acceptRequirements: (id: number) =>
+    apiFetch<WorkflowResponse>(`/api/workflow/${id}/accept-requirements`, { method: 'POST' }),
 };

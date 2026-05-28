@@ -113,7 +113,8 @@ export default function ApplicantProfilePage() {
   const [docsLoading,  setDocsLoading]  = useState(false);
   const [compliance,   setCompliance]   = useState<ComplianceSubmission[]>([]);
   const [complianceDocTypes, setComplianceDocTypes] = useState<ComplianceDocType[]>([]);
-  const [complianceVerifying, setComplianceVerifying] = useState<number | null>(null);
+  const [complianceVerifying,  setComplianceVerifying]  = useState<number | null>(null);
+  const [complianceSubmitting, setComplianceSubmitting] = useState<string | null>(null);
 
   async function handleReviewAppeal(approved: boolean) {
     if (!app) return;
@@ -594,6 +595,9 @@ export default function ApplicantProfilePage() {
               if (ms === 'decision' && (ss === 'under_review' || ss === 'waitlisted'))
                 actions.push(<button key="decide" style={btn('#fff', TEAL)} onClick={() => setActiveDialog('decide')}>Make Decision</button>);
 
+              if (ms === 'completion' && ss === 'pending_requirements')
+                actions.push(<button key="accept_reqs" style={btn('#fff', '#0284c7')} onClick={() => doWorkflowAction(() => workflowApi.acceptRequirements(Number(id)), 'Requirements recorded — student notified.')}>Mark Requirements as Received</button>);
+
               if (ms === 'completion' && ss === 'requirements_submitted')
                 actions.push(<button key="finalize" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.finalize(Number(id)), 'Application finalized.')}>Finalize Application</button>);
 
@@ -1028,6 +1032,25 @@ export default function ApplicantProfilePage() {
                               </div>
                             )}
                           </div>
+                          {!submitted && !isVerified && !wrongDept && (
+                            <button
+                              disabled={complianceSubmitting === docType.name}
+                              onClick={async () => {
+                                setComplianceSubmitting(docType.name);
+                                try {
+                                  const created = await applicationApi.submitCompliance(app.id, { requirement_type: docType.name });
+                                  setCompliance(prev => [...prev, created]);
+                                  addToast('success', `"${docType.name}" marked as received.`);
+                                } catch (err) {
+                                  addToast('error', err instanceof Error ? err.message : 'Failed to record.');
+                                } finally {
+                                  setComplianceSubmitting(null);
+                                }
+                              }}
+                              style={{ padding: '6px 14px', border: '1px solid #bfdbfe', borderRadius: 8, background: complianceSubmitting === docType.name ? '#9ca3af' : '#eff6ff', color: complianceSubmitting === docType.name ? '#fff' : '#1d4ed8', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                              {complianceSubmitting === docType.name ? 'Recording…' : 'Mark as Received'}
+                            </button>
+                          )}
                           {submitted && !isVerified && !wrongDept && (
                             <button
                               disabled={complianceVerifying === submitted.id}
