@@ -582,13 +582,13 @@ export default function ApplicantProfilePage() {
               if (ms === 'completion' && ss === 'requirements_submitted')
                 actions.push(<button key="finalize" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.finalize(Number(id)), 'Application finalized.')}>Finalize Application</button>);
 
-              if (!actions.length) return null;
               if (wrongDept) return (
                 <div style={{ background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <span style={{ fontSize: 13, color: '#92400e', fontWeight: 600 }}>You don&apos;t have permission to manage this application — it belongs to a different department.</span>
                 </div>
               );
+              if (!actions.length) return null;
               return (
                 <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px' }}>
                   <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Actions</h3>
@@ -698,7 +698,7 @@ export default function ApplicantProfilePage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.evaluate(Number(id), { ...(evalForm.score ? { score: Number(evalForm.score) } : {}), ...(evalForm.notes ? { notes: evalForm.notes } : {}) }), 'Evaluation submitted.')}>Submit</button>
+                  <button style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.evaluate(Number(id), { ...(evalForm.score ? { eval_score: { score: Number(evalForm.score) } } : {}), ...(evalForm.notes ? { note: evalForm.notes } : {}) }), 'Evaluation submitted.')}>Submit</button>
                   <button style={btn('#374151', '#f3f4f6')} onClick={() => { setActiveDialog(null); setEvalForm({ score: '', notes: '' }); }}>Cancel</button>
                 </div>
               </div>
