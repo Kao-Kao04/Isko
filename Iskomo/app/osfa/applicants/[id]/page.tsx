@@ -225,6 +225,8 @@ export default function ApplicantProfilePage() {
       ]);
       setAudit(aud);
       setScholarship(sch);
+      // Pre-load documents so Workflow tab checklist shows correct submission status
+      documentApi.list(numId).then(setDocuments).catch(() => {});
       // Load compliance data at completion stage
       if (wf?.main_status === 'completion') {
         applicationApi.getCompliance(numId).then(setCompliance).catch(() => {});
@@ -419,6 +421,11 @@ export default function ApplicantProfilePage() {
                 apiFetch<typeof completionReqs>(`/api/applications/${id}/completion-requirements`)
                   .then(setCompletionReqs).catch(() => {})
               );
+              // Ensure compliance data is loaded when viewing Documents tab
+              if (workflow?.main_status === 'completion' && compliance.length === 0) {
+                applicationApi.getCompliance(Number(id)).then(setCompliance).catch(() => {});
+                if (app) scholarshipApi.listComplianceDocs(app.scholarship_id).then(setComplianceDocTypes).catch(() => {});
+              }
             }
             if (key === 'messages') {
               import('@/lib/api').then(({ apiFetch }) =>
@@ -545,6 +552,31 @@ export default function ApplicantProfilePage() {
                 </div>
                 <div style={{ fontSize: 12, color: '#374151', background: 'rgba(255,255,255,0.6)', borderRadius: 8, padding: '10px 14px', borderLeft: `3px solid ${ss === 'completed' ? '#86efac' : '#93c5fd'}`, lineHeight: 1.6 }}>
                   <strong>Note:</strong> Scholarship benefit/allowance releases are handled by the <strong>Accounting Office</strong>, not OSFA. The student will be notified via their <strong>PUP webmail</strong> and <strong>IskoMo account</strong> once their benefits are released.
+                </div>
+              </div>
+            )}
+
+            {/* Document checklist — shown at submission stage so OSFA can verify what student brings */}
+            {ms === 'interview' && ss === 'scheduled' && isPublic && requirements.length > 0 && (
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px' }}>
+                <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Documents to Verify Upon Submission</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {requirements.map((req: { id: number; name: string; description?: string | null; is_required?: boolean }) => {
+                    const submitted = documents.some(d => d.requirement_name === req.name);
+                    return (
+                      <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: submitted ? '#f0fdf4' : '#f9fafb', border: `1px solid ${submitted ? '#86efac' : '#f3f4f6'}` }}>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>{submitted ? '✅' : '⏳'}</span>
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{req.name}</span>
+                          {req.description && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>{req.description}</div>}
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: req.is_required ? '#dc2626' : '#9ca3af' }}>{req.is_required ? 'REQUIRED' : 'OPTIONAL'}</span>
+                          {submitted && <span style={{ fontSize: 10, fontWeight: 700, color: '#059669', padding: '2px 8px', borderRadius: 20, background: '#dcfce7' }}>DIGITAL COPY ON FILE</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -899,7 +931,7 @@ export default function ApplicantProfilePage() {
       {activeTab === 'documents' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Uploaded files */}
+          {/* Uploaded files + received compliance docs — unified submitted documents view */}
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h3 style={sectionTitle}>Submitted Documents</h3>
@@ -911,12 +943,13 @@ export default function ApplicantProfilePage() {
                 Loading documents…
                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
-            ) : documents.length === 0 ? (
+            ) : documents.length === 0 && compliance.filter(c => c.submitted_at).length === 0 ? (
               <div style={{ padding: '24px 0', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
                 No documents submitted yet by the student.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Student-uploaded application documents */}
                 {documents.map(doc => (
                   <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 10, background: doc.flagged ? '#fef2f2' : '#f9fafb', border: `1px solid ${doc.flagged ? '#fca5a5' : '#f3f4f6'}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -953,6 +986,37 @@ export default function ApplicantProfilePage() {
                             Download
                           </button>
                         </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Compliance docs that have been received — shown inline so OSFA sees everything in one place */}
+                {compliance.filter(c => c.submitted_at).map(c => (
+                  <div key={`compliance-${c.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 10, background: c.is_verified ? '#f0fdf4' : '#f0f9ff', border: `1px solid ${c.is_verified ? '#86efac' : '#bae6fd'}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: c.is_verified ? '#dcfce7' : '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {c.is_verified
+                          ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{c.requirement_type}</div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                          Received {c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: c.is_verified ? '#dcfce7' : '#dbeafe', color: c.is_verified ? '#15803d' : '#1d4ed8' }}>
+                        {c.is_verified ? 'VERIFIED' : 'RECEIVED'}
+                      </span>
+                      {c.file_url && isSafeUrl(c.file_url) && (
+                        <a href={c.file_url} target="_blank" rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          View
+                        </a>
                       )}
                     </div>
                   </div>
