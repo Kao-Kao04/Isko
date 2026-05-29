@@ -486,6 +486,81 @@ export const scholarApi = {
     }),
 };
 
+// ─── Academic Period + GWA Submission API ─────────────────────────────────────
+
+export interface AcademicPeriodResponse {
+  id: number;
+  academic_year: string;
+  semester: 'first' | 'second' | 'summer';
+  start_date: string;
+  end_date: string;
+  counts_toward_max: boolean;
+  is_active: boolean;
+  is_ended: boolean;
+  label: string;
+  created_at: string;
+}
+
+export type GwaSubmissionStatus = 'pending' | 'approved' | 'rejected';
+
+export interface GwaSubmissionResponse {
+  id: number;
+  scholar_id: number;
+  period_id: number;
+  declared_gwa: string | null;
+  has_grade_below_2_5: boolean;
+  status: GwaSubmissionStatus;
+  rejection_remarks: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  period: AcademicPeriodResponse;
+  proof_url: string | null;
+}
+
+export const academicPeriodApi = {
+  getCurrent: () => apiFetch<AcademicPeriodResponse | null>('/api/academic-periods/current'),
+
+  list: () => apiFetch<AcademicPeriodResponse[]>('/api/academic-periods'),
+
+  create: (data: { academic_year: string; semester: string; start_date: string; end_date: string; counts_toward_max?: boolean }) =>
+    apiFetch<AcademicPeriodResponse>('/api/academic-periods', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: number) =>
+    apiFetch<void>(`/api/academic-periods/${id}`, { method: 'DELETE' }),
+
+  getPendingSubmissions: () =>
+    apiFetch<GwaSubmissionResponse[]>('/api/academic-periods/gwa-submissions/pending'),
+};
+
+export const gwaSubmissionApi = {
+  submit: (scholarId: number, periodId: number, declaredGwa: string | null, hasGradeBelow25: boolean, proofFile: File) => {
+    const fd = new FormData();
+    fd.append('period_id', String(periodId));
+    if (declaredGwa) fd.append('declared_gwa', declaredGwa);
+    fd.append('has_grade_below_2_5', String(hasGradeBelow25));
+    fd.append('proof', proofFile);
+    return apiFetch<GwaSubmissionResponse>(`/api/scholars/${scholarId}/gwa-submissions`, { method: 'POST', body: fd });
+  },
+
+  list: (scholarId: number) =>
+    apiFetch<GwaSubmissionResponse[]>(`/api/scholars/${scholarId}/gwa-submissions`),
+
+  approve: (scholarId: number, subId: number, data: { confirmed_gwa?: string; has_grade_below_2_5?: boolean; notes?: string }) =>
+    apiFetch<GwaSubmissionResponse>(`/api/scholars/${scholarId}/gwa-submissions/${subId}/approve`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  reject: (scholarId: number, subId: number, remarks: string) =>
+    apiFetch<GwaSubmissionResponse>(`/api/scholars/${scholarId}/gwa-submissions/${subId}/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify({ remarks }),
+    }),
+};
+
 // ─── Document API ──────────────────────────────────────────────────────────────
 
 export interface DocumentResponse {

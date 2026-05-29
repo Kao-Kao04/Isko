@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { applicationApi, documentApi, workflowApi, type ApplicationResponse, type AuditEntryResponse, type WorkflowResponse, type ComplianceSubmission } from '@/lib/api-client';
+import { applicationApi, documentApi, workflowApi, scholarApi, academicPeriodApi, gwaSubmissionApi, type ApplicationResponse, type AuditEntryResponse, type WorkflowResponse, type ComplianceSubmission, type ScholarResponse, type AcademicPeriodResponse, type GwaSubmissionResponse } from '@/lib/api-client';
 import { COLORS } from '@/lib/theme';
 import { MAIN_STAGES, STAGE_LABEL, STUDENT_SUB_STATUS_LABEL, stageIndex, isTerminal, formatInterviewDt } from '@/lib/workflow';
 
@@ -81,6 +81,19 @@ export default function ApplicationDetailPage() {
   const [complianceFileNames,   setComplianceFileNames]   = useState<Record<string, string>>({});
   const [complianceItemLoading, setComplianceItemLoading] = useState<string | null>(null);
 
+  // GWA submission state
+  const [scholar,           setScholar]           = useState<ScholarResponse | null>(null);
+  const [endedPeriods,      setEndedPeriods]      = useState<AcademicPeriodResponse[]>([]);
+  const [gwaSubmissions,    setGwaSubmissions]    = useState<GwaSubmissionResponse[]>([]);
+  const [gwaSelectedPeriod, setGwaSelectedPeriod] = useState<number | ''>('');
+  const [gwaDeclaredGwa,    setGwaDeclaredGwa]    = useState('');
+  const [gwaHasBelow25,     setGwaHasBelow25]     = useState(false);
+  const [gwaProofFile,      setGwaProofFile]      = useState<File | null>(null);
+  const [gwaProofName,      setGwaProofName]      = useState('');
+  const [gwaSubmitting,     setGwaSubmitting]     = useState(false);
+  const [gwaError,          setGwaError]          = useState('');
+  const [gwaSuccess,        setGwaSuccess]        = useState('');
+
   const DOC_LIMIT = 20;
 
   useEffect(() => {
@@ -113,6 +126,19 @@ export default function ApplicationDetailPage() {
             scholarshipApi.listComplianceDocs(a.scholarship_id).then(setComplianceDocs).catch(() => {})
           );
         }
+      }
+      // Load GWA submission data if application is approved (student is a scholar)
+      if (a.status === 'approved') {
+        scholarApi.getMyScholars().then(scholars => {
+          const s = scholars.find(sc => sc.application_id === numId);
+          if (s) {
+            setScholar(s);
+            gwaSubmissionApi.list(s.id).then(setGwaSubmissions).catch(() => {});
+          }
+        }).catch(() => {});
+        academicPeriodApi.list().then(periods => {
+          setEndedPeriods(periods.filter(p => p.is_ended));
+        }).catch(() => {});
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
@@ -863,6 +889,143 @@ export default function ApplicationDetailPage() {
                     })}
                   </div>
                 )}
+              </div>
+            );
+          })()}
+
+          {/* GWA Submission — only shown when scholar is active/approved and there are ended periods */}
+          {app.status === 'approved' && scholar && endedPeriods.length > 0 && (() => {
+            async function submitGwa() {
+              if (!scholar || !gwaSelectedPeriod || !gwaProofFile) return;
+              setGwaSubmitting(true); setGwaError(''); setGwaSuccess('');
+              try {
+                const sub = await gwaSubmissionApi.submit(scholar.id, Number(gwaSelectedPeriod), gwaDeclaredGwa || null, gwaHasBelow25, gwaProofFile);
+                setGwaSubmissions(prev => [sub, ...prev.filter(s => s.period_id !== sub.period_id)]);
+                setGwaProofFile(null); setGwaProofName(''); setGwaDeclaredGwa(''); setGwaHasBelow25(false); setGwaSelectedPeriod('');
+                setGwaSuccess('Grade slip submitted. OSFA will review and confirm your GWA.');
+              } catch (err: unknown) { setGwaError(err instanceof Error ? err.message : 'Submission failed.'); }
+              finally { setGwaSubmitting(false); }
+            }
+
+            const pendingOrApproved = gwaSelectedPeriod
+              ? gwaSubmissions.find(s => s.period_id === Number(gwaSelectedPeriod) && (s.status === 'pending' || s.status === 'approved'))
+              : null;
+
+            return (
+              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <h3 style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: '#111827' }}>Submit Grades</h3>
+                <p style={{ margin: '0 0 16px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                  Upload your grade slip after each semester ends. OSFA will verify and record your GWA.
+                </p>
+
+                {/* Past submissions list */}
+                {gwaSubmissions.length > 0 && (
+                  <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {gwaSubmissions.map(sub => {
+                      const badgeCfg = {
+                        pending:  { bg: '#fef9c3', color: '#92400e', label: 'Under Review' },
+                        approved: { bg: '#dcfce7', color: '#15803d', label: 'Verified' },
+                        rejected: { bg: '#fee2e2', color: '#dc2626', label: 'Rejected' },
+                      }[sub.status];
+                      return (
+                        <div key={sub.id} style={{ padding: '12px 14px', borderRadius: 9, border: '1px solid #e5e7eb', background: '#fafafa', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{sub.period.label}</div>
+                            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                              {sub.declared_gwa ? `Declared GWA: ${sub.declared_gwa}` : 'GWA not declared'}
+                              {sub.has_grade_below_2_5 && <span style={{ marginLeft: 8, color: '#ea580c' }}>· Has grade below 2.5</span>}
+                            </div>
+                            {sub.status === 'rejected' && sub.rejection_remarks && (
+                              <div style={{ fontSize: 11, color: '#dc2626', marginTop: 4 }}>Rejection reason: {sub.rejection_remarks}</div>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20, background: badgeCfg.bg, color: badgeCfg.color }}>{badgeCfg.label}</span>
+                            {sub.proof_url && (
+                              <a href={sub.proof_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#2563eb', textDecoration: 'underline' }}>View slip</a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Submission form */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Semester Period</label>
+                    <select
+                      value={gwaSelectedPeriod}
+                      onChange={e => { setGwaSelectedPeriod(Number(e.target.value) || ''); setGwaError(''); setGwaSuccess(''); }}
+                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#111827', background: '#fff', outline: 'none' }}>
+                      <option value="">Select a period…</option>
+                      {endedPeriods.map(p => (
+                        <option key={p.id} value={p.id}>{p.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {gwaSelectedPeriod && !pendingOrApproved && (
+                    <>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Your GWA <span style={{ fontWeight: 400, color: '#9ca3af' }}>(optional)</span></label>
+                          <input
+                            type="text"
+                            value={gwaDeclaredGwa}
+                            onChange={e => setGwaDeclaredGwa(e.target.value)}
+                            placeholder="e.g. 1.75"
+                            style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#111827', outline: 'none', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      </div>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={gwaHasBelow25}
+                          onChange={e => setGwaHasBelow25(e.target.checked)}
+                          style={{ width: 16, height: 16, accentColor: COLORS.maroon }}
+                        />
+                        <span style={{ fontSize: 13, color: '#374151' }}>I have a subject grade below 2.5 this semester</span>
+                      </label>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Grade Slip <span style={{ color: '#dc2626' }}>*</span></label>
+                        <label htmlFor="gwa-proof" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', border: `1.5px dashed ${gwaProofFile ? COLORS.maroon : '#d1d5db'}`, borderRadius: 9, cursor: 'pointer', background: gwaProofFile ? '#fff5f5' : '#fafafa' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={gwaProofFile ? COLORS.maroon : '#9ca3af'} strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          <span style={{ fontSize: 13, color: gwaProofFile ? COLORS.maroon : '#6b7280', fontWeight: gwaProofFile ? 600 : 400, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {gwaProofName || 'Upload grade slip (PDF, JPG, PNG)'}
+                          </span>
+                          <input id="gwa-proof" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
+                            onChange={e => {
+                              const f = e.target.files?.[0];
+                              if (f) { setGwaProofFile(f); setGwaProofName(f.name); }
+                            }} />
+                        </label>
+                      </div>
+
+                      {gwaError && <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626' }}>{gwaError}</div>}
+                      {gwaSuccess && <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, color: '#166534' }}>{gwaSuccess}</div>}
+
+                      <button
+                        onClick={submitGwa}
+                        disabled={!gwaProofFile || gwaSubmitting}
+                        style={{ width: '100%', padding: '11px 0', background: gwaProofFile && !gwaSubmitting ? COLORS.maroon : '#fca5a5', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#fff', cursor: gwaProofFile && !gwaSubmitting ? 'pointer' : 'not-allowed' }}>
+                        {gwaSubmitting ? 'Submitting…' : 'Submit Grade Slip'}
+                      </button>
+                    </>
+                  )}
+
+                  {gwaSelectedPeriod && pendingOrApproved && (
+                    <div style={{ padding: '12px 14px', borderRadius: 9, background: pendingOrApproved.status === 'approved' ? '#f0fdf4' : '#fef9c3', border: `1px solid ${pendingOrApproved.status === 'approved' ? '#bbf7d0' : '#fde68a'}`, fontSize: 13, color: pendingOrApproved.status === 'approved' ? '#166534' : '#92400e' }}>
+                      {pendingOrApproved.status === 'approved'
+                        ? `✓ GWA already verified for this period (${pendingOrApproved.declared_gwa ?? 'on file'}).`
+                        : 'Your grade slip for this period is currently under review. Please wait for OSFA to process it.'}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })()}

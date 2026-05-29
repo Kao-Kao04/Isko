@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { scholarApi, type ScholarResponse, type ScholarStatus } from '@/lib/api-client';
+import { scholarApi, academicPeriodApi, gwaSubmissionApi, type ScholarResponse, type ScholarStatus, type GwaSubmissionResponse } from '@/lib/api-client';
 import { useToast, ToastContainer } from '@/components/shared/OsfaToast';
 import { COLORS } from '@/lib/theme';
 import { Skel } from '@/components/shared/Skeleton';
@@ -49,6 +49,15 @@ export default function Page() {
   const [semForm, setSemForm]   = useState({ semester: '1st Semester', academic_year: '2025-2026', gwa: '', notes: '', has_grade_below_2_5: false });
   const [semSaving, setSemSaving] = useState(false);
 
+  // GWA review modal
+  const [gwaModal,         setGwaModal]         = useState<ScholarResponse | null>(null);
+  const [gwaModalSubs,     setGwaModalSubs]     = useState<GwaSubmissionResponse[]>([]);
+  const [gwaModalLoading,  setGwaModalLoading]  = useState(false);
+  const [gwaReviewForm,    setGwaReviewForm]    = useState<Record<number, { confirmedGwa: string; hasBelow25: boolean; notes: string; rejectRemarks: string }>>({});
+  const [gwaSavingId,      setGwaSavingId]      = useState<number | null>(null);
+  // pending count per scholar (scholar_id → count)
+  const [pendingGwaCounts, setPendingGwaCounts] = useState<Record<number, number>>({});
+
   const fetchScholars = useCallback(async () => {
     setLoading(true);
     try {
@@ -70,6 +79,18 @@ export default function Page() {
   }, []);
 
   useEffect(() => { fetchScholars(); }, [fetchScholars]);
+
+  // Load pending GWA submission counts after scholars load
+  useEffect(() => {
+    if (scholars.length === 0) return;
+    academicPeriodApi.getPendingSubmissions().then(subs => {
+      const counts: Record<number, number> = {};
+      for (const s of subs) {
+        counts[s.scholar_id] = (counts[s.scholar_id] ?? 0) + 1;
+      }
+      setPendingGwaCounts(counts);
+    }).catch(() => {});
+  }, [scholars]);
 
   const counts = ALL_STATUSES.reduce((acc, k) => {
     acc[k] = scholars.filter(s => s.status === k).length;
@@ -306,6 +327,26 @@ export default function Page() {
                     <button onClick={() => toggleHistory(scholar.id)}
                       style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: historyOpen ? '#f3f4f6' : '#fafafa', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       {historyOpen ? 'Hide History' : `History (${logs.length})`}
+                    </button>
+                  )}
+                  {(pendingGwaCounts[scholar.id] ?? 0) > 0 && (
+                    <button onClick={async () => {
+                      setGwaModal(scholar); setGwaModalLoading(true); setGwaModalSubs([]);
+                      try {
+                        const subs = await gwaSubmissionApi.list(scholar.id);
+                        setGwaModalSubs(subs);
+                        const forms: typeof gwaReviewForm = {};
+                        for (const sub of subs) {
+                          forms[sub.id] = { confirmedGwa: sub.declared_gwa ?? '', hasBelow25: sub.has_grade_below_2_5, notes: '', rejectRemarks: '' };
+                        }
+                        setGwaReviewForm(forms);
+                      } catch { /* silent */ } finally { setGwaModalLoading(false); }
+                    }}
+                      style={{ position: 'relative', padding: '7px 14px', border: '1px solid #fbbf24', borderRadius: 8, background: '#fffbeb', color: '#92400e', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                      GWA Review
+                      <span style={{ position: 'absolute', top: -5, right: -5, width: 16, height: 16, borderRadius: '50%', background: '#dc2626', color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {pendingGwaCounts[scholar.id]}
+                      </span>
                     </button>
                   )}
                   <button onClick={() => { setSemModal(scholar); }}
@@ -556,6 +597,156 @@ export default function Page() {
                 {semSaving ? 'Saving…' : 'Add Record'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── GWA Review Modal ── */}
+      {gwaModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setGwaModal(null)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 28, maxWidth: 580, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 700, color: '#111827' }}>GWA Submissions</h2>
+                <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{gwaModal.student_name ?? `Scholar #${gwaModal.id}`}</p>
+              </div>
+              <button onClick={() => setGwaModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#9ca3af', fontSize: 18 }}>✕</button>
+            </div>
+
+            {gwaModalLoading ? (
+              <div style={{ padding: '32px 0', textAlign: 'center', color: '#6b7280', fontSize: 13 }}>Loading submissions…</div>
+            ) : gwaModalSubs.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No GWA submissions yet.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {gwaModalSubs.map(sub => {
+                  const form = gwaReviewForm[sub.id] ?? { confirmedGwa: '', hasBelow25: false, notes: '', rejectRemarks: '' };
+                  const badgeCfg = {
+                    pending:  { bg: '#fef9c3', color: '#92400e', label: 'Pending Review' },
+                    approved: { bg: '#dcfce7', color: '#15803d', label: 'Approved' },
+                    rejected: { bg: '#fee2e2', color: '#dc2626', label: 'Rejected' },
+                  }[sub.status];
+                  return (
+                    <div key={sub.id} style={{ borderRadius: 12, border: `1px solid ${sub.status === 'pending' ? '#fbbf24' : '#e5e7eb'}`, overflow: 'hidden' }}>
+                      {/* Header */}
+                      <div style={{ padding: '12px 16px', background: sub.status === 'pending' ? '#fffbeb' : '#fafafa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{sub.period.label}</div>
+                          <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                            Declared GWA: <strong>{sub.declared_gwa ?? 'not provided'}</strong>
+                            {sub.has_grade_below_2_5 && <span style={{ marginLeft: 10, color: '#ea580c', fontWeight: 600 }}>⚠ Has grade below 2.5</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          {sub.proof_url && (
+                            <a href={sub.proof_url} target="_blank" rel="noreferrer"
+                              style={{ fontSize: 11, padding: '4px 10px', border: '1px solid #e5e7eb', borderRadius: 6, color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>
+                              View Slip
+                            </a>
+                          )}
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: badgeCfg.bg, color: badgeCfg.color }}>{badgeCfg.label}</span>
+                        </div>
+                      </div>
+
+                      {/* Review form — only for pending */}
+                      {sub.status === 'pending' && (
+                        <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <div style={{ display: 'flex', gap: 10 }}>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
+                                Confirmed GWA <span style={{ color: '#9ca3af', fontWeight: 400 }}>(leave blank to use declared)</span>
+                              </label>
+                              <input type="text" placeholder={sub.declared_gwa ?? 'e.g. 1.75'} value={form.confirmedGwa}
+                                onChange={e => setGwaReviewForm(p => ({ ...p, [sub.id]: { ...form, confirmedGwa: e.target.value } }))}
+                                style={{ width: '100%', padding: '7px 10px', border: '1.5px solid #e5e7eb', borderRadius: 7, fontSize: 13, color: '#111827', outline: 'none', boxSizing: 'border-box' }} />
+                            </div>
+                          </div>
+
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12, color: '#374151' }}>
+                            <input type="checkbox" checked={form.hasBelow25}
+                              onChange={e => setGwaReviewForm(p => ({ ...p, [sub.id]: { ...form, hasBelow25: e.target.checked } }))}
+                              style={{ accentColor: '#dc2626' }} />
+                            Has subject grade below 2.5
+                          </label>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Notes (optional)</label>
+                            <input type="text" placeholder="Any remarks for this approval…" value={form.notes}
+                              onChange={e => setGwaReviewForm(p => ({ ...p, [sub.id]: { ...form, notes: e.target.value } }))}
+                              style={{ width: '100%', padding: '7px 10px', border: '1.5px solid #e5e7eb', borderRadius: 7, fontSize: 13, color: '#111827', outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              disabled={gwaSavingId === sub.id}
+                              onClick={async () => {
+                                setGwaSavingId(sub.id);
+                                try {
+                                  const updated = await gwaSubmissionApi.approve(gwaModal.id, sub.id, {
+                                    confirmed_gwa: form.confirmedGwa || undefined,
+                                    has_grade_below_2_5: form.hasBelow25,
+                                    notes: form.notes || undefined,
+                                  });
+                                  setGwaModalSubs(prev => prev.map(s => s.id === sub.id ? updated : s));
+                                  setPendingGwaCounts(prev => ({ ...prev, [gwaModal.id]: Math.max(0, (prev[gwaModal.id] ?? 1) - 1) }));
+                                  addToast('success', `GWA submission approved for ${sub.period.label}.`);
+                                  // Refresh scholar to pick up new semester record
+                                  scholarApi.get(gwaModal.id).then(updated => {
+                                    setScholars(prev => prev.map(s => s.id === gwaModal.id
+                                      ? { ...updated, student_name: s.student_name, scholarship_name: s.scholarship_name }
+                                      : s
+                                    ));
+                                  }).catch(() => {});
+                                } catch (err) {
+                                  addToast('error', err instanceof Error ? err.message : 'Failed to approve.');
+                                } finally { setGwaSavingId(null); }
+                              }}
+                              style={{ flex: 1, padding: '8px 0', border: 'none', borderRadius: 8, background: gwaSavingId === sub.id ? '#9ca3af' : '#15803d', color: '#fff', fontSize: 13, fontWeight: 700, cursor: gwaSavingId === sub.id ? 'not-allowed' : 'pointer' }}>
+                              {gwaSavingId === sub.id ? 'Saving…' : '✓ Approve & Record GWA'}
+                            </button>
+                          </div>
+
+                          <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 10, display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#dc2626', marginBottom: 4 }}>Reject — reason required</label>
+                              <input type="text" placeholder="Reason for rejection…" value={form.rejectRemarks}
+                                onChange={e => setGwaReviewForm(p => ({ ...p, [sub.id]: { ...form, rejectRemarks: e.target.value } }))}
+                                style={{ width: '100%', padding: '7px 10px', border: '1.5px solid #fca5a5', borderRadius: 7, fontSize: 13, color: '#111827', outline: 'none', boxSizing: 'border-box' }} />
+                            </div>
+                            <button
+                              disabled={!form.rejectRemarks.trim() || gwaSavingId === sub.id}
+                              onClick={async () => {
+                                if (!form.rejectRemarks.trim()) return;
+                                setGwaSavingId(sub.id);
+                                try {
+                                  const updated = await gwaSubmissionApi.reject(gwaModal.id, sub.id, form.rejectRemarks.trim());
+                                  setGwaModalSubs(prev => prev.map(s => s.id === sub.id ? updated : s));
+                                  setPendingGwaCounts(prev => ({ ...prev, [gwaModal.id]: Math.max(0, (prev[gwaModal.id] ?? 1) - 1) }));
+                                  addToast('warning', `GWA submission rejected. Student can resubmit.`);
+                                } catch (err) {
+                                  addToast('error', err instanceof Error ? err.message : 'Failed to reject.');
+                                } finally { setGwaSavingId(null); }
+                              }}
+                              style={{ padding: '8px 14px', border: '1.5px solid #fca5a5', borderRadius: 8, background: !form.rejectRemarks.trim() ? '#fef2f2' : '#fee2e2', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: !form.rejectRemarks.trim() ? 'not-allowed' : 'pointer', flexShrink: 0 }}>
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Rejected — show reason */}
+                      {sub.status === 'rejected' && sub.rejection_remarks && (
+                        <div style={{ padding: '10px 16px', background: '#fef2f2', fontSize: 12, color: '#dc2626' }}>
+                          Rejection reason: {sub.rejection_remarks}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
