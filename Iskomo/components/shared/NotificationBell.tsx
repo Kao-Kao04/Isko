@@ -143,10 +143,17 @@ export default function NotificationBell() {
     // what the backend cached in the route field.
     let dest: string;
     if (n.application_id) {
-      const appPath = (user?.role === 'osfa_staff' || user?.role === 'super_admin')
-        ? 'applicants'
-        : 'applications';
-      dest = `${roleBase}/${appPath}/${n.application_id}`;
+      const isOsfa = user?.role === 'osfa_staff' || user?.role === 'super_admin';
+      const t = n.title.toLowerCase();
+      const isMessage = t.includes('message') || t.includes('reply');
+      if (isMessage) {
+        // Student → dedicated messages page; OSFA → applicant page with Messages tab
+        dest = isOsfa
+          ? `/osfa/applicants/${n.application_id}?tab=messages`
+          : `/student/messages/${n.application_id}`;
+      } else {
+        dest = `${roleBase}/${isOsfa ? 'applicants' : 'applications'}/${n.application_id}`;
+      }
     } else {
       const t = n.title.toLowerCase();
       if (t.includes('deadline') || t.includes('scholarship')) {

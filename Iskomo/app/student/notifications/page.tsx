@@ -45,9 +45,13 @@ function getIcon(n: NotificationResponse, size = 20, color?: string) {
 }
 
 function getActionRoute(n: NotificationResponse): string | null {
+  const t = n.title.toLowerCase();
+  // Message/reply notifications go to the dedicated per-application messages page
+  if (n.application_id && (t.includes('message') || t.includes('reply'))) {
+    return `/student/messages/${n.application_id}`;
+  }
   if (n.application_id) return `/student/applications/${n.application_id}`;
   if (n.route && n.route !== '/notifications') return `/student${n.route}`;
-  const t = n.title.toLowerCase();
   if (t.includes('deadline') || t.includes('scholarship')) return '/student/iskolarships';
   return null;
 }
