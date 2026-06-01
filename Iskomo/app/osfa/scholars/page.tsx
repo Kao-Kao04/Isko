@@ -21,9 +21,20 @@ const STATUS_CFG: Record<ScholarStatus, { bg: string; color: string; dot: string
 };
 
 const ALL_STATUSES: ScholarStatus[] = ['active', 'probationary', 'under_review', 'on_leave', 'suspended', 'terminated', 'graduated'];
-// suspended is excluded from the modal — no API transition leads TO suspended (only from suspended → active/terminated)
-const MODAL_STATUSES: ScholarStatus[] = ['active', 'probationary', 'under_review', 'on_leave', 'terminated', 'graduated'];
 const REASON_REQUIRED: ScholarStatus[] = ['terminated'];
+
+// Mirrors backend SCHOLAR_STATUS_TRANSITIONS — only valid target statuses per current status.
+// on_leave removed as a settable target; suspended never settable via UI.
+// terminated → under_review enables the appeal re-review path.
+const STATUS_TRANSITIONS: Record<ScholarStatus, ScholarStatus[]> = {
+  active:       ['probationary', 'under_review', 'terminated', 'graduated'],
+  probationary: ['active', 'under_review', 'terminated', 'graduated'],
+  under_review: ['active', 'probationary', 'terminated'],
+  on_leave:     ['active', 'terminated'],
+  suspended:    ['active', 'terminated'],
+  terminated:   ['under_review'],
+  graduated:    [],
+};
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -355,7 +366,7 @@ export default function Page() {
                     style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     + Sem Record
                   </button>
-                  <button onClick={() => { setStatusModal(scholar); setNewStatus(MODAL_STATUSES.includes(scholar.status) ? scholar.status : 'active'); setStatusReason(''); setStatusError(''); }}
+                  <button onClick={() => { const allowed = STATUS_TRANSITIONS[scholar.status] ?? []; if (!allowed.length) return; setStatusModal(scholar); setNewStatus(allowed[0]); setStatusReason(''); setStatusError(''); }}
                     style={{ padding: '7px 14px', border: `1px solid ${TEAL}33`, borderRadius: 8, background: '#fff5f5', color: TEAL, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     Update Status
                   </button>
@@ -489,7 +500,7 @@ export default function Page() {
 
             <label style={labelStyle}>New Status</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 20 }}>
-              {MODAL_STATUSES.map(key => {
+              {(STATUS_TRANSITIONS[statusModal.status] ?? []).map(key => {
                 const cfg = STATUS_CFG[key];
                 return (
                   <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 13px', borderRadius: 9, border: `1.5px solid ${newStatus === key ? cfg.dot : '#e5e7eb'}`, background: newStatus === key ? cfg.bg : '#fff', cursor: 'pointer' }}>
@@ -501,6 +512,11 @@ export default function Page() {
                   </label>
                 );
               })}
+              {statusModal.status === 'terminated' && (
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                  Set to <strong>Under Review</strong> to re-open the scholar&apos;s case after an appeal.
+                </p>
+              )}
             </div>
 
             {/* Reason textarea */}
