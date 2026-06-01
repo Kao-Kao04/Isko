@@ -82,7 +82,10 @@ function mapNotif(n: NotificationResponse): DisplayNotif {
   // Prefer application_id when available for direct deep-linking.
   let href: string | undefined;
   if (n.application_id) {
-    href = `/osfa/applicants/${n.application_id}`;
+    // Preserve tab query from route (e.g. ?tab=messages for message notifications)
+    const tabMatch = n.route?.match(/\?tab=([^&]+)/);
+    const tabSuffix = tabMatch ? `?tab=${tabMatch[1]}` : '';
+    href = `/osfa/applicants/${n.application_id}${tabSuffix}`;
   } else if (n.route) {
     // Strip any leading /osfa or /student prefix stored in the route field,
     // then map known student paths to their OSFA equivalents.
