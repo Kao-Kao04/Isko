@@ -120,6 +120,7 @@ export default function Page() {
   const [announceStatusFilter, setAnnounceStatusFilter] = useState('pending');
   const [notifications, setNotifications] = useState<DisplayNotif[]>([]);
   const [loading, setLoading]             = useState(true);
+  const [loadErr, setLoadErr]             = useState('');
   const [activeFilter, setActiveFilter]   = useState<NotifFilter>('All');
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [broadcastTitle,    setBroadcastTitle]    = useState('');
@@ -132,11 +133,12 @@ export default function Page() {
   const [selectedNotif,     setSelectedNotif]     = useState<DisplayNotif | null>(null);
 
   const fetchNotifications = useCallback(async () => {
+    setLoadErr('');
     try {
       const res = await notificationApi.list(1, 50);
       setNotifications(res.items.map(mapNotif));
-    } catch {
-      // silent fail
+    } catch (err) {
+      setLoadErr(err instanceof Error ? err.message : 'Failed to load notifications.');
     } finally {
       setLoading(false);
     }
@@ -295,6 +297,13 @@ export default function Page() {
           </Link>
         </div>
       </div>
+
+      {loadErr && (
+        <div style={{ marginBottom: 16, padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, fontSize: 13, color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span>{loadErr}</span>
+          <button onClick={fetchNotifications} style={{ padding: '5px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Retry</button>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 20, alignItems: 'start' }}>
         <div>

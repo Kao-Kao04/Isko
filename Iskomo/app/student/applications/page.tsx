@@ -40,16 +40,19 @@ const StatIcon = ({ type }: { type: string }) => {
 export default function ApplicationsPage() {
   const [applications, setApplications]     = useState<ApplicationResponse[]>([]);
   const [loading, setLoading]               = useState(true);
+  const [loadErr, setLoadErr]               = useState('');
+  const [withdrawErr, setWithdrawErr]       = useState('');
   const [activeTab, setActiveTab]           = useState('All');
   const [withdrawTarget, setWithdrawTarget] = useState<number | null>(null);
   const [withdrawing, setWithdrawing]       = useState(false);
 
   const fetchApplications = useCallback(async () => {
+    setLoadErr('');
     try {
       const res = await applicationApi.list(1, 50);
       setApplications(res.items);
-    } catch {
-      // silent fail
+    } catch (err) {
+      setLoadErr(err instanceof Error ? err.message : 'Failed to load applications.');
     } finally {
       setLoading(false);
     }
@@ -76,10 +79,13 @@ export default function ApplicationsPage() {
 
   async function handleWithdraw(id: number) {
     setWithdrawing(true);
+    setWithdrawErr('');
     try {
       await applicationApi.withdraw(id);
       setApplications(prev => prev.filter(a => a.id !== id));
-    } catch { /* ignore */ } finally {
+    } catch (err) {
+      setWithdrawErr(err instanceof Error ? err.message : 'Failed to withdraw application.');
+    } finally {
       setWithdrawing(false);
       setWithdrawTarget(null);
     }
@@ -128,6 +134,18 @@ export default function ApplicationsPage() {
           </div>
         </div>
       </div>
+
+      {loadErr && (
+        <div style={{ marginBottom: 20, padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, fontSize: 13, color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span>{loadErr}</span>
+          <button onClick={fetchApplications} style={{ padding: '5px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Retry</button>
+        </div>
+      )}
+      {withdrawErr && (
+        <div style={{ marginBottom: 20, padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, fontSize: 13, color: '#dc2626' }}>
+          {withdrawErr}
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
