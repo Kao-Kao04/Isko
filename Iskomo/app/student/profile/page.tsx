@@ -105,7 +105,7 @@ export default function Page() {
       setSaved(true); setEditing(false);
       setTimeout(() => setSaved(false), 3000);
       refresh();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed to save.'); }
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed to save.'); refresh(); }
     finally { setSaving(false); }
   }
 
@@ -176,6 +176,11 @@ export default function Page() {
         {isAcademicLocked && editing && (
           <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 9, fontSize: 13, color: '#92400e' }}>
             College, program, and year level are locked once verification has started. Contact OSFA to request changes.
+          </div>
+        )}
+        {err && (err.includes('college') || err.includes('program') || err.includes('year_level')) && (
+          <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 9, fontSize: 13, color: '#92400e' }}>
+            College, program, and year level are now locked. Your profile has been refreshed — please save again without changing those fields.
           </div>
         )}
         {err && !err.includes('college') && !err.includes('program') && !err.includes('year_level') && (
