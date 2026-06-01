@@ -162,8 +162,13 @@ export default function Page() {
 
   function handleNotifAction(n: DisplayNotif) {
     markAsRead(n.id);
-    if (n.applicationId && n.actionHref) {
-      router.push(n.actionHref);
+    // Navigate for any notification with a meaningful link (not just the notifications page itself).
+    // This covers GWA requests (→ /osfa/registrations), application notifications (→ /osfa/applicants/:id),
+    // and other deep-linked events. Announcements with no link land on /osfa/notifications so we show
+    // the detail modal instead to let the user read the full body.
+    const isNavigable = n.actionHref && n.actionHref !== '/osfa/notifications';
+    if (isNavigable) {
+      router.push(n.actionHref!);
     } else {
       setSelectedNotif({ ...n, isRead: true });
     }
@@ -365,7 +370,7 @@ export default function Page() {
                               onClick={() => handleNotifAction(n)}
                               style={{ fontSize: 12, fontWeight: 700, color: TEAL, background: TEAL_LIGHT, border: `1px solid ${TEAL}40`, borderRadius: 7, padding: '5px 12px', cursor: 'pointer' }}
                             >
-                              {n.applicationId ? 'View Details' : 'View Announcement'}
+                              {(n.actionHref && n.actionHref !== '/osfa/notifications') ? 'View Details' : 'View Announcement'}
                             </button>
                             {!n.isRead && (
                               <button onClick={() => markAsRead(n.id)} style={{ fontSize: 12, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 0', fontWeight: 500 }}>Mark as read</button>
