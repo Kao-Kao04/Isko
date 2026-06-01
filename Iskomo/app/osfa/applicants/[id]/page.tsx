@@ -164,10 +164,16 @@ export default function ApplicantProfilePage() {
   async function doWorkflowAction(fn: () => Promise<WorkflowResponse>, msg: string) {
     setActionLoading(true);
     try {
-      setWorkflow(await fn());
+      const newWf = await fn();
+      setWorkflow(newWf);
       // Re-fetch app so concurrent edits by other staff are reflected
       const updated = await applicationApi.get(Number(id));
       setApp(updated);
+      // Lazy-load compliance data when transitioning into the completion stage
+      if (newWf.main_status === 'completion' && complianceDocTypes.length === 0) {
+        applicationApi.getCompliance(Number(id)).then(setCompliance).catch(() => {});
+        scholarshipApi.listComplianceDocs(updated.scholarship_id).then(setComplianceDocTypes).catch(() => {});
+      }
       addToast('success', msg);
       setActiveDialog(null);
     } catch (err) {
@@ -640,8 +646,8 @@ export default function ApplicantProfilePage() {
               );
             })()}
 
-            {/* Document checklist — shown at submission stage so OSFA can verify what student brings */}
-            {ms === 'interview' && ss === 'scheduled' && isPublic && requirements.length > 0 && (
+            {/* Document checklist — shown throughout interview stage so OSFA can see what student needs to bring */}
+            {ms === 'interview' && isPublic && requirements.length > 0 && (
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px' }}>
                 <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Documents to Verify Upon Submission</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

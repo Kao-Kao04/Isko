@@ -112,8 +112,8 @@ export default function ApplicationDetailPage() {
       import('@/lib/api').then(({ apiFetch }) =>
         apiFetch<{ items: typeof messages }>(`/api/applications/${numId}/messages`).then(r => setMessages(r.items)).catch(() => {})
       );
-      // Load scholarship requirements when resubmission is needed
-      if ((a.status === 'incomplete' || wf?.sub_status === 'revision_requested') && a.scholarship_id) {
+      // Load scholarship requirements for resubmission OR to show the documents-to-bring checklist at the submission/interview stage
+      if ((a.status === 'incomplete' || wf?.sub_status === 'revision_requested' || wf?.main_status === 'interview') && a.scholarship_id) {
         import('@/lib/api-client').then(({ scholarshipApi }) =>
           scholarshipApi.get(a.scholarship_id).then(s => setScholarshipReqs(s.requirements ?? [])).catch(() => {})
         );
@@ -423,6 +423,30 @@ export default function ApplicationDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Documents to Prepare — visible at interview/submission stage for public scholarships */}
+          {workflow?.main_status === 'interview' && isPublic && scholarshipReqs.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1.5px solid #bfdbfe', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1d4ed8' }}>Documents to Prepare</h3>
+              </div>
+              <p style={{ margin: '0 0 14px', fontSize: 13, color: '#3b82f6', lineHeight: 1.5 }}>
+                Please prepare and bring these documents to the OSFA office on the submission deadline.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {scholarshipReqs.map(req => (
+                  <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#0c4a6e' }}>{req.name}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: req.is_required ? '#fee2e2' : '#f3f4f6', color: req.is_required ? '#dc2626' : '#9ca3af' }}>
+                      {req.is_required ? 'REQUIRED' : 'OPTIONAL'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Generate Documents — available at COMPLETION stage (shown before actions so student sees forms first) */}
           {workflow?.main_status === 'completion' && (() => {
