@@ -401,8 +401,10 @@ export default function ApplicationDetailPage() {
 
                   {/* Completion pending requirements */}
                   {ms === 'completion' && ss === 'pending_requirements' && (
-                    <div style={{ marginTop: 18, padding: '14px 16px', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a', fontSize: 13, color: '#92400e', fontWeight: 600 }}>
-                      Action required: Please submit your completion requirements to finalize your scholarship.
+                    <div style={{ marginTop: 18, padding: '14px 16px', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a', fontSize: 13, color: '#92400e', lineHeight: 1.6 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>Action Required — 2 Steps to Finalize</div>
+                      <div>1. Download and complete the required forms from the <strong>Generate Documents</strong> section below.</div>
+                      <div>2. Return the signed documents to the OSFA office, then submit your requirements using the <strong>Submit Completion Requirements</strong> form below.</div>
                     </div>
                   )}
 

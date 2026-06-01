@@ -558,6 +558,88 @@ export default function ApplicantProfilePage() {
               </div>
             )}
 
+            {/* Compliance checklist — shown in workflow tab at completion stage so OSFA can verify without switching tabs */}
+            {ms === 'completion' && complianceDocTypes.length > 0 && (() => {
+              const reqTypes = complianceDocTypes.filter(d => d.is_required);
+              const verifiedCount = reqTypes.filter(d => compliance.some(c => c.requirement_type === d.name && c.is_verified)).length;
+              const allVerifiedWf = reqTypes.length > 0 && verifiedCount === reqTypes.length;
+              return (
+                <div style={{ background: '#fff', borderRadius: 14, border: `1px solid ${allVerifiedWf ? '#86efac' : '#e5e7eb'}`, padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Compliance Documents</h3>
+                    <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 12px', borderRadius: 20, background: allVerifiedWf ? '#dcfce7' : '#eff6ff', color: allVerifiedWf ? '#15803d' : '#1d4ed8' }}>
+                      {verifiedCount} / {reqTypes.length} verified
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {complianceDocTypes.map(docType => {
+                      const submitted = compliance.find(c => c.requirement_type === docType.name);
+                      const isVerified = submitted?.is_verified;
+                      return (
+                        <div key={docType.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: isVerified ? '#f0fdf4' : submitted ? '#eff6ff' : '#f9fafb', border: `1px solid ${isVerified ? '#86efac' : submitted ? '#bfdbfe' : '#f3f4f6'}` }}>
+                          <div style={{ width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: isVerified ? '#dcfce7' : submitted ? '#dbeafe' : '#e5e7eb' }}>
+                            {isVerified
+                              ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                              : submitted
+                              ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{docType.name}</span>
+                            <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: docType.is_required ? '#dc2626' : '#9ca3af' }}>{docType.is_required ? 'Required' : 'Optional'}</span>
+                            {submitted && (
+                              <div style={{ fontSize: 11, color: isVerified ? '#15803d' : '#1d4ed8', marginTop: 1 }}>
+                                {isVerified
+                                  ? `Verified${submitted.verified_at ? ` · ${new Date(submitted.verified_at).toLocaleDateString()}` : ''}`
+                                  : 'Received · pending verification'}
+                              </div>
+                            )}
+                          </div>
+                          {!submitted && !isVerified && !wrongDept && (
+                            <button
+                              disabled={complianceSubmitting === docType.name}
+                              onClick={async () => {
+                                setComplianceSubmitting(docType.name);
+                                try {
+                                  const created = await applicationApi.submitCompliance(app.id, { requirement_type: docType.name });
+                                  setCompliance(prev => [...prev, created]);
+                                  addToast('success', `"${docType.name}" marked as received.`);
+                                } catch (err) {
+                                  addToast('error', err instanceof Error ? err.message : 'Failed to record.');
+                                } finally { setComplianceSubmitting(null); }
+                              }}
+                              style={{ padding: '5px 12px', border: '1px solid #bfdbfe', borderRadius: 8, background: complianceSubmitting === docType.name ? '#9ca3af' : '#eff6ff', color: complianceSubmitting === docType.name ? '#fff' : '#1d4ed8', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                              {complianceSubmitting === docType.name ? 'Recording…' : 'Mark Received'}
+                            </button>
+                          )}
+                          {submitted && !isVerified && !wrongDept && (
+                            <button
+                              disabled={complianceVerifying === submitted.id}
+                              onClick={async () => {
+                                setComplianceVerifying(submitted.id);
+                                try {
+                                  const updated = await applicationApi.verifyCompliance(app.id, submitted.id);
+                                  setCompliance(prev => prev.map(c => c.id === updated.id ? updated : c));
+                                  addToast('success', `"${docType.name}" verified.`);
+                                } catch (err) {
+                                  addToast('error', err instanceof Error ? err.message : 'Failed to verify.');
+                                } finally { setComplianceVerifying(null); }
+                              }}
+                              style={{ padding: '5px 12px', border: 'none', borderRadius: 8, background: complianceVerifying === submitted.id ? '#9ca3af' : '#059669', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                              {complianceVerifying === submitted.id ? 'Verifying…' : 'Verify ✓'}
+                            </button>
+                          )}
+                          {isVerified && (
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#15803d', padding: '3px 8px', borderRadius: 20, background: '#dcfce7', flexShrink: 0 }}>Verified</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Document checklist — shown at submission stage so OSFA can verify what student brings */}
             {ms === 'interview' && ss === 'scheduled' && isPublic && requirements.length > 0 && (
               <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px' }}>
