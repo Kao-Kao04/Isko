@@ -139,7 +139,9 @@ export default function ApplicantProfilePage() {
     try {
       const docs = await documentApi.list(Number(id));
       setDocuments(docs);
-    } catch { /* silent */ } finally {
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Failed to load documents.');
+    } finally {
       setDocsLoading(false);
     }
   }
@@ -1459,7 +1461,9 @@ export default function ApplicantProfilePage() {
                 await apiFetch(`/api/applications/${id}/notes`, { method: 'PATCH', body: JSON.stringify({ notes: internalNotes }) });
                 setNotesSaved(true);
                 setTimeout(() => setNotesSaved(false), 3000);
-              } catch { /* silent */ } finally { setNotesSaving(false); }
+              } catch (err) {
+                addToast('error', err instanceof Error ? err.message : 'Failed to save notes.');
+              } finally { setNotesSaving(false); }
             }}
             disabled={notesSaving}
             style={{ padding: '8px 18px', background: notesSaving ? '#9ca3af' : '#0f172a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: notesSaving ? 'not-allowed' : 'pointer' }}>

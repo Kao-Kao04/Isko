@@ -340,7 +340,9 @@ export default function Page() {
                           forms[sub.id] = { confirmedGwa: sub.declared_gwa ?? '', hasBelow25: sub.has_grade_below_2_5, notes: '', rejectRemarks: '' };
                         }
                         setGwaReviewForm(forms);
-                      } catch { /* silent */ } finally { setGwaModalLoading(false); }
+                      } catch (err) {
+                        addToast('error', err instanceof Error ? err.message : 'Failed to load GWA submissions.');
+                      } finally { setGwaModalLoading(false); }
                     }}
                       style={{ position: 'relative', padding: '7px 14px', border: '1px solid #fbbf24', borderRadius: 8, background: '#fffbeb', color: '#92400e', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                       GWA Review

@@ -893,8 +893,8 @@ export default function ApplicationDetailPage() {
             );
           })()}
 
-          {/* GWA Submission — only shown when scholar is active/approved and there are ended periods */}
-          {app.status === 'approved' && scholar && endedPeriods.length > 0 && (() => {
+          {/* GWA Submission — only shown for active scholars with ended periods */}
+          {app.status === 'approved' && scholar && !['terminated', 'graduated'].includes(scholar.status) && endedPeriods.length > 0 && (() => {
             async function submitGwa() {
               if (!scholar || !gwaSelectedPeriod || !gwaProofFile) return;
               setGwaSubmitting(true); setGwaError(''); setGwaSuccess('');

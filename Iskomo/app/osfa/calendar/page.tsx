@@ -17,19 +17,22 @@ function formatTime(iso: string) {
 export default function CalendarPage() {
   const { user }              = useCurrentUser();
   const isPublic              = user?.department === 'public';
-  const [events,  setEvents]  = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [today]               = useState(new Date());
-  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selected, setSelected] = useState<Date | null>(null);
+  const [events,    setEvents]    = useState<CalendarEvent[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [today]                   = useState(new Date());
+  const [viewDate, setViewDate]   = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selected, setSelected]   = useState<Date | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await reportsApi.calendar();
       setEvents(data.events);
-    } catch { /* silent */ }
-    finally { setLoading(false); }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load calendar. Please try again.');
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
@@ -105,6 +108,14 @@ export default function CalendarPage() {
           {/* Day cells */}
           {loading ? (
             <div style={{ padding: 60, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>Loading…</div>
+          ) : loadError ? (
+            <div style={{ padding: 60, textAlign: 'center', fontSize: 14 }}>
+              <div style={{ color: '#dc2626', fontWeight: 600, marginBottom: 8 }}>Failed to load calendar</div>
+              <div style={{ color: '#6b7280', marginBottom: 16, fontSize: 13 }}>{loadError}</div>
+              <button onClick={fetchEvents} style={{ padding: '8px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                Retry
+              </button>
+            </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
               {cells.map((day, i) => {

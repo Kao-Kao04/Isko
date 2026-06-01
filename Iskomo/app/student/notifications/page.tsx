@@ -74,6 +74,13 @@ export default function StudentNotificationsPage() {
 
   useEffect(() => { fetchNotifs(1); }, [fetchNotifs]);
 
+  // Refresh when a real-time notification arrives via the layout's WebSocket
+  useEffect(() => {
+    const handler = () => { setPage(1); fetchNotifs(1); };
+    window.addEventListener('iskomo:notification', handler);
+    return () => window.removeEventListener('iskomo:notification', handler);
+  }, [fetchNotifs]);
+
   // Close panel on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null); };

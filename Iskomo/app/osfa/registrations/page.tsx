@@ -25,6 +25,7 @@ export default function RegistrationsPage() {
   const { toasts, addToast, removeToast } = useToast();
   const [students,       setStudents]       = useState<Student[]>([]);
   const [loading,        setLoading]        = useState(true);
+  const [loadError,      setLoadError]      = useState<string | null>(null);
   const [filter,         setFilter]         = useState<'pending_verification' | 'verified' | 'rejected' | 'all' | 'gwa_pending'>('all');
   const [appFilter,      setAppFilter]      = useState<'' | 'with_application' | 'no_application'>();
   const [search,         setSearch]         = useState('');
@@ -44,11 +45,15 @@ export default function RegistrationsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
+    setStudents([]);
     try {
       const statusParam = (filter === 'all' || filter === 'gwa_pending') ? undefined : filter;
       const res = await userApi.list(1, 100, statusParam, appFilter || undefined);
       setStudents(res.items);
-    } catch { /* silent */ } finally {
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load students. Please try again.');
+    } finally {
       setLoading(false);
     }
   }, [filter, appFilter]);
@@ -63,7 +68,9 @@ export default function RegistrationsPage() {
     try {
       const docs = await userApi.getRegistrationDocuments(student.id);
       setSelectedDocs(docs);
-    } catch { /* silent */ } finally {
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Failed to load documents.');
+    } finally {
       setDocsLoading(false);
     }
   }
@@ -236,6 +243,14 @@ export default function RegistrationsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {loading ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>Loading…</div>
+          ) : loadError ? (
+            <div style={{ padding: 40, textAlign: 'center', fontSize: 13 }}>
+              <div style={{ color: '#dc2626', fontWeight: 600, marginBottom: 8 }}>Failed to load students</div>
+              <div style={{ color: '#6b7280', marginBottom: 16 }}>{loadError}</div>
+              <button onClick={load} style={{ padding: '8px 18px', background: TEAL, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                Retry
+              </button>
+            </div>
           ) : filtered.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No students in this category.</div>
           ) : filtered.map(s => {
