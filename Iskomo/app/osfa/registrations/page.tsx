@@ -83,7 +83,11 @@ export default function RegistrationsPage() {
       await load();
       setSelectedId(null);
     } catch (err) {
-      addToast('error', err instanceof Error ? err.message : 'Failed to approve.');
+      const msg = err instanceof Error ? err.message : 'Failed to approve.';
+      addToast('error', msg);
+      // Reload so the panel reflects the actual status — prevents stale
+      // pending_verification state leaving the Approve button visible.
+      await load();
     } finally { setSaving(false); }
   }
 
