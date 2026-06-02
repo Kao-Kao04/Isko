@@ -1,89 +1,106 @@
 export const PUP_COLLEGE_PROGRAMS: Record<string, string[]> = {
-  CAF:   [
+  CAF: [
     'BS Accountancy (BSA)',
     'BS Management Accounting (BSMA)',
     'BS Financial Management (BSFM)',
   ],
-  CBA:   [
+  CBA: [
     'BSBA major in Human Resource Management',
     'BSBA major in Marketing Management',
     'BSBA major in Operations Management',
     'BS Entrepreneurship (BSEntrep)',
+    'Bachelor of Science in Office Administration (BSOA)',
   ],
-  COC:   [
-    'Bachelor in Advertising and Public Relations (BAPR)',
+  COC: [
+    'Bachelor of Arts in Digital Public Relations (BADPR)',
     'Bachelor of Arts in Broadcasting (BABr)',
     'Bachelor of Arts in Communication Research (BACR)',
+    'Bachelor of Arts in Journalism (BAJ)',
   ],
-  CCIS:  [
+  CCIS: [
     'BS Computer Science (BSCS)',
     'BS Information Technology (BSIT)',
   ],
-  COED:  [
+  COED: [
     'Bachelor of Elementary Education (BEEd)',
+    'Bachelor of Early Childhood Education (BECEd)',
     'BSEd major in English',
     'BSEd major in Mathematics',
     'BSEd major in Science',
     'BSEd major in Filipino',
     'BSEd major in Social Studies',
+    'Bachelor of Technology and Livelihood Education (BTLEd) major in Home Economics',
+    'Bachelor of Technology and Livelihood Education (BTLEd) major in Industrial Arts',
+    'Bachelor of Technology and Livelihood Education (BTLEd) major in ICT',
     'Bachelor of Library and Information Science (BLIS)',
   ],
-  CE:    [
+  CE: [
     'BS Civil Engineering (BSCE)',
     'BS Electrical Engineering (BSEE)',
     'BS Mechanical Engineering (BSME)',
     'BS Electronics Engineering (BSECE)',
     'BS Industrial Engineering (BSIE)',
     'BS Railway Engineering (BSRE)',
+    'BS Computer Engineering (BSCpE)',
   ],
   CADBE: [
     'BS Architecture (BS Arch)',
     'BS Interior Design (BSID)',
     'BS Environmental Planning (BSEP)',
   ],
-  CAL:   [
+  CAL: [
     'AB English Language Studies (ABELS)',
     'AB Filipinology (ABF)',
     'AB Literary and Cultural Studies (ABLCS)',
     'Bachelor of Performing Arts (BPeA)',
+    'Bachelor of Arts in Philosophy (AB-Philo)',
   ],
   CPSPA: [
     'AB Political Science (BAPS)',
     'Bachelor of Public Administration (BPA)',
+    'Bachelor of Arts in Political Economy (BAPE)',
+    'Bachelor of Arts in International Studies (BAIS)',
   ],
-  CSSD:  [
+  CSSD: [
     'AB Sociology (ABSOC)',
     'AB Psychology (ABPSY)',
-    'BS Cooperatives (BSCOOP)',
+    'Bachelor of Science in Cooperatives (BSCoop)',
+    'Bachelor of Science in Economics (BSE)',
+    'Bachelor of Arts in History (BAH)',
+    'Bachelor of Arts in Philippine Studies (BAPHS)',
+    'Bachelor in Human Services (BHS)',
+    'Bachelor of Science in Social Work (BSSW)',
   ],
-  CS:    [
+  CS: [
     'BS Mathematics (BSMath)',
     'BS Applied Mathematics (BSAM)',
     'BS Statistics (BSStat)',
     'BS Physics (BSPhy)',
     'BS Chemistry (BSChem)',
     'BS Biology (BSBio)',
+    'BS Food Technology (BSFT)',
+    'BS Nutrition and Dietetics (BSND)',
   ],
-  CL:    [
+  CL: [
     'Juris Doctor (JD)',
   ],
   ITECH: [
-    'Diploma in Information Technology (DIT)',
+    'Diploma in Information and Communications Technology (DICT)',
     'Diploma in Office Management Technology (DOMT)',
     'Diploma in Electrical Engineering Technology (DEET)',
     'Diploma in Mechanical Engineering Technology (DMET)',
     'Diploma in Civil Engineering Technology (DCET)',
-    'Diploma in Electronics Engineering Technology (DEET/ELEX)',
+    'Diploma in Electronics Engineering Technology (DECET)',
     'Diploma in Railway Engineering Technology (DRET)',
     'Diploma in Computer Engineering Technology (DCpET)',
   ],
-  CHK:   [
-    'BS Exercise and Sports Science',
-    'Bachelor of Physical Education',
+  CHK: [
+    'BS Exercise and Sports Science (BSESS)',
+    'Bachelor of Physical Education (BPE)',
   ],
   CTHTM: [
-    'BS Hotel and Restaurant Management',
-    'BS Tourism Management',
-    'BS Transportation Management',
+    'BS Hotel and Restaurant Management (BSHM)',
+    'BS Tourism Management (BSTM)',
+    'BS Transportation Management (BSTRM)',
   ],
 };
