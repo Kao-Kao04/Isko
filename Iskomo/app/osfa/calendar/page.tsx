@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { reportsApi, type CalendarEvent } from '@/lib/api-client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -17,12 +18,20 @@ function formatTime(iso: string) {
 export default function CalendarPage() {
   const { user }              = useCurrentUser();
   const isPublic              = user?.department === 'public';
+  const searchParams          = useSearchParams();
   const [events,    setEvents]    = useState<CalendarEvent[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [today]                   = useState(new Date());
-  const [viewDate, setViewDate]   = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selected, setSelected]   = useState<Date | null>(null);
+
+  // Jump to the month of ?date=YYYY-MM-DD if provided (e.g. from dashboard interview links)
+  const initialDate = (() => {
+    const d = searchParams.get('date');
+    if (d) { const parsed = new Date(d); if (!isNaN(parsed.getTime())) return parsed; }
+    return new Date();
+  })();
+  const [viewDate, setViewDate]   = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
+  const [selected, setSelected]   = useState<Date | null>(searchParams.get('date') ? initialDate : null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);

@@ -402,7 +402,7 @@ export default function Page() {
                 const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : dt.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
                 const timeLabel = dt.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true });
                 return (
-                  <Link key={ev.application_id} href={`/osfa/applicants/${ev.application_id}`}
+                  <Link key={ev.application_id} href={`/osfa/calendar?date=${new Date(ev.interview_datetime).toISOString().slice(0, 10)}`}
                     style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderBottom: idx < upcomingInterviews.length - 1 ? '1px solid #f3f4f6' : 'none', transition: 'background 0.12s' }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
