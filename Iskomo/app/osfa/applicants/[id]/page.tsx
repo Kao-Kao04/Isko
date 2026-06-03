@@ -611,7 +611,8 @@ export default function ApplicantProfilePage() {
                                   setCompliance(prev => [...prev, created]);
                                   addToast('success', `"${docType.name}" marked as received.`);
                                 } catch (err) {
-                                  addToast('error', err instanceof Error ? err.message : 'Failed to record.');
+                                  const msg = err instanceof Error ? err.message : 'Failed to record.';
+                                  addToast('error', msg === 'Failed to fetch' ? 'Connection error — please try again.' : msg);
                                 } finally { setComplianceSubmitting(null); }
                               }}
                               style={{ padding: '5px 12px', border: '1px solid #bfdbfe', borderRadius: 8, background: complianceSubmitting === docType.name ? '#9ca3af' : '#eff6ff', color: complianceSubmitting === docType.name ? '#fff' : '#1d4ed8', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
@@ -1196,7 +1197,8 @@ export default function ApplicantProfilePage() {
                                   setCompliance(prev => [...prev, created]);
                                   addToast('success', `"${docType.name}" marked as received.`);
                                 } catch (err) {
-                                  addToast('error', err instanceof Error ? err.message : 'Failed to record.');
+                                  const msg = err instanceof Error ? err.message : 'Failed to record.';
+                                  addToast('error', msg === 'Failed to fetch' ? 'Connection error — please try again.' : msg);
                                 } finally {
                                   setComplianceSubmitting(null);
                                 }

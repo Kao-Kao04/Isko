@@ -487,6 +487,31 @@ export default function ApplicationDetailPage() {
                   </button>
                 </div>
 
+                {/* Compliance Forms — shown when compliance docs are configured for this scholarship */}
+                {complianceDocs.length > 0 && (
+                  <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14, marginTop: 4, marginBottom: 14 }}>
+                    <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Compliance Forms to Fill Out</p>
+                    <p style={{ margin: '0 0 10px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                      Download, fill out, and physically bring these forms to the OSFA office.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {complianceDocs.map((doc, i) => (
+                        <a key={i} href={OSFA_FOLDER} target="_blank" rel="noreferrer"
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, border: `1px solid ${doc.is_required ? '#fca5a5' : '#e5e7eb'}`, background: doc.is_required ? '#fff7f7' : '#fafafa', textDecoration: 'none', color: '#374151', fontSize: 12, fontWeight: 500 }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#fef2f2'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = doc.is_required ? '#fff7f7' : '#fafafa'; }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                          <span style={{ flex: 1 }}>{doc.name}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: doc.is_required ? '#fee2e2' : '#f3f4f6', color: doc.is_required ? '#dc2626' : '#9ca3af', flexShrink: 0 }}>
+                            {doc.is_required ? 'REQUIRED' : 'OPTIONAL'}
+                          </span>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* OSFA Required Forms */}
                 <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
