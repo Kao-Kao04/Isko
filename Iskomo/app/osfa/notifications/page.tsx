@@ -149,6 +149,18 @@ export default function Page() {
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
+  // Listen for real-time notifications pushed by the bell's WebSocket so
+  // the page stays in sync without a manual refresh.
+  useEffect(() => {
+    function onPush(e: Event) {
+      const data = (e as CustomEvent).detail as import('@/lib/api-client').NotificationResponse;
+      if (!data?.id) { fetchNotifications(); return; }
+      setNotifications(prev => [mapNotif({ ...data, is_read: false }), ...prev.filter(n => n.id !== data.id)]);
+    }
+    window.addEventListener('iskomo:notification', onPush);
+    return () => window.removeEventListener('iskomo:notification', onPush);
+  }, [fetchNotifications]);
+
   const markAsRead = async (id: number) => {
     try {
       await notificationApi.markRead(id);
