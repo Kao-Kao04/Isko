@@ -154,8 +154,22 @@ export default function Page() {
   useEffect(() => {
     function onPush(e: Event) {
       const data = (e as CustomEvent).detail as import('@/lib/api-client').NotificationResponse;
+      // Bulk broadcast (no id) — re-fetch so we get full data with correct created_at etc.
       if (!data?.id) { fetchNotifications(); return; }
-      setNotifications(prev => [mapNotif({ ...data, is_read: false }), ...prev.filter(n => n.id !== data.id)]);
+      // WS push only carries {id, title, body, application_id} — fill missing fields
+      // so mapNotif never receives undefined for created_at / route / image_url.
+      const p = data as Partial<import('@/lib/api-client').NotificationResponse>;
+      const full: import('@/lib/api-client').NotificationResponse = {
+        id:             data.id,
+        title:          data.title,
+        body:           data.body ?? '',
+        application_id: data.application_id ?? null,
+        is_read:        false,
+        route:          p.route      ?? null,
+        image_url:      p.image_url  ?? null,
+        created_at:     p.created_at ?? new Date().toISOString(),
+      };
+      setNotifications(prev => [mapNotif(full), ...prev.filter(n => n.id !== data.id)]);
     }
     window.addEventListener('iskomo:notification', onPush);
     return () => window.removeEventListener('iskomo:notification', onPush);
