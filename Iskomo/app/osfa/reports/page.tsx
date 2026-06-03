@@ -296,41 +296,87 @@ export default function ReportsPage() {
       {activeTab === 'trends' && (
         <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Application Trends (Last 14 Days)</h3>
-          <p style={{ margin: '0 0 28px', fontSize: 12, color: '#6b7280' }}>Daily submission counts by workflow stage</p>
+          <p style={{ margin: '0 0 24px', fontSize: 12, color: '#6b7280' }}>Daily submission counts by workflow stage</p>
           {trendByDate.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>No trend data available yet.</div>
-          ) : (
-            <>
-              <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 200 }}>
-                {trendByDate.map(day => (
-                  <div key={day.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column-reverse', width: '100%', gap: 1 }}>
-                      {trendStatuses.map(s => {
-                        const v = day.counts[s] ?? 0;
-                        if (!v) return null;
-                        const h = `${Math.round((v / maxTrendCount) * 180)}px`;
+          ) : (() => {
+            const CHART_H = 180;
+            const yTicks = [0, Math.ceil(maxTrendCount * 0.25), Math.ceil(maxTrendCount * 0.5), Math.ceil(maxTrendCount * 0.75), maxTrendCount];
+            return (
+              <>
+                <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                  {/* Y-axis labels */}
+                  <div style={{ display: 'flex', flexDirection: 'column-reverse', justifyContent: 'space-between', height: CHART_H, paddingRight: 10, flexShrink: 0, width: 28 }}>
+                    {yTicks.map(v => (
+                      <span key={v} style={{ fontSize: 10, color: '#9ca3af', textAlign: 'right', display: 'block', lineHeight: 1 }}>{v}</span>
+                    ))}
+                  </div>
+
+                  {/* Chart area */}
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    {/* Horizontal grid lines */}
+                    {yTicks.map((_, i) => (
+                      <div key={i} style={{
+                        position: 'absolute', zIndex: 0,
+                        top: i === yTicks.length - 1 ? 0 : `${100 - (i / (yTicks.length - 1)) * 100}%`,
+                        left: 0, right: 0, height: 1,
+                        background: i === 0 ? '#e5e7eb' : '#f3f4f6',
+                      }} />
+                    ))}
+
+                    {/* Bars */}
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: CHART_H, position: 'relative', zIndex: 1, paddingBottom: 0 }}>
+                      {trendByDate.map(day => {
+                        let bottom = 0;
+                        const activeStatuses = trendStatuses.filter(s => (day.counts[s] ?? 0) > 0);
                         return (
-                          <div key={s} style={{ height: h, background: TREND_COLOR[s] ?? '#94a3b8', minHeight: 3, borderRadius: 2 }}
-                            title={`${TREND_LABEL[s] ?? s}: ${v}`} />
+                          <div key={day.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}>
+                            {/* Total count above bar */}
+                            <span style={{ fontSize: 10, fontWeight: 700, color: '#374151', marginBottom: 3, visibility: day.total > 0 ? 'visible' : 'hidden' }}>
+                              {day.total}
+                            </span>
+                            {/* Stacked bar */}
+                            <div style={{ position: 'relative', width: '100%', height: Math.max(Math.round((day.total / maxTrendCount) * (CHART_H - 20)), day.total > 0 ? 4 : 0) }}>
+                              {trendStatuses.map(s => {
+                                const v = day.counts[s] ?? 0;
+                                if (!v) return null;
+                                const h = Math.max(Math.round((v / maxTrendCount) * (CHART_H - 20)), 4);
+                                const isTop = s === activeStatuses[activeStatuses.length - 1];
+                                const bot = bottom;
+                                bottom += h;
+                                return (
+                                  <div key={s} title={`${TREND_LABEL[s] ?? s}: ${v}`} style={{
+                                    position: 'absolute', left: 0, right: 0,
+                                    bottom: bot, height: h,
+                                    background: TREND_COLOR[s] ?? '#94a3b8',
+                                    borderRadius: isTop ? '4px 4px 0 0' : 0,
+                                  }} />
+                                );
+                              })}
+                            </div>
+                            {/* Date label */}
+                            <span style={{ fontSize: 10, color: '#6b7280', marginTop: 6, whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              {day.date?.slice(5)}
+                            </span>
+                          </div>
                         );
                       })}
                     </div>
-                    <span style={{ fontSize: 9, color: '#9ca3af', writingMode: 'vertical-rl', transform: 'rotate(180deg)', marginTop: 4, whiteSpace: 'nowrap' }}>
-                      {day.date?.slice(5)}
-                    </span>
                   </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 16, marginTop: 24, flexWrap: 'wrap' }}>
-                {trendStatuses.map(s => (
-                  <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 2, background: TREND_COLOR[s] ?? '#94a3b8' }} />
-                    <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{TREND_LABEL[s] ?? s}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                </div>
+
+                {/* Legend */}
+                <div style={{ display: 'flex', gap: 16, marginTop: 20, flexWrap: 'wrap', paddingLeft: 38 }}>
+                  {trendStatuses.map(s => (
+                    <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 12, height: 12, borderRadius: 3, background: TREND_COLOR[s] ?? '#94a3b8', flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{TREND_LABEL[s] ?? s}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
