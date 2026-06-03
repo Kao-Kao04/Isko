@@ -268,10 +268,10 @@ export default function Page() {
     }
   }
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-  const newAppCount  = notifications.filter(n => n.type === 'submission').length;
-  const messageCount = notifications.filter(n => n.type === 'message').length;
-  const systemCount  = notifications.filter(n => n.type === 'info').length;
+  const unreadCount  = notifications.filter(n => !n.isRead).length;
+  const newAppCount  = notifications.filter(n => n.type === 'submission' && !n.isRead).length;
+  const messageCount = notifications.filter(n => n.type === 'message'    && !n.isRead).length;
+  const systemCount  = notifications.filter(n => n.type === 'info'       && !n.isRead).length;
 
   const filtered = notifications.filter(n => {
     if (activeFilter === 'Unread')           return !n.isRead;
