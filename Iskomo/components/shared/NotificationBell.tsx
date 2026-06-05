@@ -159,8 +159,17 @@ export default function NotificationBell() {
       if (t.includes('deadline') || t.includes('scholarship')) {
         // Student route is intentionally "iskolarships"; OSFA route is "scholarships"
         dest = roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`;
-      } else if (t.includes('registration')) {
+      } else if (t.includes('registration') || t.includes('gwa')) {
         dest = `${roleBase}/registrations`;
+      } else if (n.route && n.route !== '/notifications') {
+        // Use backend-provided route (e.g. /registrations for GWA update requests)
+        const bare = n.route.replace(/^\/(osfa|student)/, '');
+        const map: Record<string, string> = {
+          '/registrations': `${roleBase}/registrations`,
+          '/iskolarships':  roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`,
+          '/profile':       `${roleBase}/profile`,
+        };
+        dest = map[bare] ?? `${roleBase}/notifications`;
       } else {
         // General announcement — send to notifications page so student can read the body
         dest = `${roleBase}/notifications`;
