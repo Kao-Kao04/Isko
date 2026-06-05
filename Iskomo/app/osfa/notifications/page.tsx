@@ -593,7 +593,7 @@ export default function Page() {
           {/* Fixed footer */}
           <div style={{ padding: '16px 28px 24px', flexShrink: 0, borderTop: '1px solid #f3f4f6', display: 'flex', gap: 10 }}>
             <button onClick={() => setShowBroadcast(false)} style={{ flex: 1, padding: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
-            <button onClick={sendBroadcast} disabled={broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()} style={{ flex: 1, padding: 10, background: (broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()) ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, #5C0000)`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: (broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()) ? 'not-allowed' : 'pointer', color: '#fff' }}>
+            <button onClick={sendBroadcast} disabled={broadcasting || !broadcastTitle.trim() || !broadcastBody.trim() || (announceTarget === 'by_scholarship' && !announceScholarshipId)} style={{ flex: 1, padding: 10, background: (broadcasting || !broadcastTitle.trim() || !broadcastBody.trim() || (announceTarget === 'by_scholarship' && !announceScholarshipId)) ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, #5C0000)`, border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: (broadcasting || !broadcastTitle.trim() || !broadcastBody.trim() || (announceTarget === 'by_scholarship' && !announceScholarshipId)) ? 'not-allowed' : 'pointer', color: '#fff' }}>
               {broadcasting ? 'Sending…' : 'Send Announcement'}
             </button>
           </div>
