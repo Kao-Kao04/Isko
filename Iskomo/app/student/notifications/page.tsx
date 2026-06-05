@@ -230,6 +230,7 @@ export default function StudentNotificationsPage() {
                 boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
                 position: 'sticky',
                 top: 90,
+                maxHeight: 'calc(100vh - 110px)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
@@ -254,8 +255,8 @@ export default function StudentNotificationsPage() {
                 >×</button>
               </div>
 
-              {/* Panel body */}
-              <div className="notif-panel-body" style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Panel body — scrollable so long notification content is always readable */}
+              <div className="notif-panel-body" style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', flex: 1 }}>
                 <div>
                   <p style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: '#111827', lineHeight: 1.4 }}>{selected.title}</p>
                   <span style={{ fontSize: 11, color: '#9ca3af' }}>{formatFull(selected.created_at)}</span>
