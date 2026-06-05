@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { notificationApi, type NotificationResponse } from '@/lib/api-client';
+import { notificationApi, scholarshipApi, type NotificationResponse, type ScholarshipResponse } from '@/lib/api-client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
@@ -121,6 +121,8 @@ export default function Page() {
   const [announceTarget, setAnnounceTarget] = useState<'all' | 'by_scholarship' | 'by_status'>('all');
   const [announceScholarshipId, setAnnounceScholarshipId] = useState('');
   const [announceStatusFilter, setAnnounceStatusFilter] = useState('pending');
+  const [scholarships, setScholarships] = useState<ScholarshipResponse[]>([]);
+  const [scholarshipsLoading, setScholarshipsLoading] = useState(false);
   const [notifications, setNotifications] = useState<DisplayNotif[]>([]);
   const [loading, setLoading]             = useState(true);
   const [loadErr, setLoadErr]             = useState('');
@@ -518,9 +520,26 @@ export default function Page() {
             </div>
             {announceTarget === 'by_scholarship' && (
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Scholarship ID</label>
-                <input type="number" value={announceScholarshipId} onChange={e => setAnnounceScholarshipId(e.target.value)}
-                  placeholder="Enter scholarship ID" style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Scholarship</label>
+                <select
+                  value={announceScholarshipId}
+                  onFocus={async () => {
+                    if (scholarships.length === 0 && !scholarshipsLoading) {
+                      setScholarshipsLoading(true);
+                      try {
+                        const res = await scholarshipApi.list(1, 100);
+                        setScholarships(res.items);
+                      } catch { /* ignore */ }
+                      finally { setScholarshipsLoading(false); }
+                    }
+                  }}
+                  onChange={e => setAnnounceScholarshipId(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
+                  <option value="">{scholarshipsLoading ? 'Loading…' : 'Select a scholarship…'}</option>
+                  {scholarships.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
               </div>
             )}
             {announceTarget === 'by_status' && (
