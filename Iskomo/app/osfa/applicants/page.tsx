@@ -22,7 +22,7 @@ const statusStyle: Record<string, { bg: string; color: string; dot: string }> = 
 };
 
 const TERMINAL: ApplicationStatus[] = ['approved', 'rejected', 'withdrawn'];
-const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected', 'incomplete', 'withdrawn'] as const;
+const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected', 'incomplete', 'withdrawn', 'waitlisted'] as const;
 const perPageOptions = [5, 10, 20, 50];
 type SortKey = 'name' | 'scholarship' | 'status' | 'submitted';
 
@@ -88,12 +88,15 @@ function ApplicantsContent() {
     const [totalRes, ...statusRes] = await Promise.allSettled([
       applicationApi.count(),
       ...statuses.map(s => applicationApi.count(s)),
+      applicationApi.count(undefined, 'waitlisted'), // waitlisted is a sub_status
     ]);
     const counts: Record<string, number> = {};
     counts['all'] = totalRes.status === 'fulfilled' ? (totalRes.value as { count: number }).count : 0;
     statuses.forEach((s, i) => {
       counts[s] = statusRes[i].status === 'fulfilled' ? (statusRes[i] as PromiseFulfilledResult<{ count: number }>).value.count : 0;
     });
+    const waitlistRes = statusRes[statuses.length];
+    counts['waitlisted'] = waitlistRes?.status === 'fulfilled' ? (waitlistRes as PromiseFulfilledResult<{ count: number }>).value.count : 0;
     setStatusCounts(counts);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -102,11 +105,14 @@ function ApplicantsContent() {
   ) => {
     try {
       setLoading(true);
+      // 'waitlisted' is a workflow sub_status, not an application status
+      const isWaitlisted = status === 'waitlisted';
       const result = await applicationApi.list(
         page, size,
-        status !== 'all' ? status : undefined,
+        (!isWaitlisted && status !== 'all') ? status : undefined,
         search || undefined,
         scholarshipIdFilter,
+        isWaitlisted ? 'waitlisted' : undefined,
       );
       setApplications(result.items ?? []);
       setServerTotal(result.total ?? 0);
