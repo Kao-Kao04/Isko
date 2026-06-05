@@ -133,10 +133,10 @@ export default function NotificationBell() {
   const unread = notifs.filter(n => !n.is_read).length;
 
   async function handleItemClick(n: NotificationResponse) {
-    // Mark read silently — never let a network error block navigation
-    notificationApi.markRead(n.id)
-      .then(() => setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x)))
-      .catch(() => { /* silent — stale read state is fine */ });
+    // Optimistic update — remove red dot immediately so user sees instant feedback.
+    // Fire API in background; if it fails, dot stays gone (better than flickering).
+    setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+    notificationApi.markRead(n.id).catch(() => {});
     setOpen(false);
 
     // Compute destination client-side so routing is correct regardless of
