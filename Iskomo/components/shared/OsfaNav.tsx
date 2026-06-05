@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { applicationApi, userApi } from '@/lib/api-client';
+import { applicationApi, userApi, reportsApi } from '@/lib/api-client';
 import { apiFetch } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
 
@@ -67,12 +67,13 @@ const ALL_LINKS = [...PRIMARY, ...SECONDARY];
 
 export default function OsfaNav() {
   const pathname = usePathname();
-  const [hovered,         setHovered]         = useState<string | null>(null);
-  const [pendingCount,    setPendingCount]    = useState(0);
-  const [pendingRegCount, setPendingRegCount] = useState(0);
-  const [unreadMessages,  setUnreadMessages]  = useState(0);
-  const [drawerOpen,      setDrawerOpen]      = useState(false);
-  const [moreOpen,        setMoreOpen]        = useState(false);
+  const [hovered,            setHovered]            = useState<string | null>(null);
+  const [pendingCount,       setPendingCount]       = useState(0);
+  const [pendingRegCount,    setPendingRegCount]    = useState(0);
+  const [unreadMessages,     setUnreadMessages]     = useState(0);
+  const [todayInterviewCount, setTodayInterviewCount] = useState(0);
+  const [drawerOpen,         setDrawerOpen]         = useState(false);
+  const [moreOpen,           setMoreOpen]           = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setDrawerOpen(false); setMoreOpen(false); }, [pathname]);
@@ -101,6 +102,14 @@ export default function OsfaNav() {
     const load = () => {
       applicationApi.count('pending').then(r => setPendingCount(r.count)).catch(() => {});
       userApi.list(1, 1, 'pending_verification').then(r => setPendingRegCount(r.total)).catch(() => {});
+      // Count interviews scheduled for today
+      reportsApi.calendar().then(data => {
+        const todayStr = new Date().toDateString();
+        const count = (data.events ?? []).filter(
+          e => new Date(e.interview_datetime).toDateString() === todayStr
+        ).length;
+        setTodayInterviewCount(count);
+      }).catch(() => {});
     };
     load();
     const t = setInterval(load, 60_000);
@@ -114,9 +123,10 @@ export default function OsfaNav() {
   }, [pathname]);
 
   const badge = (href: string) =>
-    href === '/osfa/applicants'    && pendingCount    > 0 ? pendingCount    :
-    href === '/osfa/registrations' && pendingRegCount > 0 ? pendingRegCount :
-    href === '/osfa/messages'      && unreadMessages  > 0 ? unreadMessages  :
+    href === '/osfa/applicants'    && pendingCount        > 0 ? pendingCount        :
+    href === '/osfa/registrations' && pendingRegCount     > 0 ? pendingRegCount     :
+    href === '/osfa/messages'      && unreadMessages      > 0 ? unreadMessages      :
+    href === '/osfa/calendar'      && todayInterviewCount > 0 ? todayInterviewCount :
     null;
 
   const secondaryActive = SECONDARY.some(l => pathname === l.href || pathname.startsWith(l.href + '/'));
