@@ -81,11 +81,59 @@ const TREND_COLOR: Record<string, string> = {
   INCOMPLETE:   '#ea580c',
 };
 
-function StatCard({ label, value, sub, color = '#111827' }: { label: string; value: string | number; sub?: string; color?: string }) {
+function StatCard({ label, value, sub, color = '#111827', index = 0 }: { label: string; value: string | number; sub?: string; color?: string; index?: number }) {
+  const isNum = typeof value === 'number';
+  const [displayed, setDisplayed] = useState(0);
+  const [visible,   setVisible]   = useState(false);
+
+  // Staggered fade-in
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), index * 90);
+    return () => clearTimeout(t);
+  }, [index]);
+
+  // Count-up animation
+  useEffect(() => {
+    if (!isNum) return;
+    const target = value as number;
+    if (target === 0) { setDisplayed(0); return; }
+    const duration = 900;
+    const start    = Date.now();
+    const tick = () => {
+      const p = Math.min((Date.now() - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+      setDisplayed(Math.round(eased * target));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value, isNum]);
+
   return (
-    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+    <div
+      style={{
+        background: '#fff',
+        borderRadius: 14,
+        border: '1px solid #e5e7eb',
+        padding: '20px 24px',
+        boxShadow: visible ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
+        opacity:   visible ? 1 : 0,
+        transform: visible ? 'translateY(0) scale(1)' : 'translateY(18px) scale(0.97)',
+        transition: `opacity 0.45s ease ${index * 0.09}s, transform 0.45s ease ${index * 0.09}s, box-shadow 0.2s ease`,
+        cursor: 'default',
+      }}
+      onMouseEnter={e => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.boxShadow = `0 10px 28px rgba(0,0,0,0.11)`;
+        el.style.transform  = 'translateY(-3px) scale(1.015)';
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
+        el.style.transform  = 'translateY(0) scale(1)';
+      }}
+    >
       <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{isNum ? displayed : value}</div>
       {sub && <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>{sub}</div>}
     </div>
   );
@@ -201,18 +249,18 @@ export default function ReportsPage() {
       {activeTab === 'overview' && overview && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16 }}>
-            <StatCard label="Total Applications" value={totalApps} color={TEAL} />
-            <StatCard label="Active Scholarships" value={overview.active_scholarships} color="#2563eb" />
-            <StatCard label="Total Scholars" value={overview.total_scholars} color="#059669" />
-            <StatCard label="Approved"
+            <StatCard index={0} label="Total Applications" value={totalApps} color={TEAL} />
+            <StatCard index={1} label="Active Scholarships" value={overview.active_scholarships} color="#2563eb" />
+            <StatCard index={2} label="Total Scholars" value={overview.total_scholars} color="#059669" />
+            <StatCard index={3} label="Approved"
               value={overview.applications_by_status['approved'] ?? 0}
               color="#059669"
               sub={totalApps ? `${Math.round(((overview.applications_by_status['approved'] ?? 0) / totalApps) * 100)}% approval rate` : undefined}
             />
-            <StatCard label="In Progress" value={overview.applications_by_status['in_progress'] ?? 0} color="#d97706" />
-            <StatCard label="Rejected"    value={overview.applications_by_status['rejected']    ?? 0} color="#dc2626" />
+            <StatCard index={4} label="In Progress" value={overview.applications_by_status['in_progress'] ?? 0} color="#d97706" />
+            <StatCard index={5} label="Rejected"    value={overview.applications_by_status['rejected']    ?? 0} color="#dc2626" />
             {(overview.applications_by_status['waitlisted'] ?? 0) > 0 && (
-              <StatCard label="Waitlisted" value={overview.applications_by_status['waitlisted']} color="#6366f1" />
+              <StatCard index={6} label="Waitlisted" value={overview.applications_by_status['waitlisted']} color="#6366f1" />
             )}
           </div>
 
@@ -220,13 +268,24 @@ export default function ReportsPage() {
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: '24px 28px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Application Status Distribution</h3>
             <div style={{ display: 'flex', height: 32, borderRadius: 8, overflow: 'hidden', gap: 2 }}>
-              {Object.entries(overview.applications_by_status).filter(([, v]) => v > 0).map(([status, count]) => (
+              {Object.entries(overview.applications_by_status).filter(([, v]) => v > 0).map(([status, count], i) => (
                 <div key={status} title={`${STATUS_LABEL[status] ?? status}: ${count}`}
-                  style={{ flex: count, background: STATUS_COLOR[status] ?? '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 24 }}>
+                  style={{
+                    flex: count,
+                    background: STATUS_COLOR[status] ?? '#94a3b8',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 24,
+                    animation: `barGrow 0.7s ease ${i * 0.08}s both`,
+                  }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{count}</span>
                 </div>
               ))}
             </div>
+            <style>{`
+              @keyframes barGrow {
+                from { opacity: 0; transform: scaleX(0); transform-origin: left; }
+                to   { opacity: 1; transform: scaleX(1); transform-origin: left; }
+              }
+            `}</style>
             <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
               {Object.entries(overview.applications_by_status).map(([status, count]) => (
                 <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
