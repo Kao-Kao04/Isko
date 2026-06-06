@@ -122,6 +122,25 @@ export default function StudentNotificationsPage() {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 700px) {
+          .notif-backdrop  { display: block !important; }
+          .notif-drag-handle { display: flex !important; }
+          .notif-panel {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: 88vh !important;
+            border-radius: 20px 20px 0 0 !important;
+            z-index: 1200 !important;
+            top: auto !important;
+            box-shadow: 0 -8px 40px rgba(0,0,0,0.18) !important;
+          }
+        }
+      `}</style>
       <div style={{ maxWidth: selected ? 1100 : 640, margin: '0 auto', padding: '28px 16px 100px', display: 'flex', gap: 20, alignItems: 'flex-start', transition: 'max-width 0.25s ease' }}>
 
         {/* ── Notification List ── */}
