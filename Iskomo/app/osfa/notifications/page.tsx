@@ -64,7 +64,7 @@ function classifyOsfaType(n: NotificationResponse): string {
   const t = n.title.toLowerCase();
   if (t.includes('message') || t.includes('reply')) return 'message';
   if (n.application_id) {
-    if (t.includes('submit') || t.includes('resubmit')) return 'submission';
+    if (t.includes('submit') || t.includes('resubmit') || t.includes('received') || t.includes('new application')) return 'submission';
     return 'application';
   }
   return 'info';
