@@ -71,7 +71,8 @@ export default function OsfaNav() {
   const [pendingCount,       setPendingCount]       = useState(0);
   const [pendingRegCount,    setPendingRegCount]    = useState(0);
   const [unreadMessages,     setUnreadMessages]     = useState(0);
-  const [todayInterviewCount, setTodayInterviewCount] = useState(0);
+  const [todayInterviewCount,    setTodayInterviewCount]    = useState(0);
+  const [upcomingInterviewCount, setUpcomingInterviewCount] = useState(0);
   const [drawerOpen,         setDrawerOpen]         = useState(false);
   const [moreOpen,           setMoreOpen]           = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -102,13 +103,18 @@ export default function OsfaNav() {
     const load = () => {
       applicationApi.count('pending').then(r => setPendingCount(r.count)).catch(() => {});
       userApi.list(1, 1, 'pending_verification').then(r => setPendingRegCount(r.total)).catch(() => {});
-      // Count interviews scheduled for today
+      // Count today's and upcoming interviews
       reportsApi.calendar().then(data => {
-        const todayStr = new Date().toDateString();
-        const count = (data.events ?? []).filter(
+        const now      = new Date();
+        const todayStr = now.toDateString();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const events   = data.events ?? [];
+        setTodayInterviewCount(events.filter(
           e => new Date(e.interview_datetime).toDateString() === todayStr
-        ).length;
-        setTodayInterviewCount(count);
+        ).length);
+        setUpcomingInterviewCount(events.filter(
+          e => new Date(e.interview_datetime) >= startOfToday
+        ).length);
       }).catch(() => {});
     };
     load();
@@ -123,10 +129,10 @@ export default function OsfaNav() {
   }, [pathname]);
 
   const badge = (href: string) =>
-    href === '/osfa/applicants'    && pendingCount        > 0 ? pendingCount        :
-    href === '/osfa/registrations' && pendingRegCount     > 0 ? pendingRegCount     :
-    href === '/osfa/messages'      && unreadMessages      > 0 ? unreadMessages      :
-    href === '/osfa/calendar'      && todayInterviewCount > 0 ? todayInterviewCount :
+    href === '/osfa/applicants'    && pendingCount           > 0 ? pendingCount           :
+    href === '/osfa/registrations' && pendingRegCount        > 0 ? pendingRegCount        :
+    href === '/osfa/messages'      && unreadMessages         > 0 ? unreadMessages         :
+    href === '/osfa/calendar'      && upcomingInterviewCount > 0 ? upcomingInterviewCount :
     null;
 
   const secondaryActive = SECONDARY.some(l => pathname === l.href || pathname.startsWith(l.href + '/'));
@@ -201,9 +207,9 @@ export default function OsfaNav() {
               position: 'relative', transition: 'all 0.15s ease',
             }}>
             {secondaryActive && <span style={{ position: 'absolute', bottom: -1, left: '50%', transform: 'translateX(-50%)', width: 18, height: 2.5, borderRadius: 9999, background: M }} />}
-            {todayInterviewCount > 0 && (
+            {upcomingInterviewCount > 0 && (
               <span style={{ position: 'absolute', top: 4, right: 4, minWidth: 16, height: 16, borderRadius: 9999, background: M, color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff', padding: '0 3px' }}>
-                {todayInterviewCount > 9 ? '9+' : todayInterviewCount}
+                {upcomingInterviewCount > 9 ? '9+' : upcomingInterviewCount}
               </span>
             )}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -221,6 +227,7 @@ export default function OsfaNav() {
             }}>
               {SECONDARY.map(link => {
                 const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+                const b = badge(link.href);
                 return (
                   <Link key={link.href} href={link.href} style={{
                     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
@@ -233,7 +240,12 @@ export default function OsfaNav() {
                   onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLAnchorElement).style.background = '#f9fafb'; }}
                   onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; }}>
                     <span style={{ color: isActive ? M : '#6b7280', display: 'flex', flexShrink: 0 }}>{link.icon}</span>
-                    {link.label}
+                    <span style={{ flex: 1 }}>{link.label}</span>
+                    {b !== null && (
+                      <span style={{ minWidth: 20, height: 20, borderRadius: 9999, background: M, color: '#fff', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
+                        {b > 99 ? '99+' : b}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
