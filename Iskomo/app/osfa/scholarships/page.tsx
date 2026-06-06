@@ -214,6 +214,10 @@ export default function Page() {
       addToast('error', 'Title and number of slots are required.');
       return;
     }
+    if (!isOsfaStaff && !form.category) {
+      addToast('error', 'Please select a visibility (Public or Private).');
+      return;
+    }
     setFormLoading(true);
     try {
       const data = {
@@ -720,6 +724,49 @@ export default function Page() {
                 <input type="text" value={form.name} onChange={e => setField('name', e.target.value)} placeholder="e.g., Academic Excellence Grant" style={inputStyle} />
               </div>
 
+              {/* Visibility toggle — super_admin only; OSFA staff are locked to their department */}
+              {!isOsfaStaff && (
+                <div>
+                  <label style={labelStyle}>Visibility <span style={{ color: '#dc2626' }}>*</span></label>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    {(['public', 'private'] as const).map(opt => {
+                      const active = form.category === opt;
+                      const colors = opt === 'public'
+                        ? { bg: '#eff6ff', border: '#3b82f6', color: '#1d4ed8' }
+                        : { bg: '#fdf4ff', border: '#a855f7', color: '#7e22ce' };
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setForm(prev => ({
+                            ...prev,
+                            category: opt,
+                            requires_thank_you_letter: opt === 'private' ? prev.requires_thank_you_letter : false,
+                          }))}
+                          style={{
+                            flex: 1,
+                            padding: '10px 0',
+                            borderRadius: 10,
+                            border: `2px solid ${active ? colors.border : '#e5e7eb'}`,
+                            background: active ? colors.bg : '#fafafa',
+                            color: active ? colors.color : '#9ca3af',
+                            fontWeight: 700,
+                            fontSize: 14,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {opt === 'public' ? '🌐 Public' : '🔒 Private'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
+                    Public — visible to all registered students. Private — visible only to invited or OSFA-managed applicants.
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label style={labelStyle}>Description</label>
                 <textarea value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Briefly describe the scholarship program..." rows={3} style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5, fontFamily: 'inherit' }} />
@@ -765,32 +812,11 @@ export default function Page() {
                 <input type="text" value={form.eligibility_text} onChange={e => setField('eligibility_text', e.target.value)} placeholder="e.g., GWA of 1.75 or better, full-time enrollment" style={inputStyle} />
               </div>
 
-              {/* Max semesters + category (category hidden for OSFA staff) */}
-              <div style={{ display: 'grid', gridTemplateColumns: isOsfaStaff ? '1fr' : '1fr 1fr', gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>Max Semesters</label>
-                  <input type="number" min="1" step="1" value={form.max_semesters} onChange={e => setField('max_semesters', e.target.value)} placeholder="Leave blank for no limit" style={inputStyle} />
-                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Maximum number of semesters this scholarship is valid. Leave blank for no limit.</div>
-                </div>
-                {/* Category — super_admin only; OSFA staff are locked to their department */}
-                {!isOsfaStaff && (
-                  <div>
-                    <label style={labelStyle}>Category</label>
-                    <select value={form.category} onChange={e => {
-                      const val = e.target.value as '' | 'public' | 'private';
-                      setForm(prev => ({
-                        ...prev,
-                        category: val,
-                        // Reset thank-you letter flag when leaving private
-                        requires_thank_you_letter: val === 'private' ? prev.requires_thank_you_letter : false,
-                      }));
-                    }} style={inputStyle}>
-                      <option value="">— Not specified —</option>
-                      <option value="public">Public</option>
-                      <option value="private">Private</option>
-                    </select>
-                  </div>
-                )}
+              {/* Max semesters */}
+              <div>
+                <label style={labelStyle}>Max Semesters</label>
+                <input type="number" min="1" step="1" value={form.max_semesters} onChange={e => setField('max_semesters', e.target.value)} placeholder="Leave blank for no limit" style={inputStyle} />
+                <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Maximum number of semesters this scholarship is valid. Leave blank for no limit.</div>
               </div>
               {/* Requires Thank You Letter — only for private scholarships */}
               {effectiveCategory === 'private' && (

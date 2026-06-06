@@ -362,7 +362,7 @@ export default function Page() {
                       </span>
                     </button>
                   )}
-                  <button onClick={() => { setSemModal(scholar); }}
+                  <button onClick={() => { setSemForm({ semester: '1st Semester', academic_year: '2025-2026', gwa: '', notes: '', has_grade_below_2_5: false }); setSemModal(scholar); }}
                     style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     + Sem Record
                   </button>
