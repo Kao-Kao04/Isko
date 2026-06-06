@@ -682,7 +682,7 @@ export default function ApplicantProfilePage() {
                 if (ss === 'screening')
                   actions.push(
                     <button key="pass" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.screeningResult(Number(id), true), 'Screening passed.')}>Pass Screening</button>,
-                    <button key="fail" style={btn('#fff', '#dc2626')} onClick={() => setActiveDialog('fail_screening')}>Fail Screening</button>,
+                    <button key="fail" style={btn('#fff', '#dc2626')} onClick={() => { setFailNote(''); setActiveDialog('fail_screening'); }}>Fail Screening</button>,
                   );
                 if (ss === 'screening_passed')
                   actions.push(<button key="verify" style={btn('#fff', TEAL)} onClick={() => doWorkflowAction(() => workflowApi.startVerification(Number(id)), 'Verification started.')}>Start Verification</button>);
@@ -692,7 +692,7 @@ export default function ApplicantProfilePage() {
                 if (ss === 'pending_validation')
                   actions.push(
                     <button key="validated" style={btn('#fff', '#059669')} onClick={() => doWorkflowAction(() => workflowApi.verificationResult(Number(id), true), 'Documents validated.')}>Validated ✓</button>,
-                    <button key="revision" style={btn('#fff', '#d97706')} onClick={() => setActiveDialog('revision')}>Request Revision</button>,
+                    <button key="revision" style={btn('#fff', '#d97706')} onClick={() => { setRevisionNote(''); setActiveDialog('revision'); }}>Request Revision</button>,
                     <button key="fail_val" style={btn('#fff', '#dc2626')} onClick={() => doWorkflowAction(() => workflowApi.verificationResult(Number(id), false), 'Validation failed.')}>Fail Validation</button>,
                   );
                 if (ss === 'revision_requested')
