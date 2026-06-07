@@ -51,7 +51,14 @@ function getActionRoute(n: NotificationResponse): string | null {
     return `/student/messages/${n.application_id}`;
   }
   if (n.application_id) return `/student/applications/${n.application_id}`;
-  if (n.route && n.route !== '/notifications') return `/student${n.route}`;
+  if (n.route && n.route !== '/notifications') {
+    // External URLs (custom announcement links) are used as-is.
+    if (/^https?:\/\//i.test(n.route)) return n.route;
+    // Strip any role prefix the sender may have typed (e.g. /student/iskolarships
+    // or /osfa/scholarships) before prepending ours — avoids /student/student/... 404s.
+    const bare = n.route.replace(/^\/(osfa|student)/, '');
+    return `/student${bare}`;
+  }
   if (t.includes('deadline') || t.includes('scholarship')) return '/student/iskolarships';
   return null;
 }
@@ -291,7 +298,10 @@ export default function StudentNotificationsPage() {
 
                 {actionRoute && (
                   <button
-                    onClick={() => router.push(actionRoute)}
+                    onClick={() => {
+                      if (/^https?:\/\//i.test(actionRoute)) window.open(actionRoute, '_blank', 'noopener,noreferrer');
+                      else router.push(actionRoute);
+                    }}
                     style={{ width: '100%', padding: '11px', background: `linear-gradient(135deg, ${MAROON}, #5C0000)`, border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
                     {selected.application_id ? 'View Application' : selected.route === '/profile' ? 'View Profile' : selected.route === '/registrations' ? 'View GWA Request' : 'View Scholarships'}
