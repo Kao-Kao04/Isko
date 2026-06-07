@@ -367,9 +367,15 @@ export default function Page() {
                 </div>
               ) : notifications.slice(0, 5).map((n, idx) => {
                 const c = NOTIF_TYPE.info;
-                const notifHref = n.route ? `/student${n.route}` : n.application_id ? `/student/applications/${n.application_id}` : '/student/applications';
+                const isExternalNotif = !!n.route && /^https?:\/\//i.test(n.route);
+                const notifHref = isExternalNotif
+                  ? n.route!
+                  : n.route
+                    ? `/student${n.route.replace(/^\/(osfa|student)/, '')}`
+                    : n.application_id ? `/student/applications/${n.application_id}` : '/student/applications';
                 return (
                   <Link key={n.id} href={notifHref} className="notif-row"
+                    {...(isExternalNotif ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     style={{
                       textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: 10,
                       padding: '11px 16px',

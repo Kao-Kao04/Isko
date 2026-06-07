@@ -72,6 +72,10 @@ export default function Page() {
       return;
     }
     if (n.route) {
+      if (/^https?:\/\//i.test(n.route)) {
+        window.open(n.route, '_blank', 'noopener,noreferrer');
+        return;
+      }
       const bare = n.route.replace(/^\/(osfa|student)/, '');
       const routeMap: Record<string, string> = {
         '/iskolarships': '/osfa/scholarships',
