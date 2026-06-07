@@ -657,6 +657,9 @@ export const userApi = {
   sendRegistrationReminders: () =>
     apiFetch<{ sent: number; failed: number; total: number }>('/api/users/send-registration-reminders', { method: 'POST' }),
 
+  sendVerifiedReminders: () =>
+    apiFetch<{ sent: number; failed: number; total: number }>('/api/users/send-verified-reminders', { method: 'POST' }),
+
   submitGwaRequest: (gwa: string, proof: File) => {
     const fd = new FormData();
     fd.append('gwa', gwa);

@@ -39,6 +39,7 @@ export default function RegistrationsPage() {
   const [checkedIds,     setCheckedIds]     = useState<Set<number>>(new Set());
   const [bulkSaving,     setBulkSaving]     = useState(false);
   const [reminding,      setReminding]      = useState(false);
+  const [emailingVerified, setEmailingVerified] = useState(false);
   const [gwaProofUrl,    setGwaProofUrl]    = useState<string | null>(null);
   const [gwaReviewing,   setGwaReviewing]   = useState(false);
   const [gwaRejectNote,  setGwaRejectNote]  = useState('');
@@ -160,25 +161,46 @@ export default function RegistrationsPage() {
           <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#111827' }}>Student Registrations</h1>
           <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Review submitted documents and verify student accounts.</p>
         </div>
-        <button
-          onClick={async () => {
-            if (reminding) return;
-            setReminding(true);
-            try {
-              const res = await userApi.sendRegistrationReminders();
-              addToast('success', `Reminder sent to ${res.sent} student${res.sent !== 1 ? 's' : ''}.${res.failed > 0 ? ` ${res.failed} failed.` : ''}`);
-            } catch {
-              addToast('error', 'Failed to send reminders. Please try again.');
-            } finally {
-              setReminding(false);
-            }
-          }}
-          disabled={reminding}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', background: reminding ? '#f3f4f6' : '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, color: reminding ? '#9ca3af' : '#374151', cursor: reminding ? 'not-allowed' : 'pointer' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          {reminding ? 'Sending…' : 'Remind Unregistered'}
-        </button>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            onClick={async () => {
+              if (reminding) return;
+              setReminding(true);
+              try {
+                const res = await userApi.sendRegistrationReminders();
+                addToast('success', `Reminder sent to ${res.sent} student${res.sent !== 1 ? 's' : ''}.${res.failed > 0 ? ` ${res.failed} failed.` : ''}`);
+              } catch {
+                addToast('error', 'Failed to send reminders. Please try again.');
+              } finally {
+                setReminding(false);
+              }
+            }}
+            disabled={reminding}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', background: reminding ? '#f3f4f6' : '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, color: reminding ? '#9ca3af' : '#374151', cursor: reminding ? 'not-allowed' : 'pointer' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            {reminding ? 'Sending…' : 'Remind Unregistered'}
+          </button>
+          <button
+            onClick={async () => {
+              if (emailingVerified) return;
+              setEmailingVerified(true);
+              try {
+                const res = await userApi.sendVerifiedReminders();
+                addToast('success', `Email sent to ${res.sent} student${res.sent !== 1 ? 's' : ''}.${res.failed > 0 ? ` ${res.failed} failed.` : ''}`);
+              } catch {
+                addToast('error', 'Failed to send emails. Please try again.');
+              } finally {
+                setEmailingVerified(false);
+              }
+            }}
+            disabled={emailingVerified}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', background: emailingVerified ? '#f3f4f6' : '#fff', border: '1px solid #e5e7eb', borderRadius: 9, fontSize: 13, fontWeight: 600, color: emailingVerified ? '#9ca3af' : '#374151', cursor: emailingVerified ? 'not-allowed' : 'pointer' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            {emailingVerified ? 'Sending…' : 'Email Verified Students'}
+          </button>
+        </div>
       </div>
 
       {/* Filter tabs */}
