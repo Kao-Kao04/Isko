@@ -1263,6 +1263,26 @@ export default function ApplicantProfilePage() {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   Terms & Conditions
                 </a>
+                <a href={applicationApi.documentUrl(app.id, 'scholarship-agreement')} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Scholarship Agreement
+                </a>
+                <a href={applicationApi.documentUrl(app.id, 'acceptance-form')} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Acceptance Form
+                </a>
+                <a href={applicationApi.documentUrl(app.id, 'bank-details-form')} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Bank Details Form
+                </a>
+                <a href={applicationApi.documentUrl(app.id, 'maintaining-conditions-form')} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#f9fafb', color: '#374151', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Maintaining Conditions Form
+                </a>
               </div>
             </div>
           )}

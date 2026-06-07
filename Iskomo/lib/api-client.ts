@@ -384,7 +384,7 @@ export const applicationApi = {
     }),
 
   // Document generation — return the URL to open in a new tab (backend returns styled HTML)
-  documentUrl: (id: number, type: 'confirmation-letter' | 'terms') =>
+  documentUrl: (id: number, type: 'confirmation-letter' | 'terms' | 'scholarship-agreement' | 'acceptance-form' | 'bank-details-form' | 'maintaining-conditions-form') =>
     `${BASE_URL}/api/applications/${id}/documents/${type}`,
 };
 
