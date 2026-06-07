@@ -139,6 +139,12 @@ export default function NotificationBell() {
     notificationApi.markRead(n.id).catch(() => {});
     setOpen(false);
 
+    // External URLs (custom announcement links) bypass internal routing entirely.
+    if (n.route && /^https?:\/\//i.test(n.route)) {
+      window.open(n.route, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     // Compute destination client-side so routing is correct regardless of
     // what the backend cached in the route field.
     let dest: string;

@@ -87,15 +87,20 @@ function mapNotif(n: NotificationResponse): DisplayNotif {
     const tabSuffix = tabMatch ? `?tab=${tabMatch[1]}` : '';
     href = `/osfa/applicants/${n.application_id}${tabSuffix}`;
   } else if (n.route) {
-    // Strip any leading /osfa or /student prefix stored in the route field,
-    // then map known student paths to their OSFA equivalents.
-    const bare = n.route.replace(/^\/(osfa|student)/, '');
-    const routeMap: Record<string, string> = {
-      '/iskolarships': '/osfa/scholarships',
-      '/registrations': '/osfa/registrations',
-      '/profile': '/osfa/notifications',
-    };
-    href = routeMap[bare] ?? `/osfa${bare.replace(/^\/applications\/(\d+)/, '/applicants/$1')}`;
+    if (/^https?:\/\//i.test(n.route)) {
+      // External URLs (custom announcement links) are used as-is.
+      href = n.route;
+    } else {
+      // Strip any leading /osfa or /student prefix stored in the route field,
+      // then map known student paths to their OSFA equivalents.
+      const bare = n.route.replace(/^\/(osfa|student)/, '');
+      const routeMap: Record<string, string> = {
+        '/iskolarships': '/osfa/scholarships',
+        '/registrations': '/osfa/registrations',
+        '/profile': '/osfa/notifications',
+      };
+      href = routeMap[bare] ?? `/osfa${bare.replace(/^\/applications\/(\d+)/, '/applicants/$1')}`;
+    }
   }
   return {
     id:            n.id,
@@ -199,7 +204,8 @@ export default function Page() {
     // the detail modal instead to let the user read the full body.
     const isNavigable = n.actionHref && n.actionHref !== '/osfa/notifications';
     if (isNavigable) {
-      router.push(n.actionHref!);
+      if (/^https?:\/\//i.test(n.actionHref!)) window.open(n.actionHref!, '_blank', 'noopener,noreferrer');
+      else router.push(n.actionHref!);
     } else {
       setSelectedNotif({ ...n, isRead: true });
     }
