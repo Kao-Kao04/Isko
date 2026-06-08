@@ -18,6 +18,11 @@ const STATUS_CFG: Record<string, { bg: string; color: string; label: string }> =
 };
 
 const STATUSES = ['all', 'pending', 'approved', 'rejected', 'incomplete', 'withdrawn'] as const;
+const CATEGORIES = ['all', 'public', 'private'] as const;
+const CATEGORY_CFG: Record<string, { color: string; label: string }> = {
+  public:  { color: '#1d4ed8', label: '🌐 Public' },
+  private: { color: '#7e22ce', label: '🔒 Private' },
+};
 
 function Spin() {
   return <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div style={{ width: 36, height: 36, border: '3px solid #f3f4f6', borderTop: `3px solid ${M}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
@@ -31,6 +36,7 @@ export default function AdminApplicationsPage() {
   const [total,   setTotal]   = useState(0);
   const [page,    setPage]    = useState(1);
   const [status,  setStatus]  = useState<string>(() => searchParams.get('status') ?? 'all');
+  const [category, setCategory] = useState<typeof CATEGORIES[number]>('all');
   const [search,  setSearch]  = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -45,13 +51,14 @@ export default function AdminApplicationsPage() {
   useEffect(() => { load(1, status); }, [load, status]);
 
   const totalPages = Math.max(1, Math.ceil(total / 25));
-  const displayed  = search.trim()
-    ? items.filter(a => {
-        const q   = search.toLowerCase();
-        const name = a.student ? `${a.student.first_name ?? ''} ${a.student.last_name ?? ''}`.toLowerCase() : '';
-        return name.includes(q) || (a.student?.email ?? '').toLowerCase().includes(q) || (a.scholarship?.name ?? '').toLowerCase().includes(q);
-      })
-    : items;
+  const displayed  = items
+    .filter(a => category === 'all' || a.scholarship?.category === category)
+    .filter(a => {
+      if (!search.trim()) return true;
+      const q   = search.toLowerCase();
+      const name = a.student ? `${a.student.first_name ?? ''} ${a.student.last_name ?? ''}`.toLowerCase() : '';
+      return name.includes(q) || (a.student?.email ?? '').toLowerCase().includes(q) || (a.scholarship?.name ?? '').toLowerCase().includes(q);
+    });
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
@@ -69,6 +76,14 @@ export default function AdminApplicationsPage() {
             <button key={s} onClick={() => { setStatus(s); setPage(1); }}
               style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: status === s ? '#fff' : 'transparent', color: status === s ? M : '#6b7280', fontSize: 12, fontWeight: status === s ? 700 : 500, cursor: 'pointer', boxShadow: status === s ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', textTransform: 'capitalize' }}>
               {s === 'all' ? 'All' : STATUS_CFG[s]?.label ?? s}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 10, padding: 4 }}>
+          {CATEGORIES.map(c => (
+            <button key={c} onClick={() => { setCategory(c); setPage(1); }}
+              style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: category === c ? '#fff' : 'transparent', color: category === c ? (CATEGORY_CFG[c]?.color ?? M) : '#6b7280', fontSize: 12, fontWeight: category === c ? 700 : 500, cursor: 'pointer', boxShadow: category === c ? '0 1px 4px rgba(0,0,0,0.08)' : 'none' }}>
+              {c === 'all' ? 'All' : CATEGORY_CFG[c]?.label ?? c}
             </button>
           ))}
         </div>
@@ -95,8 +110,8 @@ export default function AdminApplicationsPage() {
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '60px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
           <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6 }}>No applications found</div>
-          <div style={{ fontSize: 13, color: '#6b7280' }}>{search ? 'Try a different search term.' : status !== 'all' ? `No ${status} applications in the system.` : 'No applications have been submitted yet.'}</div>
-          {(search || status !== 'all') && <button onClick={() => { setSearch(''); setStatus('all'); }} style={{ marginTop: 14, padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Clear filters</button>}
+          <div style={{ fontSize: 13, color: '#6b7280' }}>{search ? 'Try a different search term.' : status !== 'all' ? `No ${status} applications in the system.` : category !== 'all' ? `No applications for ${category} scholarships.` : 'No applications have been submitted yet.'}</div>
+          {(search || status !== 'all' || category !== 'all') && <button onClick={() => { setSearch(''); setStatus('all'); setCategory('all'); }} style={{ marginTop: 14, padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Clear filters</button>}
         </div>
       ) : (
         <>
@@ -121,7 +136,14 @@ export default function AdminApplicationsPage() {
                         <div style={{ fontSize: 11, color: '#9ca3af' }}>{a.student?.email ?? ''}</div>
                       </td>
                       <td style={{ padding: '12px 16px', color: '#374151', fontFamily: 'monospace', fontSize: 12 }}>{a.student?.student_number ?? '—'}</td>
-                      <td style={{ padding: '12px 16px', color: '#374151', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.scholarship?.name ?? '—'}</td>
+                      <td style={{ padding: '12px 16px', color: '#374151', maxWidth: 240 }}>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.scholarship?.name ?? '—'}</div>
+                        {a.scholarship?.category && (
+                          <span style={{ display: 'inline-block', marginTop: 3, fontSize: 10, fontWeight: 700, color: CATEGORY_CFG[a.scholarship.category]?.color }}>
+                            {CATEGORY_CFG[a.scholarship.category]?.label}
+                          </span>
+                        )}
+                      </td>
                       <td style={{ padding: '12px 16px' }}><span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, background: cfg.bg, color: cfg.color, fontSize: 11, fontWeight: 700 }}>{cfg.label}</span></td>
                       <td style={{ padding: '12px 16px', color: '#6b7280', fontSize: 12, whiteSpace: 'nowrap' }}>{fmt(a.submitted_at)}</td>
                       <td style={{ padding: '12px 16px' }}>
