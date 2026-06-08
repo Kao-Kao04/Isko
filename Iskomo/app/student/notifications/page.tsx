@@ -61,6 +61,7 @@ function getActionRoute(n: NotificationResponse): string | null {
     if (resolved.path && resolved.path !== '/notifications') return withRoleBase(resolved.path, '/student');
   }
   if (t.includes('deadline') || t.includes('scholarship')) return '/student/iskolarships';
+  if (t.includes('registration') || t.includes('gwa')) return '/student/registration';
   return null;
 }
 

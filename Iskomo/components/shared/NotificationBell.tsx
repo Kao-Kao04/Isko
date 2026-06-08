@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
-import { resolveNotifRoute } from '@/lib/notifications';
+import { resolveNotifRoute, withRoleBase } from '@/lib/notifications';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getAccessToken } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
@@ -169,24 +169,17 @@ export default function NotificationBell() {
       }
     } else {
       const t = n.title.toLowerCase();
-      if (t.includes('deadline') || t.includes('scholarship')) {
-        // Student route is intentionally "iskolarships"; OSFA route is "scholarships"
+      if (route && route !== '/notifications') {
+        // Prefer the backend-provided route (incl. custom announcement links) —
+        // withRoleBase translates portal-specific page names (e.g. /iskolarships
+        // ↔ /scholarships, /registration ↔ /registrations) so it lands on a real
+        // page for the viewer's role. Keeps this consistent with the dedicated
+        // notifications page and dashboard widgets, which also resolve `route` first.
+        dest = withRoleBase(route, roleBase);
+      } else if (t.includes('deadline') || t.includes('scholarship')) {
         dest = roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`;
       } else if (t.includes('registration') || t.includes('gwa')) {
-        // Student page is "registration" (singular); OSFA page is "registrations" (plural)
         dest = roleBase === '/osfa' ? `${roleBase}/registrations` : `${roleBase}/registration`;
-      } else if (route && route !== '/notifications') {
-        // Use backend-provided route (e.g. /registrations for GWA update requests).
-        // Page names differ between portals for a couple of routes — translate them.
-        const bare = route.replace(/^\/(osfa|student)/, '');
-        const map: Record<string, string> = {
-          '/registrations': roleBase === '/osfa' ? `${roleBase}/registrations` : `${roleBase}/registration`,
-          '/registration':  roleBase === '/osfa' ? `${roleBase}/registrations` : `${roleBase}/registration`,
-          '/iskolarships':  roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`,
-          '/scholarships':  roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`,
-          '/profile':       `${roleBase}/profile`,
-        };
-        dest = map[bare] ?? `${roleBase}/notifications`;
       } else {
         // General announcement — send to notifications page so student can read the body
         dest = `${roleBase}/notifications`;
