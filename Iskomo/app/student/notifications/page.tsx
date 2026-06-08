@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
+import { resolveNotifRoute, withRoleBase } from '@/lib/notifications';
 import { COLORS } from '@/lib/theme';
 
 const MAROON = COLORS.maroon;
@@ -52,12 +53,12 @@ function getActionRoute(n: NotificationResponse): string | null {
   }
   if (n.application_id) return `/student/applications/${n.application_id}`;
   if (n.route && n.route !== '/notifications') {
-    // External URLs (custom announcement links) are used as-is.
-    if (/^https?:\/\//i.test(n.route)) return n.route;
-    // Strip any role prefix the sender may have typed (e.g. /student/iskolarships
-    // or /osfa/scholarships) before prepending ours — avoids /student/student/... 404s.
-    const bare = n.route.replace(/^\/(osfa|student)/, '');
-    return `/student${bare}`;
+    const resolved = resolveNotifRoute(n.route);
+    // Truly external (cross-origin) URLs are used as-is; same-origin absolute
+    // URLs (e.g. an OSFA staffer pasted their own browser's address-bar URL
+    // into an announcement) get their role prefix swapped to ours below.
+    if (resolved.external) return n.route;
+    if (resolved.path) return withRoleBase(resolved.path, '/student');
   }
   if (t.includes('deadline') || t.includes('scholarship')) return '/student/iskolarships';
   return null;

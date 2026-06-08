@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { notificationApi, type NotificationResponse } from '@/lib/api-client';
+import { resolveNotifRoute } from '@/lib/notifications';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getAccessToken } from '@/lib/api';
 import { COLORS } from '@/lib/theme';
@@ -139,11 +140,17 @@ export default function NotificationBell() {
     notificationApi.markRead(n.id).catch(() => {});
     setOpen(false);
 
-    // External URLs (custom announcement links) bypass internal routing entirely.
-    if (n.route && /^https?:\/\//i.test(n.route)) {
-      window.open(n.route, '_blank', 'noopener,noreferrer');
+    // Truly external URLs (different origin) bypass internal routing entirely.
+    // Same-origin absolute URLs (e.g. an OSFA staffer pasted their own browser's
+    // address-bar URL into an announcement link) are internal routes in disguise —
+    // resolve them through the normal role-based routing below instead of
+    // window.open-ing the viewer onto a page they may not even have access to.
+    const resolved = resolveNotifRoute(n.route);
+    if (resolved.external) {
+      window.open(n.route!, '_blank', 'noopener,noreferrer');
       return;
     }
+    const route = resolved.path;
 
     // Compute destination client-side so routing is correct regardless of
     // what the backend cached in the route field.
@@ -167,9 +174,9 @@ export default function NotificationBell() {
         dest = roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`;
       } else if (t.includes('registration') || t.includes('gwa')) {
         dest = `${roleBase}/registrations`;
-      } else if (n.route && n.route !== '/notifications') {
+      } else if (route && route !== '/notifications') {
         // Use backend-provided route (e.g. /registrations for GWA update requests)
-        const bare = n.route.replace(/^\/(osfa|student)/, '');
+        const bare = route.replace(/^\/(osfa|student)/, '');
         const map: Record<string, string> = {
           '/registrations': `${roleBase}/registrations`,
           '/iskolarships':  roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`,

@@ -7,6 +7,7 @@ import ScholarshipCard from '@/components/scholarship/ScholarshipCard';
 import TutorialModal from '@/components/shared/TutorialModal';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { applicationApi, scholarshipApi, scholarApi, notificationApi, type ApplicationResponse, type ScholarResponse, type NotificationResponse } from '@/lib/api-client';
+import { resolveNotifRoute, withRoleBase } from '@/lib/notifications';
 import { mapScholarship } from '@/lib/adapters';
 import { STUDENT_SUB_STATUS_LABEL } from '@/lib/workflow';
 import type { Scholarship } from '@/lib/osfa-data';
@@ -367,11 +368,12 @@ export default function Page() {
                 </div>
               ) : notifications.slice(0, 5).map((n, idx) => {
                 const c = NOTIF_TYPE.info;
-                const isExternalNotif = !!n.route && /^https?:\/\//i.test(n.route);
+                const resolved = resolveNotifRoute(n.route);
+                const isExternalNotif = resolved.external;
                 const notifHref = isExternalNotif
                   ? n.route!
-                  : n.route
-                    ? `/student${n.route.replace(/^\/(osfa|student)/, '')}`
+                  : resolved.path
+                    ? withRoleBase(resolved.path, '/student')
                     : n.application_id ? `/student/applications/${n.application_id}` : '/student/applications';
                 return (
                   <Link key={n.id} href={notifHref} className="notif-row"

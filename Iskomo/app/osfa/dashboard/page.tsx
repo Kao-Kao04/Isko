@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { applicationApi, scholarshipApi, notificationApi, dashboardApi, reportsApi, type ApplicationResponse, type ScholarshipResponse, type NotificationResponse, type DashboardStats, type CalendarEvent } from '@/lib/api-client';
+import { resolveNotifRoute, withRoleBase } from '@/lib/notifications';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 import { Skel } from '@/components/shared/Skeleton';
@@ -72,16 +73,17 @@ export default function Page() {
       return;
     }
     if (n.route) {
-      if (/^https?:\/\//i.test(n.route)) {
+      const resolved = resolveNotifRoute(n.route);
+      if (resolved.external) {
         window.open(n.route, '_blank', 'noopener,noreferrer');
         return;
       }
-      const bare = n.route.replace(/^\/(osfa|student)/, '');
+      const bare = (resolved.path ?? n.route).replace(/^\/(osfa|student)/, '');
       const routeMap: Record<string, string> = {
         '/iskolarships': '/osfa/scholarships',
         '/registrations': '/osfa/registrations',
       };
-      const dest = routeMap[bare] ?? `/osfa${bare.replace(/^\/applications\/(\d+)/, '/applicants/$1')}`;
+      const dest = routeMap[bare] ?? withRoleBase(bare.replace(/^\/applications\/(\d+)/, '/applicants/$1'), '/osfa');
       router.push(dest);
       return;
     }

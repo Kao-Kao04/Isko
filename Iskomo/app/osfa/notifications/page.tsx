@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { notificationApi, scholarshipApi, type NotificationResponse, type ScholarshipResponse } from '@/lib/api-client';
+import { resolveNotifRoute } from '@/lib/notifications';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 
@@ -87,13 +88,14 @@ function mapNotif(n: NotificationResponse): DisplayNotif {
     const tabSuffix = tabMatch ? `?tab=${tabMatch[1]}` : '';
     href = `/osfa/applicants/${n.application_id}${tabSuffix}`;
   } else if (n.route) {
-    if (/^https?:\/\//i.test(n.route)) {
-      // External URLs (custom announcement links) are used as-is.
+    const resolved = resolveNotifRoute(n.route);
+    if (resolved.external) {
+      // Truly external (cross-origin) URLs are used as-is.
       href = n.route;
     } else {
       // Strip any leading /osfa or /student prefix stored in the route field,
       // then map known student paths to their OSFA equivalents.
-      const bare = n.route.replace(/^\/(osfa|student)/, '');
+      const bare = (resolved.path ?? n.route).replace(/^\/(osfa|student)/, '');
       const routeMap: Record<string, string> = {
         '/iskolarships': '/osfa/scholarships',
         '/registrations': '/osfa/registrations',
