@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { applicationApi, scholarshipApi, notificationApi, dashboardApi, reportsApi, type ApplicationResponse, type ScholarshipResponse, type NotificationResponse, type DashboardStats, type CalendarEvent } from '@/lib/api-client';
-import { resolveNotifRoute, withRoleBase } from '@/lib/notifications';
+import { resolveNotifRoute } from '@/lib/notifications';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { COLORS } from '@/lib/theme';
 import { Skel } from '@/components/shared/Skeleton';
@@ -83,7 +83,7 @@ export default function Page() {
         '/iskolarships': '/osfa/scholarships',
         '/registrations': '/osfa/registrations',
       };
-      const dest = routeMap[bare] ?? withRoleBase(bare.replace(/^\/applications\/(\d+)/, '/applicants/$1'), '/osfa');
+      const dest = routeMap[bare] ?? `/osfa${bare.replace(/^\/applications\/(\d+)/, '/applicants/$1')}`;
       router.push(dest);
       return;
     }

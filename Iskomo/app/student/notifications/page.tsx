@@ -52,13 +52,13 @@ function getActionRoute(n: NotificationResponse): string | null {
     return `/student/messages/${n.application_id}`;
   }
   if (n.application_id) return `/student/applications/${n.application_id}`;
-  if (n.route && n.route !== '/notifications') {
+  if (n.route) {
     const resolved = resolveNotifRoute(n.route);
     // Truly external (cross-origin) URLs are used as-is; same-origin absolute
     // URLs (e.g. an OSFA staffer pasted their own browser's address-bar URL
     // into an announcement) get their role prefix swapped to ours below.
     if (resolved.external) return n.route;
-    if (resolved.path) return withRoleBase(resolved.path, '/student');
+    if (resolved.path && resolved.path !== '/notifications') return withRoleBase(resolved.path, '/student');
   }
   if (t.includes('deadline') || t.includes('scholarship')) return '/student/iskolarships';
   return null;
