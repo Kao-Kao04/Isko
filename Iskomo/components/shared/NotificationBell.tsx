@@ -173,13 +173,17 @@ export default function NotificationBell() {
         // Student route is intentionally "iskolarships"; OSFA route is "scholarships"
         dest = roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`;
       } else if (t.includes('registration') || t.includes('gwa')) {
-        dest = `${roleBase}/registrations`;
+        // Student page is "registration" (singular); OSFA page is "registrations" (plural)
+        dest = roleBase === '/osfa' ? `${roleBase}/registrations` : `${roleBase}/registration`;
       } else if (route && route !== '/notifications') {
-        // Use backend-provided route (e.g. /registrations for GWA update requests)
+        // Use backend-provided route (e.g. /registrations for GWA update requests).
+        // Page names differ between portals for a couple of routes — translate them.
         const bare = route.replace(/^\/(osfa|student)/, '');
         const map: Record<string, string> = {
-          '/registrations': `${roleBase}/registrations`,
+          '/registrations': roleBase === '/osfa' ? `${roleBase}/registrations` : `${roleBase}/registration`,
+          '/registration':  roleBase === '/osfa' ? `${roleBase}/registrations` : `${roleBase}/registration`,
           '/iskolarships':  roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`,
+          '/scholarships':  roleBase === '/osfa' ? `${roleBase}/scholarships` : `${roleBase}/iskolarships`,
           '/profile':       `${roleBase}/profile`,
         };
         dest = map[bare] ?? `${roleBase}/notifications`;

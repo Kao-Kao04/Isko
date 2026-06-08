@@ -64,6 +64,23 @@ function getActionRoute(n: NotificationResponse): string | null {
   return null;
 }
 
+// Derives the action button's label from where it actually navigates —
+// comparing against the *resolved* destination (not the raw stored route/link)
+// so the label never promises a page the click won't land on.
+function getActionLabel(n: NotificationResponse, actionRoute: string | null): string {
+  if (n.application_id) return 'View Application';
+  if (!actionRoute) return 'View Details';
+  if (/^https?:\/\//i.test(actionRoute)) return 'Open Link';
+  const bare = actionRoute.replace(/^\/(student|osfa)/, '');
+  if (bare.startsWith('/profile')) return 'View Profile';
+  if (bare.startsWith('/registration')) return 'View GWA Request';
+  if (bare.startsWith('/iskolarships')) return 'View Scholarships';
+  if (bare.startsWith('/applications')) return 'View Application';
+  if (bare.startsWith('/messages')) return 'View Messages';
+  if (bare.startsWith('/notifications')) return 'View Notifications';
+  return 'View Details';
+}
+
 export default function StudentNotificationsPage() {
   const router = useRouter();
   const [notifs,   setNotifs]   = useState<NotificationResponse[]>([]);
@@ -305,7 +322,7 @@ export default function StudentNotificationsPage() {
                     }}
                     style={{ width: '100%', padding: '11px', background: `linear-gradient(135deg, ${MAROON}, #5C0000)`, border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
-                    {selected.application_id ? 'View Application' : selected.route === '/profile' ? 'View Profile' : selected.route === '/registrations' ? 'View GWA Request' : 'View Scholarships'}
+                    {getActionLabel(selected, actionRoute)}
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </button>
                 )}
