@@ -67,6 +67,18 @@ function formatAction(action: string): { label: string; color: string } {
   return { label: clean, color: '#374151' };
 }
 
+// Colors for entries derived from a workflow stage transition (entry.to_main set).
+// Labels for these come from SUB_STATUS_LABEL/subStatusLabel instead of ACTION_LABEL.
+const WORKFLOW_ACTION_COLOR: Record<string, string> = {
+  screening_failed:   '#dc2626',
+  validation_failed:  '#dc2626',
+  revision_requested: '#ea580c',
+  approved:           '#059669',
+  rejected:           '#dc2626',
+  waitlisted:         '#d97706',
+  completed:          '#059669',
+};
+
 export default function ApplicantProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { toasts, addToast, removeToast } = useToast();
@@ -208,6 +220,14 @@ export default function ApplicantProfilePage() {
     isPublic ? (publicSubStatusOverride[sub] ?? SUB_STATUS_LABEL[sub] ?? sub) : (SUB_STATUS_LABEL[sub] ?? sub);
   const stageLabel = (stage: string) =>
     stage === 'interview' && isPublic ? 'Submission' : (STAGE_LABEL[stage] ?? stage);
+
+  // Activity History entries derived from a workflow stage transition (to_main set)
+  // use workflow stage/sub-status terminology (with public/private overrides);
+  // legacy audit entries (submitted, resubmitted, decisions, appeals) use ACTION_LABEL.
+  const auditLabel = (entry: AuditEntryResponse): { label: string; color: string } =>
+    entry.to_main
+      ? { label: subStatusLabel(entry.action), color: WORKFLOW_ACTION_COLOR[entry.action] ?? '#374151' }
+      : formatAction(entry.action);
 
   useEffect(() => {
     const numId = Number(id);
@@ -1411,7 +1431,7 @@ export default function ApplicantProfilePage() {
                     {i < arr.length - 1 && <div style={{ width: 2, flex: 1, background: '#e5e7eb', marginTop: 6 }} />}
                   </div>
                   <div style={{ paddingBottom: 4 }}>
-                    <div style={{ fontSize: 14, color: formatAction(entry.action).color, fontWeight: 600 }}>{formatAction(entry.action).label}</div>
+                    <div style={{ fontSize: 14, color: auditLabel(entry).color, fontWeight: 600 }}>{auditLabel(entry).label}</div>
                     {entry.note && <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>{entry.note}</div>}
                     <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 3 }}>{formatTime(entry.created_at)}</div>
                   </div>

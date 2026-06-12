@@ -164,6 +164,9 @@ export interface AuditEntryResponse {
   to_status: string | null;
   note: string | null;
   created_at: string;
+  // Set only for entries derived from a workflow stage transition — use
+  // SUB_STATUS_LABEL/stageLabel (lib/workflow.ts) to render `action` instead of ACTION_LABEL.
+  to_main?: string | null;
 }
 
 // ─── Notification Types ───────────────────────────────────────────────────────
