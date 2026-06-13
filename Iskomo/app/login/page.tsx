@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { login, signup } from '@/lib/auth';
@@ -119,6 +120,7 @@ function LoginPageInner() {
   const [password, setPassword] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
   const [signupError, setSignupError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -173,7 +175,8 @@ function LoginPageInner() {
 
     if (signupPassword.length < 8)              { setSignupError('Password must be at least 8 characters.'); return; }
     if (!/[A-Z]/.test(signupPassword))          { setSignupError('Password must contain at least one uppercase letter.'); return; }
-    if (!/[^a-zA-Z0-9]/.test(signupPassword))  { setSignupError('Password must contain at least one special character.'); return; }
+    if (!/[^a-zA-Z0-9\s]/.test(signupPassword)) { setSignupError('Password must contain at least one special character.'); return; }
+    if (!agreedToTerms)                         { setSignupError('Please agree to the Terms & Conditions and Data Privacy Policy.'); return; }
     setSignupLoading(true);
     try {
       const result = await signup(signupEmail, signupPassword);
@@ -453,7 +456,7 @@ function LoginPageInner() {
                       {(() => {
                         const hasLen     = signupPassword.length >= 8;
                         const hasUpper   = /[A-Z]/.test(signupPassword);
-                        const hasSpecial = /[^a-zA-Z0-9]/.test(signupPassword);
+                        const hasSpecial = /[^a-zA-Z0-9\s]/.test(signupPassword);
                         const score      = [hasLen, hasUpper, hasSpecial].filter(Boolean).length;
                         const strength   = score === 0
                           ? { label: '',       color: '#e5e7eb' }
@@ -495,18 +498,29 @@ function LoginPageInner() {
                       })()}
                     </div>
 
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: '#374151', cursor: 'pointer', lineHeight: 1.5 }}>
+                      <input type="checkbox" checked={agreedToTerms} onChange={e => setAgreedToTerms(e.target.checked)}
+                        style={{ accentColor: TEAL, marginTop: 2 }} />
+                      <span>
+                        I agree to the{' '}
+                        <Link href="/terms" target="_blank" style={{ color: TEAL, fontWeight: 600 }}>Terms &amp; Conditions</Link>
+                        {' '}and{' '}
+                        <Link href="/privacy" target="_blank" style={{ color: TEAL, fontWeight: 600 }}>Data Privacy Policy</Link>.
+                      </span>
+                    </label>
+
                     {signupError && (
                       <p style={{ margin: 0, fontSize: 13, color: '#dc2626', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px' }}>
                         {signupError}
                       </p>
                     )}
 
-                    <button type="submit" disabled={signupLoading} style={{
+                    <button type="submit" disabled={signupLoading || !agreedToTerms} style={{
                       width: '100%', padding: '12px', marginTop: 4,
-                      background: signupLoading ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
+                      background: (signupLoading || !agreedToTerms) ? '#9ca3af' : `linear-gradient(135deg, ${TEAL}, ${TEAL_DARK})`,
                       color: '#fff', border: 'none', borderRadius: 10,
-                      fontWeight: 700, fontSize: 15, cursor: signupLoading ? 'not-allowed' : 'pointer',
-                      boxShadow: signupLoading ? 'none' : `0 3px 12px ${TEAL}40`,
+                      fontWeight: 700, fontSize: 15, cursor: (signupLoading || !agreedToTerms) ? 'not-allowed' : 'pointer',
+                      boxShadow: (signupLoading || !agreedToTerms) ? 'none' : `0 3px 12px ${TEAL}40`,
                     }}>
                       {signupLoading ? 'Sending...' : 'Send Verification Email →'}
                     </button>
